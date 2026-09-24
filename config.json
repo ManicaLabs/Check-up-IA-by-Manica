@@ -9,7 +9,7 @@
   "quiz": {
     "questions_par_axe": 4,
     "points_par_bonne_reponse": 5,
-    "statuts_publies": ["valide", "a_valider"],
+    "statuts_publies": ["valide"],
     "mention_beta": "Version bêta : les questions sont en cours de relecture."
   },
   "profils": {

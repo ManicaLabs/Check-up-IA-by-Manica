@@ -17,17 +17,19 @@ const config = JSON.parse(lire('config.json'));
 const banque = JSON.parse(lire('questions.json'));
 const html = lire('index.html');
 
-// --- Script inline : syntaxe ---
+// --- Scripts inline : syntaxe (chaque bloc séparément) ---
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
-if (scripts.length !== 1) erreur(`index.html : 1 bloc <script> attendu, ${scripts.length} trouvé(s)`);
+if (!scripts.length) erreur('index.html : aucun bloc <script> inline');
 const dossierTmp = mkdtempSync(join(tmpdir(), 'checkup-'));
-const fichierJs = join(dossierTmp, 'inline.js');
-writeFileSync(fichierJs, scripts.join('\n'));
-try {
-  execFileSync(process.execPath, ['--check', fichierJs], { stdio: 'pipe' });
-} catch (e) {
-  erreur(`index.html : erreur de syntaxe JS\n${e.stderr}`);
-}
+scripts.forEach((code, i) => {
+  const fichierJs = join(dossierTmp, `inline-${i}.js`);
+  writeFileSync(fichierJs, code);
+  try {
+    execFileSync(process.execPath, ['--check', fichierJs], { stdio: 'pipe' });
+  } catch (e) {
+    erreur(`index.html : erreur de syntaxe JS dans le bloc <script> n° ${i + 1}\n${e.stderr}`);
+  }
+});
 for (const f of ['sw.js', 'tools/validate.mjs']) {
   try {
     execFileSync(process.execPath, ['--check', join(racine, f)], { stdio: 'pipe' });
@@ -37,7 +39,7 @@ for (const f of ['sw.js', 'tools/validate.mjs']) {
 }
 
 // --- Logique pure extraite d'index.html ---
-const logique = scripts[0].match(/\/\/ === LOGIQUE PURE[^\n]*\n([\s\S]*?)\/\/ === FIN LOGIQUE PURE ===/);
+const logique = scripts.join('\n').match(/\/\/ === LOGIQUE PURE[^\n]*\n([\s\S]*?)\/\/ === FIN LOGIQUE PURE ===/);
 if (!logique) throw new Error('Marqueurs LOGIQUE PURE introuvables dans index.html');
 const L = new Function(`${logique[1]}; return { melanger, tirerQuestions, choixAffiches, calculerResultat, niveauPour, remplir, lienMail, valeursModele, typo };`)();
 
@@ -169,6 +171,7 @@ if (!erreurs.length) {
 // --- Fichiers référencés ---
 const refs = new Set();
 for (const [, u] of html.matchAll(/(?:href|src)="([^"#:]+?)"/g)) refs.add(u);
+for (const [, liste] of html.matchAll(/srcset="([^"]+)"/g)) liste.split(',').forEach(c => refs.add(c.trim().split(/\s+/)[0]));
 const manifeste = JSON.parse(lire('manifest.webmanifest'));
 manifeste.icons.forEach(i => refs.add(i.src));
 const sw = lire('sw.js');
@@ -179,6 +182,22 @@ for (const f of ['config.json', 'questions.json', 'index.html', 'manifest.webman
   if (!precache.includes(f)) erreur(`sw.js : ${f} absent du PRECACHE`);
 }
 if (!html.includes(`content="${config.url_app}og-image.png"`)) avertissements.push('og:image ne pointe pas vers url_app de config.json');
+
+// --- Appels externes : seul GoatCounter est autorisé, script tiers verrouillé par SRI ---
+const ORIGINES_AUTORISEES = ['https://gc.zgo.at', 'https://manica.goatcounter.com'];
+for (const [balise] of html.matchAll(/<(?:script|link|img|iframe|source)\b[^>]*>/g)) {
+  const [, url] = balise.match(/\b(?:src|href)="((?:https?:)?\/\/[^"]+)"/) || [];
+  if (!url) continue;
+  const origine = new URL(url, 'https://x').origin;
+  if (/rel="canonical"/.test(balise)) continue;
+  if (!ORIGINES_AUTORISEES.includes(origine)) erreur(`ressource externe non autorisée : ${url}`);
+  if (/^<script/.test(balise) && !/integrity="sha(256|384|512)-/.test(balise)) erreur(`script externe sans empreinte SRI : ${url}`);
+}
+const csp = (html.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/) || [])[1] || '';
+for (const origine of csp.match(/https:\/\/[^\s;]+/g) || []) {
+  if (!ORIGINES_AUTORISEES.includes(origine)) erreur(`CSP : origine non prévue ${origine}`);
+}
+if (!/connect-src 'self' https:\/\/manica\.goatcounter\.com/.test(csp)) erreur('CSP : connect-src doit autoriser manica.goatcounter.com');
 
 // --- Bilan ---
 const aValider = banque.questions.filter(q => q.statut === 'a_valider').length;

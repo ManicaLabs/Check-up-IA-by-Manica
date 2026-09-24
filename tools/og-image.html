@@ -24,28 +24,23 @@ body {
   box-sizing: border-box;
   width: 1200px;
   height: 630px;
-  padding: 76px 84px 72px;
+  padding: 64px 84px 68px;
   display: flex;
   flex-direction: column;
 }
+/* Logo sombre sur transparent, inversé pour ressortir sur le bleu nuit */
+.logo { display: block; width: 430px; height: auto; filter: invert(1); }
 .title {
-  margin: 0;
-  font-size: 168px;
+  margin: 44px 0 0;
+  font-size: 150px;
   font-weight: 800;
   letter-spacing: -0.05em;
   line-height: .9;
 }
-.by {
-  margin: 18px 0 0;
-  font-size: 40px;
-  font-weight: 600;
-  color: #BCC5D6;
-  letter-spacing: -0.01em;
-}
 .pulse {
   position: absolute;
   left: 0;
-  top: 330px;
+  top: 402px;
   width: 1200px;
   height: 64px;
 }
@@ -58,12 +53,12 @@ body {
 }
 .lead {
   margin: 0;
-  font-size: 44px;
+  font-size: 42px;
   font-weight: 700;
   line-height: 1.18;
   letter-spacing: -0.02em;
 }
-.lead span { display: block; margin-top: 10px; font-size: 30px; font-weight: 500; color: #BCC5D6; letter-spacing: 0; }
+.lead span { display: block; margin-top: 10px; font-size: 29px; font-weight: 500; color: #BCC5D6; letter-spacing: 0; }
 .pill {
   flex: none;
   padding: 22px 34px;
@@ -78,10 +73,10 @@ body {
 </head>
 <body>
 <div class="card">
+  <img class="logo" src="../img/logo-manica-baseline-900.png" alt="Manica">
   <h1 class="title">Check-up IA</h1>
-  <p class="by">by Manica</p>
   <svg class="pulse" viewBox="0 0 1200 64" aria-hidden="true">
-    <path d="M0 40 H560 C568 40 571 28 580 28 C589 28 592 40 600 40 H620 L629 47 L646 4 L666 60 L678 40 H704 C714 40 718 23 732 23 C746 23 750 40 760 40 H1200" fill="none" stroke="#F7F5F1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
+    <path d="M0 40 H912 C920 40 923 28 932 28 C941 28 944 40 952 40 H972 L981 47 L998 4 L1018 60 L1030 40 H1056 C1066 40 1070 23 1084 23 C1098 23 1102 40 1112 40 H1200" fill="none" stroke="#F7F5F1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
   </svg>
   <div class="bottom">
     <p class="lead">Où en êtes-vous vraiment avec l’IA&#8239;?<span>20 questions, 5 minutes, un score sur 100.</span></p>

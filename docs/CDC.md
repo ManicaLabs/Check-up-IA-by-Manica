@@ -2,7 +2,7 @@
 
 > Handoff doc pour Claude Code. Source de vérité pour le code = le repo Git.
 > À mettre à jour à chaque déploiement, pas seulement en fin de projet.
-> Dernière mise à jour : 24/09/2026 — v1.0 (premier déploiement).
+> Dernière mise à jour : 24/09/2026 — v1.1 (logo, bascule clair/sombre, mesure d'audience GoatCounter).
 
 ---
 
@@ -23,7 +23,7 @@
 - Seule sortie de donnée = clic volontaire (RDV Google Agenda ou mail pré-rempli).
 - Mobile-first (trafic LinkedIn / réseaux sociaux).
 - Pas de framework ni de build : `index.html` statique + JSON, servi par GitHub Pages.
-- **Aucune requête tierce** : police auto-hébergée, pas de CDN, pas d'analytics. Verrouillé par une CSP (`connect-src 'self'`, etc.) — argument « Sécurité Radicale » vérifiable.
+- **Aucune requête tierce non maîtrisée** : police auto-hébergée, pas de CDN. Seule exception, GoatCounter (mesure d'audience sans cookie) : script figé `count.v5.js` verrouillé par empreinte SRI, et CSP qui n'autorise que `gc.zgo.at` (script) et `manica.goatcounter.com` (comptage). Argument « Sécurité Radicale » vérifiable dans l'onglet Réseau.
 
 ---
 
@@ -41,29 +41,28 @@
 | Fichier | Rôle |
 |---|---|
 | `index.html` | App complète (HTML + CSS + JS inline) : accueil → quiz → résultat |
-| `questions.json` | Banque de questions (47, toutes `a_valider`) |
+| `questions.json` | Banque de questions (47, toutes validées par Cédric le 24/09/2026) |
 | `config.json` | Lien RDV, email, seuils et textes des niveaux, recommandations, textes CTA, modèles mail et partage |
 | `sw.js` | Service worker : hors ligne, réseau d'abord |
 | `manifest.webmanifest` | Manifeste PWA |
-| `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` | Icônes |
+| `img/logo_manica_hd.png`, `img/logo_manica_hd_baseline.png` | Logos sources fournis par Cédric (2816×1504, niveaux de gris sur transparent) — ne pas modifier |
+| `img/logo-manica-baseline-600.png`, `img/logo-manica-baseline-900.png`, `img/logo-manica-300.png` | Logos web générés (recadrés, palette 64 couleurs) |
+| `favicon-32.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` | Icônes générées : symbole du logo en clair sur bleu nuit |
 | `og-image.png` | Image de partage (1200×630) |
 | `fonts/manrope-latin.woff2`, `fonts/OFL.txt` | Police Manrope variable 400–800, sous-ensemble latin (25 Ko), licence OFL |
 | `tools/validate.mjs` | Validation avant push (voir §10) |
-| `tools/og-image.html`, `tools/icon-maskable.svg` | Sources de l'image OG et de l'icône maskable |
+| `tools/build-assets.py` | Génère logos web et icônes depuis les logos sources (Pillow) |
+| `tools/og-image.html` | Source de l'image OG |
 | `docs/CDC.md` | Ce document |
 | `.nojekyll` | Désactive Jekyll sur GitHub Pages |
 
 ### Assets — régénération
 
 ```bash
-# Icônes (Inkscape)
-inkscape favicon.svg -w 512 -h 512 -o icon-512.png
-inkscape favicon.svg -w 192 -h 192 -o icon-192.png
-inkscape favicon.svg -w 32 -h 32 -o favicon-32.png
-inkscape tools/icon-maskable.svg -w 512 -h 512 -o icon-maskable-512.png
-inkscape tools/icon-maskable.svg -w 180 -h 180 -o apple-touch-icon.png
-# Image OG (Chrome headless)
-google-chrome --headless=new --hide-scrollbars --window-size=1200,630 \
+# Logos web + icônes, depuis img/logo_manica_hd*.png
+python3 tools/build-assets.py
+# Image OG (Chrome headless ; --allow-file-access-from-files pour charger le logo)
+google-chrome --headless=new --hide-scrollbars --allow-file-access-from-files --window-size=1200,630 \
   --virtual-time-budget=3000 --screenshot="$PWD/og-image.png" "file://$PWD/tools/og-image.html"
 ```
 
@@ -73,6 +72,11 @@ LinkedIn met l'aperçu en cache : après changement de `og-image.png`, forcer le
 
 ## 3. Architecture v1 (en prod)
 
+### En-tête et pied de page
+- En-tête sur tous les écrans : logo à gauche, bouton de thème soleil/lune à droite (44×44 px).
+- Logo **avec baseline** sur l'accueil (280 px de large sur mobile, 320 px au-delà de 640 px) ; logo **sans baseline** compact (34 px de haut) sur quiz, résultat et erreur. Bascule pilotée par `body[data-ecran]`, posé par `afficher()`.
+- Pied de page : logo sans baseline (28 px), mention de confidentialité, mention de mesure d'audience, bouton d'installation.
+
 ### Écrans
 1. **Accueil** : titre « Check-up IA » / « by Manica », tracé ECG (animé une fois au chargement), accroche, choix du profil (2 cartes radio de taille égale, aucune présélection), bouton « Commencer le test », mention rassurante. Si une session existe : « Reprendre le test » ou « Revoir mon dernier résultat ».
 2. **Quiz** : barre de progression, axe + « Question X / 20 », énoncé, 4 choix (radios natifs stylés), « Valider ma réponse » → correction (bordure + icône + texte « Bonne réponse » / « Votre réponse »), explication, « Question suivante » (ou « Voir mon résultat »). Pas de retour arrière.
@@ -80,6 +84,7 @@ LinkedIn met l'aperçu en cache : après changement de `og-image.png`, forcer le
 4. **Erreur** : si `config.json` / `questions.json` ne se chargent pas.
 
 ### Stockage local
+- Clé `checkup-ia:theme` : `light` ou `dark`, uniquement après un clic sur la bascule. Absente = on suit la préférence système.
 - Clé `localStorage` : `checkup-ia:v1`, lecture/écriture sous `try/catch` (le test marche sans).
 - Forme : `{ profil, items: [{ id, ordre: [4 entiers] }], reponses: [position choisie…], index }`. `ordre[k] = 0` → le choix affiché en position k est la bonne réponse.
 - Une session dont un id n'existe plus dans `questions.json` est ignorée (évite les incohérences après édition de la banque).
@@ -90,8 +95,18 @@ LinkedIn met l'aperçu en cache : après changement de `og-image.png`, forcer le
 - Bouton discret « Installer l'application » dans le pied de page quand le navigateur propose l'installation (`beforeinstallprompt`, Chrome/Android).
 - **Incrémenter `VERSION` dans `sw.js`** quand la liste `PRECACHE` change (sinon inutile : le contenu se rafraîchit en ligne).
 
-### Mesure d'audience
-- Aucune en v1. Fonction `suivre(evenement)` vide dans `index.html`, déjà appelée aux 5 événements (`test_demarre`, `test_termine`, `clic_rdv`, `clic_mail`, `partage_linkedin`). Brancher Umami/Plausible = remplir cette fonction **et** ouvrir la CSP (`script-src`/`connect-src`) au domaine de l'outil.
+### Thème clair / sombre
+- Un petit script dans le `<head>` pose `data-theme="light|dark"` sur `<html>` **avant l'affichage** (pas de flash) : choix mémorisé, sinon `prefers-color-scheme`.
+- Tous les jetons sombres sont sous `:root[data-theme="dark"]` (une seule définition). Plus de `@media (prefers-color-scheme)` dans le CSS.
+- Bascule : `aria-pressed` (vrai = sombre), `title` explicite, `meta theme-color` mis à jour. Sans choix mémorisé, un changement de préférence système en cours de visite est suivi.
+- Stockage bloqué : la bascule marche pour la visite, rien ne plante (testé).
+
+### Mesure d'audience (GoatCounter)
+- Script `https://gc.zgo.at/count.v5.js`, `async`, avec `integrity` SRI et `crossorigin="anonymous"`, juste avant `</body>`. Compte la page vue au chargement.
+- Événements via `suivre(evenement)` → `goatcounter.count({ path, title, event: true })` : `test_demarre`, `test_termine`, `clic_rdv`, `clic_mail`, `partage_linkedin`. Seuls le nom et un titre lisible partent, jamais les réponses ni le score.
+- `suivre()` ne fait rien si le script n'est pas chargé (hors ligne, bloqueur de pub) et avale toute exception : la mesure ne peut pas casser le test.
+- Le service worker ignore les requêtes d'autres origines : rien de GoatCounter n'est mis en cache par l'app.
+- GoatCounter ne compte pas `localhost` (comportement du script) : les tests locaux ne polluent pas les statistiques.
 
 ### Partage
 - Mobile (pointeur tactile + Web Share API) : feuille de partage native (LinkedIn y figure si l'app est installée), texte + URL.
@@ -173,31 +188,35 @@ Palette du CDC appliquée telle quelle (en attente de validation ou de codes off
 - Tous les couples texte/fond ≥ 4,5:1 (AA). **Le texte sur l'ambre est bleu nuit** : du blanc sur `#E8874A` ne fait que 2,6:1.
 - L'ambre n'est utilisé que sur « Réserver un échange » (et le bouton de l'image OG). « Commencer le test » est en bleu nuit.
 - Typographie : **Manrope** (géométrique, solide), auto-hébergée. Base 17 px.
-- Logo : lockup texte « Manica » (800, couleur primaire) en attendant le fichier officiel.
-- Motif de marque : tracé ECG (accueil, icône, image OG) — le « check-up ».
-- Mode clair/sombre selon `prefers-color-scheme`. Animations coupées si `prefers-reduced-motion`.
+- Logo officiel (fourni le 24/09/2026) : **niveaux de gris purs**, deux tons (noir et gris de la feuille), parties blanches transparentes. En mode sombre, `filter: invert(1)` : le noir devient `#E3E2E5`, la feuille `#B3B3B3`, la hiérarchie est conservée et les découpes laissent voir le fond (contrastes 14,3:1 et 8,8:1). Pas de plaque claire nécessaire. `alt="Manica"` partout ; sources ≥ 3× la taille affichée (netteté mobile).
+- Favicon et icônes PWA : symbole seul (recadré automatiquement), en clair sur carré bleu nuit — lisible sur onglet clair comme sombre.
+- Image OG : logo avec baseline inversé sur fond bleu nuit, « Check-up IA », tracé ECG, bouton ambre « Faire le test ».
+- Motif : tracé ECG (accueil, image OG) — le « check-up ».
+- Mode clair/sombre : préférence système par défaut, bascule manuelle mémorisée (voir §3). Animations coupées si `prefers-reduced-motion`.
 - Accessibilité : radios natifs (navigation clavier aux flèches), focus visible, focus déplacé sur la question / le bouton, correction annoncée (`aria-live`) avec la bonne réponse lue aux lecteurs d'écran, jamais de couleur seule.
 
 ---
 
-## 7. Mesure d'audience (optionnel)
+## 7. Mesure d'audience
 
-Pas de Google Analytics. Si besoin : Umami ou Plausible, sans cookie, idéalement auto-hébergé — décision de Cédric. Branchement prévu (voir §3).
+GoatCounter (compte `manica`, tableau de bord https://manica.goatcounter.com), sans cookie — détails techniques au §3. Pas de Google Analytics.
+Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`. Taux de complétion = `test_termine` / `test_demarre`.
 
 ---
 
 ## 8. État d'avancement
 
 - ✅ v1.0 (24/09/2026) : app complète, PWA installable et hors ligne, 47 questions `a_valider`, config, icônes, image OG, validation automatisée, déployée sur GitHub Pages.
-- ✅ Tests réalisés avant push : `node tools/validate.mjs` (structure, 6 000 tirages simulés, scores, niveaux, modèles mail/partage, syntaxe JS, fichiers référencés) ; parcours complet dans Chrome headless en mobile clair, mobile sombre et desktop (reprise après rechargement, relecture du résultat, « Refaire », mailto, lien RDV, aucune requête externe, aucune erreur console, démarrage hors ligne).
-- ⚠️ **Questions non relues** : un bandeau « Version bêta : les questions sont en cours de relecture » s'affiche dans le pied de page tant qu'une question publiée n'est pas `valide`. Il disparaît de lui-même quand toutes le sont.
+- ✅ v1.1 (24/09/2026) : logo officiel (avec baseline sur l'accueil et l'image OG, sans baseline ailleurs), favicon et icônes PWA tirés du symbole, bascule clair/sombre mémorisée, GoatCounter avec les 5 événements. Les 47 questions ont été validées par Cédric (`statut: valide`) ; `statuts_publies` passe à `["valide"]` : une future question `a_valider` ne sera pas tirée tant qu'elle n'est pas relue. Le bandeau bêta ne s'affiche donc plus.
+- ✅ Tests v1.1 avant push : `validate.mjs` (+ contrôle des origines externes, SRI obligatoire, CSP) ; parcours complet Chrome headless en 5 configurations (clair, sombre système, sombre forcé, clair forcé sur système sombre, desktop sombre) : logo attendu par écran, chargé, inversé en sombre seulement ; thème conservé au rechargement ; les 5 événements émis ; stockage bloqué ; hors ligne ; seules origines externes contactées : `gc.zgo.at` (et `manica.goatcounter.com` en prod, intercepté pendant les tests).
+- ✅ Tests v1.0 avant push : `node tools/validate.mjs` (structure, 6 000 tirages simulés, scores, niveaux, modèles mail/partage, syntaxe JS, fichiers référencés) ; parcours complet dans Chrome headless en mobile clair, mobile sombre et desktop (reprise après rechargement, relecture du résultat, « Refaire », mailto, lien RDV, aucune requête externe, aucune erreur console, démarrage hors ligne).
+- Bandeau « Version bêta » : s'affiche automatiquement si une question publiée n'est pas `valide` (impossible avec `statuts_publies: ["valide"]`, utile si on rouvre aux `a_valider`).
 - ⚠️ Pas encore testé sur vrai téléphone (iOS Safari, Android Chrome) : à faire par Cédric.
 
 ### Décisions prises par défaut (à confirmer par Cédric)
 - Palette et typographie : proposition du CDC + Manrope.
 - Wording : « accompagnement ».
 - Domaine : URL GitHub Pages par défaut.
-- Mesure d'audience : aucune.
 - Textes des niveaux : ceux du CDC ; recommandations et CTA : rédigés par Claude.
 
 ---
@@ -221,7 +240,11 @@ Pas de Google Analytics. Si besoin : Umami ou Plausible, sans cookie, idéalemen
 - **localStorage** : toujours sous `try/catch`.
 - **CSS `:has()`** : `.choice:has(input:checked)` est plus spécifique que `.choice.is-wrong` ; l'état « sélectionné » est donc limité à `.choices:not(.is-locked)`. Garder ce schéma si on retouche les états.
 - **Texte sur l'ambre** : toujours bleu nuit (contraste).
-- **CSP** stricte dans `index.html` : toute ressource tierce (analytics, police, image externe) sera bloquée tant que la CSP n'est pas ouverte explicitement.
+- **CSP** stricte dans `index.html` : toute ressource tierce sera bloquée tant que la CSP n'est pas ouverte explicitement. `validate.mjs` refuse toute origine externe hors GoatCounter et tout script externe sans SRI.
+- **GoatCounter SRI** : l'empreinte correspond à `count.v5.js` (figé). Pour changer de version : télécharger le fichier, recalculer `openssl dgst -sha384 -binary count.vX.js | openssl base64 -A`, mettre à jour `src` et `integrity`. Une empreinte fausse bloque le script en silence (plus de stats, l'app marche).
+- **Tests sur la prod** : intercepter/bloquer `manica.goatcounter.com` pour ne pas fausser les statistiques.
+- **Thème** : ne jamais réintroduire de `@media (prefers-color-scheme: dark)` dans le CSS — tout passe par `data-theme`, sinon la bascule manuelle ne peut plus forcer le mode clair.
+- **Logo** : ne pas éditer les fichiers générés, relancer `tools/build-assets.py`. Si le logo officiel devenait coloré, remplacer `invert(1)` par une plaque claire en mode sombre.
 - **Balises OG** : statiques et en URL absolue (les robots LinkedIn n'exécutent pas le JS). À mettre à jour si le domaine change.
 - **Service worker** : incrémenter `VERSION` si la liste `PRECACHE` change ; tout fichier ajouté au précache doit exister (vérifié par `validate.mjs`).
 - **Cache GitHub Pages** ~10 min : prévenir Cédric qu'un changement peut tarder.
@@ -235,12 +258,10 @@ Pas de Google Analytics. Si besoin : Umami ou Plausible, sans cookie, idéalemen
 1. Lire ce CDC, puis `index.html`, `config.json`, `questions.json`.
 2. Vérifier l'accès push (`gh auth status`, `git ls-remote origin`). Sinon, demander un token classique scope `repo`.
 3. Points encore ouverts côté Cédric :
-   - relire et valider les 47 questions (`statut: valide`) avant diffusion large ;
-   - logo Manica (SVG ou PNG haute résolution, fond transparent) ;
    - validation ou correction de la palette ;
+   - logo vectoriel (SVG) si disponible, pour une netteté parfaite à toute taille ;
    - confirmation du wording « accompagnement » ;
    - domaine personnalisé ou non ;
-   - mesure d'audience ou non.
 4. Après chaque déploiement : mettre à jour §8 de ce document.
 
 Ce projet reste un bon candidat de POC en direct pour Le Café Tech Manica : « zéro backend, zéro donnée, tout calculé dans le navigateur » se vérifie en direct dans l'onglet Réseau des outils de développement.

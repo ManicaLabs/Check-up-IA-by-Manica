@@ -3,15 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://manica.goatcounter.com; font-src 'self'; connect-src 'self' https://manica.goatcounter.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Check-up IA by Manica</title>
 <meta name="description" content="Où en êtes-vous vraiment avec l'IA ? 20 questions, 5 minutes, un score sur 100. Test gratuit, sans inscription, calculé dans votre navigateur.">
 <link rel="canonical" href="https://manicalabs.github.io/Check-up-IA-by-Manica/">
-<meta name="theme-color" content="#F7F5F1" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0B1326" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F7F5F1">
+<script>
+  // Thème appliqué avant l'affichage (pas de flash) : choix mémorisé, sinon préférence système.
+  (() => {
+    let choix = null;
+    try { choix = localStorage.getItem('checkup-ia:theme'); } catch (e) { /* stockage bloqué */ }
+    const theme = choix === 'dark' || choix === 'light' ? choix
+      : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.dataset.theme = theme;
+    document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#0B1326' : '#F7F5F1';
+  })();
+</script>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="Check-up IA">
 <meta name="mobile-web-app-capable" content="yes">
@@ -38,7 +48,7 @@
 }
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --navy: #101B33;
   --slate: #2C3E5C;
   --amber: #E8874A;
@@ -72,28 +82,28 @@
   --measure: 36rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0B1326;
-    --surface: #111C35;
-    --fg: #E8E5DE;
-    --fg-strong: #F7F5F1;
-    --fg-muted: #A8B3C8;
-    --line: #27365A;
-    --track: #1E2B4A;
-    --fill: #F7F5F1;
-    --on-fill: var(--navy);
-    --ok: #5DBE89;
-    --ok-fg: #85D6A8;
-    --ok-bg: #11301F;
-    --ko: #E07F6A;
-    --ko-fg: #F29C88;
-    --ko-bg: #3A1B15;
-    --focus: #F7F5F1;
-    --panel: #16233F;
-    --on-panel: #F7F5F1;
-    --on-panel-muted: #B4BED1;
-  }
+/* Mode sombre : data-theme est posé par le script du <head> (choix mémorisé ou préférence système). */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0B1326;
+  --surface: #111C35;
+  --fg: #E8E5DE;
+  --fg-strong: #F7F5F1;
+  --fg-muted: #A8B3C8;
+  --line: #27365A;
+  --track: #1E2B4A;
+  --fill: #F7F5F1;
+  --on-fill: var(--navy);
+  --ok: #5DBE89;
+  --ok-fg: #85D6A8;
+  --ok-bg: #11301F;
+  --ko: #E07F6A;
+  --ko-fg: #F29C88;
+  --ko-bg: #3A1B15;
+  --focus: #F7F5F1;
+  --panel: #16233F;
+  --on-panel: #F7F5F1;
+  --on-panel-muted: #B4BED1;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -145,13 +155,41 @@ a { color: inherit; }
 }
 
 /* En-tête */
-.topbar { padding-top: 18px; padding-bottom: 18px; }
-.brand {
-  font-weight: 800;
-  font-size: 1.125rem;
-  letter-spacing: -0.02em;
-  color: var(--fg-strong);
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+  padding-bottom: 14px;
 }
+
+/* Logo : dessin sombre sur fond transparent, inversé en mode sombre (logo en niveaux de gris). */
+.logo { display: block; height: auto; }
+:root[data-theme="dark"] .logo { filter: invert(1); }
+.logo-full { width: 280px; max-width: calc(100% - 56px); }
+.logo-compact { width: auto; height: 34px; }
+body[data-ecran="ecran-accueil"] .logo-compact,
+body:not([data-ecran="ecran-accueil"]) .logo-full { display: none; }
+
+.theme-toggle {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1.5px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--fg-strong);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.theme-toggle svg { width: 20px; height: 20px; }
+.theme-toggle .icon-sun,
+:root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+:root[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
 
 main { flex: 1; }
 .screen { padding-bottom: 48px; }
@@ -208,7 +246,7 @@ main { flex: 1; }
 }
 
 /* Accueil */
-.hero { padding-top: 28px; }
+.hero { padding-top: 16px; }
 .hero-title {
   display: flex;
   flex-direction: column;
@@ -599,14 +637,15 @@ main { flex: 1; }
   font-size: .875rem;
   color: var(--fg-muted);
 }
-.foot-brand { font-weight: 800; color: var(--fg-strong); }
+.logo-foot { width: auto; height: 28px; margin-bottom: 12px; }
 .foot p + p { margin-top: 6px; }
 .foot .text-btn { font-size: .875rem; min-height: 44px; }
 
 @media (min-width: 640px) {
   :root { --gutter: 32px; }
-  .topbar { padding-top: 28px; }
-  .hero { padding-top: 48px; }
+  .topbar { padding-top: 24px; }
+  .logo-full { width: 320px; }
+  .hero { padding-top: 32px; }
   .choice:hover:not(:has(input:disabled)) { border-color: var(--fg-muted); }
   .profile-option:hover { border-color: var(--fg-muted); }
   .profile-option:has(input:checked):hover { border-color: var(--fill); }
@@ -619,9 +658,16 @@ main { flex: 1; }
 }
 </style>
 </head>
-<body>
+<body data-ecran="ecran-accueil">
 <header class="wrap topbar">
-  <span class="brand">Manica</span>
+  <img class="logo logo-full" src="img/logo-manica-baseline-900.png"
+       srcset="img/logo-manica-baseline-600.png 600w, img/logo-manica-baseline-900.png 900w"
+       sizes="(min-width: 640px) 320px, 280px" width="900" height="332" alt="Manica">
+  <img class="logo logo-compact" src="img/logo-manica-300.png" width="300" height="111" alt="Manica">
+  <button type="button" class="theme-toggle" id="btn-theme" aria-pressed="false" aria-label="Mode sombre" title="Passer en mode sombre">
+    <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
 </header>
 
 <main id="main">
@@ -728,8 +774,10 @@ main { flex: 1; }
 </main>
 
 <footer class="wrap foot">
-  <p><span class="foot-brand">Manica</span> — IA utile et accompagnée.</p>
+  <img class="logo logo-foot" src="img/logo-manica-300.png" width="300" height="111" alt="Manica">
+  <p>IA utile et accompagnée.</p>
   <p>Votre score est calculé dans votre navigateur : aucune réponse ne quitte votre appareil.</p>
+  <p>Mesure d’audience anonyme et sans cookie (GoatCounter).</p>
   <p id="mention-beta" hidden></p>
   <button type="button" class="text-btn" id="btn-installer" hidden>Installer l’application</button>
 </footer>
@@ -859,9 +907,26 @@ main { flex: 1; }
   let questionsParId = new Map();
   let session = null;
 
-  // Point d'accroche pour une mesure d'audience sans cookie (Umami, Plausible…).
-  // v1 : rien n'est envoyé. Événements : test_demarre, test_termine, clic_rdv, clic_mail, partage_linkedin.
-  function suivre(evenement) {}
+  // Mesure d'audience GoatCounter (sans cookie). Seuls le nom de l'événement et son titre sont envoyés,
+  // jamais les réponses ni le score. Silencieux si le script n'est pas chargé (hors ligne, bloqueur).
+  const TITRES_EVENEMENTS = {
+    test_demarre: 'Test démarré',
+    test_termine: 'Test terminé',
+    clic_rdv: 'Clic : réserver un échange',
+    clic_mail: 'Clic : nous écrire',
+    partage_linkedin: 'Partage du score'
+  };
+
+  function suivre(evenement) {
+    try {
+      const gc = window.goatcounter;
+      if (gc && typeof gc.count === 'function') {
+        gc.count({ path: evenement, title: TITRES_EVENEMENTS[evenement], event: true });
+      }
+    } catch (e) {
+      // La mesure ne doit jamais gêner le test.
+    }
+  }
 
   function lireSession() {
     try {
@@ -915,6 +980,7 @@ main { flex: 1; }
 
   function afficher(idEcran) {
     for (const ecran of document.querySelectorAll('main > .screen')) ecran.hidden = ecran.id !== idEcran;
+    document.body.dataset.ecran = idEcran;
     window.scrollTo(0, 0);
     const titre = $(idEcran).querySelector('[tabindex="-1"]');
     if (titre) titre.focus({ preventScroll: true });
@@ -1220,6 +1286,42 @@ main { flex: 1; }
 
   $('btn-recharger').addEventListener('click', () => location.reload());
 
+  // --- Thème clair / sombre ---
+  const CLE_THEME = 'checkup-ia:theme';
+  const systemeSombre = matchMedia('(prefers-color-scheme: dark)');
+  let choixTheme = null;
+  try {
+    const t = localStorage.getItem(CLE_THEME);
+    if (t === 'dark' || t === 'light') choixTheme = t;
+  } catch (e) {
+    // Stockage bloqué : le choix vaudra pour cette visite seulement.
+  }
+
+  function appliquerTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#0B1326' : '#F7F5F1';
+    const bouton = $('btn-theme');
+    bouton.setAttribute('aria-pressed', String(theme === 'dark'));
+    bouton.title = theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre';
+  }
+
+  appliquerTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+
+  $('btn-theme').addEventListener('click', () => {
+    choixTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    appliquerTheme(choixTheme);
+    try {
+      localStorage.setItem(CLE_THEME, choixTheme);
+    } catch (e) {
+      // Stockage bloqué : rien à faire.
+    }
+  });
+
+  // Sans choix explicite, suivre la préférence système si elle change en cours de visite.
+  systemeSombre.addEventListener('change', event => {
+    if (!choixTheme) appliquerTheme(event.matches ? 'dark' : 'light');
+  });
+
   // --- PWA ---
   let invitationInstallation = null;
   addEventListener('beforeinstallprompt', event => {
@@ -1242,5 +1344,8 @@ main { flex: 1; }
   }
 })();
 </script>
+<!-- GoatCounter : version figée + empreinte SRI, le navigateur refuse tout script modifié. -->
+<script data-goatcounter="https://manica.goatcounter.com/count" async src="https://gc.zgo.at/count.v5.js"
+        crossorigin="anonymous" integrity="sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ"></script>
 </body>
 </html>
