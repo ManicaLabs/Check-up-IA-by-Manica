@@ -2,7 +2,7 @@
 
 > Handoff doc pour Claude Code. Source de vérité pour le code = le repo Git.
 > À mettre à jour à chaque déploiement, pas seulement en fin de projet.
-> Dernière mise à jour : 24/09/2026 — v1.1.2 (logo, bascule clair/sombre, GoatCounter, partage transparent).
+> Dernière mise à jour : 24/09/2026 — v1.2 (logo, bascule clair/sombre, GoatCounter, partage par icônes).
 
 ---
 
@@ -47,6 +47,7 @@
 | `manifest.webmanifest` | Manifeste PWA |
 | `img/logo_manica_hd.png`, `img/logo_manica_hd_baseline.png` | Logos sources fournis par Cédric (2816×1504, niveaux de gris sur transparent) — ne pas modifier |
 | `img/logo-manica-baseline-600.png`, `img/logo-manica-baseline-900.png`, `img/logo-manica-300.png` | Logos web générés (recadrés, palette 64 couleurs) |
+| `img/logo-manica-baseline-clair-900.png` | Logo avec baseline en version claire, pour l'image de partage Instagram (canvas) |
 | `favicon-32.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` | Icônes générées : symbole du logo en clair sur bleu nuit |
 | `og-image.png` | Image de partage (1200×630) |
 | `fonts/manrope-latin.woff2`, `fonts/OFL.txt` | Police Manrope variable 400–800, sous-ensemble latin (25 Ko), licence OFL |
@@ -104,20 +105,26 @@ LinkedIn met l'aperçu en cache : après changement de `og-image.png`, forcer le
 ### Mesure d'audience (GoatCounter)
 - Script `https://gc.zgo.at/count.v5.js`, `async`, avec `integrity` SRI et `crossorigin="anonymous"`, juste avant `</body>`.
 - Réglage `data-goatcounter-settings='{"no_onload": true}'` : la **page vue est comptée par l'app** (événement `load`, une fois la page visible, même logique que count.js), dans `compter()` sous try/catch. Raison : count.js lit `localStorage` sans protection ; avec un stockage bloqué (Safari/Firefox, cookies désactivés), son comptage automatique levait une `SecurityError` non interceptée (reproduit, puis corrigé en v1.1.1). Conséquence assumée : ces visiteurs ne sont pas comptés, sans erreur.
-- Événements via `suivre(evenement)` → `goatcounter.count({ path, title, event: true })` : `test_demarre`, `test_termine`, `clic_rdv`, `clic_mail`, `partage_linkedin`. Seuls le nom et un titre lisible partent, jamais les réponses ni le score.
+- Événements via `suivre(evenement)` → `goatcounter.count({ path, title, event: true })` : `test_demarre`, `test_termine`, `clic_rdv`, `clic_mail`, `partage_linkedin`, et depuis la v1.2 `partage_facebook`, `partage_instagram`, `partage_mail`, `partage_copie`. Seuls le nom et un titre lisible partent, jamais les réponses ni le score.
 - `suivre()` ne fait rien si le script n'est pas chargé (hors ligne, bloqueur de pub) et avale toute exception : la mesure ne peut pas casser le test.
 - Le service worker ignore les requêtes d'autres origines : rien de GoatCounter n'est mis en cache par l'app.
 - GoatCounter ne compte pas `localhost` (comportement du script) : les tests locaux ne polluent pas les statistiques.
 
-### Partage
-- Mobile (pointeur tactile + Web Share API) : feuille de partage native (LinkedIn y figure si l'app est installée), texte + URL.
-- Desktop (ou échec de la feuille native) : copie du texte + URL dans le presse-papiers, **toujours confirmée** :
-  - toast `#toast` 3 s (« Texte copié ! Collez-le dans votre post LinkedIn. »), région `role="status" aria-live="polite"` présente dès le chargement ; le texte copié complet est annoncé aux lecteurs d'écran (`.sr-only`) ; couleurs inversées `--fill`/`--on-fill` (15,7:1 en clair comme en sombre) ;
-  - bouton « Partager mon score » → « Copié ! » pendant 2 s ;
-  - panneau `#partage-panneau` qui reste affiché avec le texte exact copié et un lien « Ouvrir LinkedIn » (`linkedin.com/sharing/share-offsite/?url=…`, endpoint officiel, URL seule), défilé au-dessus du toast ;
-  - échec de copie (permission refusée, API absente) : toast « Copie impossible… », pas de « Copié ! », et le panneau propose le texte à sélectionner.
-- LinkedIn ne s'ouvre plus automatiquement (v1.1.2) : le nouvel onglet masquait la confirmation de copie.
-- L'aperçu LinkedIn = `og-image.png` (statique : le score ne peut pas y figurer sans backend).
+### Partage (v1.2 : une icône par réseau)
+Zone « Partager mon score » sous le bloc CTA : 5 boutons ronds de 52 px, `aria-label` + `title` explicites, pictogrammes monochromes (`currentColor`, donc justes en clair et en sombre). LinkedIn en premier et en fond plein (prioritaire). Pictogrammes LinkedIn, Facebook, Instagram : paquet simple-icons (licence CC0), tracés intégrés dans le HTML, aucun appel externe.
+
+| Icône | Ordinateur | Mobile (pointeur tactile) |
+|---|---|---|
+| LinkedIn | `linkedin.com/feed/?shareActive=true&text=…` : éditeur de post **pré-rempli** avec le texte + l'URL (lien non officiel, ne marche que sur ordinateur) | feuille de partage du téléphone (`navigator.share`, texte + URL → app LinkedIn) ; sans Web Share : `sharing/share-offsite/?url=` (officiel, URL seule) |
+| Facebook | `facebook.com/sharer/sharer.php?u=` (officiel, URL seule : Facebook interdit le texte pré-rempli) | idem |
+| Instagram | pas de lien de partage web : **image du score** 1080×1920 (format story) dessinée en canvas, **téléchargée** + toast explicatif | la même image passée à la feuille de partage (`navigator.share({ files })`, Instagram y figure s'il est installé) ; sinon téléchargement |
+| E-mail | `mailto:?subject=…&body=…` (objet `partage.mail_objet`, corps = texte + URL), destinataire au choix | idem |
+| Copier | presse-papiers **toujours confirmé** (voir ci-dessous) | idem |
+
+- Copie : toast `#toast` 3 s (« Texte copié ! Collez-le dans votre post. »), région `role="status" aria-live="polite"` présente dès le chargement, texte copié complet annoncé aux lecteurs d'écran (`.sr-only`), couleurs inversées `--fill`/`--on-fill` (15,7:1 dans les deux modes) ; icône qui passe à une coche verte + `aria-label` « Texte copié » pendant 2 s ; panneau `#partage-panneau` qui reste affiché avec le texte exact copié et un lien « Ouvrir LinkedIn », défilé au-dessus du toast ; échec : toast « Copie impossible… », pas d'état « copié », texte proposé à la sélection.
+- Image Instagram : préparée en arrière-plan 1,5 s après l'affichage du résultat (le partage natif doit suivre le clic de près, sinon Safari le refuse) ; logo `img/logo-manica-baseline-clair-900.png` (pas de `ctx.filter`, absent de Safari < 18) ; marges de 250 px en haut et en bas (zones couvertes par l'interface des stories) ; rien n'est envoyé.
+- Textes : `config.partage.titre`, `.texte`, `.mail_objet`.
+- L'aperçu des liens LinkedIn et Facebook = `og-image.png` (statique : le score ne peut pas y figurer sans backend).
 
 ---
 
@@ -207,13 +214,14 @@ Palette du CDC appliquée telle quelle (en attente de validation ou de codes off
 ## 7. Mesure d'audience
 
 GoatCounter (compte `manica`, tableau de bord https://manica.goatcounter.com), sans cookie — détails techniques au §3. Pas de Google Analytics.
-Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`. Taux de complétion = `test_termine` / `test_demarre`.
+Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`. Taux de complétion = `test_termine` / `test_demarre`. Partage : somme des `partage_*` / `test_termine`, et répartition par réseau.
 
 ---
 
 ## 8. État d'avancement
 
 - ✅ v1.0 (24/09/2026) : app complète, PWA installable et hors ligne, 47 questions `a_valider`, config, icônes, image OG, validation automatisée, déployée sur GitHub Pages.
+- ✅ v1.2 (24/09/2026) : partage par icônes — LinkedIn (prioritaire, texte pré-rempli sur ordinateur), Facebook, Instagram (image du score générée dans le navigateur), e-mail, copie confirmée ; 4 nouveaux événements GoatCounter. Testé : liens par support, événements, copie + confirmation, image téléchargée et vérifiée (1080×1920), clair/sombre, mobile/ordinateur. Non testable en headless : la feuille de partage native (LinkedIn et Instagram sur mobile) — à vérifier sur téléphone.
 - ✅ v1.1.2 (24/09/2026) : correctif de transparence du partage — la copie dans le presse-papiers était de fait silencieuse (LinkedIn s'ouvrait aussitôt dans un nouvel onglet, le message restait en petit dans l'onglet quitté). Désormais : toast annoncé aux lecteurs d'écran, bouton « Copié ! », texte copié affiché, lien « Ouvrir LinkedIn » à la demande, message honnête en cas d'échec. Recherche globale : c'était le seul accès au presse-papiers du projet.
 - ✅ v1.1.1 (24/09/2026) : page vue GoatCounter déclenchée par l'app (voir §3) — plus d'erreur JS quand le stockage est bloqué.
 - ✅ v1.1 (24/09/2026) : logo officiel (avec baseline sur l'accueil et l'image OG, sans baseline ailleurs), favicon et icônes PWA tirés du symbole, bascule clair/sombre mémorisée, GoatCounter avec les 5 événements. Les 47 questions ont été validées par Cédric (`statut: valide`) ; `statuts_publies` passe à `["valide"]` : une future question `a_valider` ne sera pas tirée tant qu'elle n'est pas relue. Le bandeau bêta ne s'affiche donc plus.
@@ -260,6 +268,8 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`
 - **Service worker** : incrémenter `VERSION` si la liste `PRECACHE` change ; tout fichier ajouté au précache doit exister (vérifié par `validate.mjs`).
 - **Cache GitHub Pages** ~10 min : prévenir Cédric qu'un changement peut tarder.
 - **Presse-papiers (et toute action discrète similaire)** : jamais d'écriture silencieuse. Chaque copie appelle `afficherToast()` juste après (confirmation visible + annonce `aria-live`), montre le texte copié, et gère l'échec sans prétendre avoir copié. Ne pas ouvrir d'onglet ou de fenêtre dans le même geste : il masquerait la confirmation (et les popups ouverts après un `await` sont souvent bloqués). `validate.mjs` échoue si un `clipboard.write…` ou `execCommand('copy')` n'est pas suivi d'un `afficherToast(` dans les 40 lignes.
+- **Partage LinkedIn** : `feed/?shareActive=true&text=` n'est pas documenté par LinkedIn. S'il cesse de marcher (on arrive sur le fil sans éditeur), remplacer `LIENS_PARTAGE.linkedinTexte` par `LIENS_PARTAGE.linkedin` (officiel, URL seule) dans `preparerPartage()`.
+- **Nouveau réseau de partage** : lien officiel si possible, pictogramme monochrome `currentColor`, `aria-label` + `title`, événement `partage_<réseau>` ajouté à `TITRES_EVENEMENTS`, et jamais de copie presse-papiers implicite (règle ci-dessous).
 - **Wording formation vs accompagnement** : accompagnement par défaut.
 - **Noms d'outils IA** : jamais dans un énoncé ou une réponse sans vérification ; de préférence dans l'explication seulement.
 

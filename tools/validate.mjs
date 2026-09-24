@@ -62,10 +62,11 @@ for (const p of profils) {
   if (!config.cta.sous_titre[p]) erreur(`config.json : cta.sous_titre.${p} manquant`);
   if (!config.cta.positionnement[p]) erreur(`config.json : cta.positionnement.${p} manquant`);
 }
+for (const k of ['titre', 'texte', 'mail_objet']) if (!config.partage?.[k]) erreur(`config.json : partage.${k} manquant`);
 if (!/^https:\/\//.test(config.contact.lien_rdv)) erreur('config.json : lien_rdv doit être une URL https');
 if (!/^[^@\s]+@[^@\s]+\.[a-z]+$/i.test(config.contact.email)) erreur('config.json : email invalide');
 const variables = new Set(['score', 'niveau', 'profil', 'detail_axes']);
-for (const [nom, modele] of [['mail.objet', config.mail.objet], ['mail.corps', config.mail.corps], ['partage.texte', config.partage.texte]]) {
+for (const [nom, modele] of [['mail.objet', config.mail.objet], ['mail.corps', config.mail.corps], ['partage.texte', config.partage.texte], ['partage.mail_objet', config.partage.mail_objet]]) {
   for (const [, v] of modele.matchAll(/\{(\w+)\}/g)) if (!variables.has(v)) erreur(`config.json : variable inconnue {${v}} dans ${nom}`);
 }
 

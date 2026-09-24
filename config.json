@@ -115,7 +115,8 @@
     "corps": "Bonjour,\n\nJe viens de faire le Check-up IA by Manica.\n\nProfil : {profil}\nScore global : {score}/100 (niveau {niveau})\n\nDétail par axe :\n{detail_axes}\n\nCe que j'aimerais améliorer : \n"
   },
   "partage": {
-    "bouton": "Partager mon score",
+    "titre": "Partager mon score",
+    "mail_objet": "Check-up IA : j'ai obtenu {score}/100, et vous ?",
     "texte": "J'ai fait le Check-up IA by Manica : {score}/100, niveau {niveau}. 20 questions, 5 minutes, sans inscription. Et vous, où en êtes-vous avec l'IA ?"
   }
 }

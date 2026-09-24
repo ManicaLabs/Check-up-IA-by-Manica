@@ -75,6 +75,8 @@ logo_baseline = charger('logo_manica_hd_baseline.png')
 enregistrer(redimensionner(logo_baseline, largeur=900), 'img/logo-manica-baseline-900.png')
 enregistrer(redimensionner(logo_baseline, largeur=600), 'img/logo-manica-baseline-600.png')
 enregistrer(redimensionner(logo, largeur=300), 'img/logo-manica-300.png')
+# Version claire pour l'image de partage (dessinée sur canvas, sans filtre CSS)
+enregistrer(inverser(redimensionner(logo_baseline, largeur=900)), 'img/logo-manica-baseline-clair-900.png')
 
 # Icônes : symbole en clair sur fond bleu nuit
 sym = inverser(symbole(logo))
