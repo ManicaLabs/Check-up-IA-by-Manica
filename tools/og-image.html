@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<!-- Source de og-image.png (1200×630). Régénérer : voir docs/CDC.md, section « Assets ». -->
+<style>
+@font-face {
+  font-family: "Manrope";
+  src: url("../fonts/manrope-latin.woff2") format("woff2");
+  font-weight: 400 800;
+}
+html, body { margin: 0; }
+body {
+  width: 1200px;
+  height: 630px;
+  overflow: hidden;
+  background: #101B33;
+  color: #F7F5F1;
+  font-family: "Manrope", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.card {
+  position: relative;
+  box-sizing: border-box;
+  width: 1200px;
+  height: 630px;
+  padding: 76px 84px 72px;
+  display: flex;
+  flex-direction: column;
+}
+.title {
+  margin: 0;
+  font-size: 168px;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: .9;
+}
+.by {
+  margin: 18px 0 0;
+  font-size: 40px;
+  font-weight: 600;
+  color: #BCC5D6;
+  letter-spacing: -0.01em;
+}
+.pulse {
+  position: absolute;
+  left: 0;
+  top: 330px;
+  width: 1200px;
+  height: 64px;
+}
+.bottom {
+  margin-top: auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+}
+.lead {
+  margin: 0;
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+}
+.lead span { display: block; margin-top: 10px; font-size: 30px; font-weight: 500; color: #BCC5D6; letter-spacing: 0; }
+.pill {
+  flex: none;
+  padding: 22px 34px;
+  border-radius: 18px;
+  background: #E8874A;
+  color: #101B33;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1 class="title">Check-up IA</h1>
+  <p class="by">by Manica</p>
+  <svg class="pulse" viewBox="0 0 1200 64" aria-hidden="true">
+    <path d="M0 40 H560 C568 40 571 28 580 28 C589 28 592 40 600 40 H620 L629 47 L646 4 L666 60 L678 40 H704 C714 40 718 23 732 23 C746 23 750 40 760 40 H1200" fill="none" stroke="#F7F5F1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
+  </svg>
+  <div class="bottom">
+    <p class="lead">Où en êtes-vous vraiment avec l’IA&#8239;?<span>20 questions, 5 minutes, un score sur 100.</span></p>
+    <span class="pill">Faire le test</span>
+  </div>
+</div>
+</body>
+</html>

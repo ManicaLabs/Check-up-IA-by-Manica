@@ -1,0 +1,1246 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Check-up IA by Manica</title>
+<meta name="description" content="Où en êtes-vous vraiment avec l'IA ? 20 questions, 5 minutes, un score sur 100. Test gratuit, sans inscription, calculé dans votre navigateur.">
+<link rel="canonical" href="https://manicalabs.github.io/Check-up-IA-by-Manica/">
+<meta name="theme-color" content="#F7F5F1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B1326" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Check-up IA">
+<meta name="mobile-web-app-capable" content="yes">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:site_name" content="Manica">
+<meta property="og:title" content="Check-up IA by Manica">
+<meta property="og:description" content="Où en êtes-vous vraiment avec l'IA ? 20 questions, 5 minutes, un score sur 100. Gratuit, sans inscription.">
+<meta property="og:url" content="https://manicalabs.github.io/Check-up-IA-by-Manica/">
+<meta property="og:image" content="https://manicalabs.github.io/Check-up-IA-by-Manica/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Check-up IA by Manica : où en êtes-vous vraiment avec l'IA ?">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face {
+  font-family: "Manrope";
+  src: url("fonts/manrope-latin.woff2") format("woff2");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --navy: #101B33;
+  --slate: #2C3E5C;
+  --amber: #E8874A;
+  --paper: #F7F5F1;
+  --anthracite: #1E1E1E;
+
+  --bg: var(--paper);
+  --surface: #FFFDF9;
+  --fg: var(--anthracite);
+  --fg-strong: var(--navy);
+  --fg-muted: #4A566D;
+  --line: #D9D4CA;
+  --track: #E7E2D8;
+  --fill: var(--navy);
+  --on-fill: var(--paper);
+  --cta: var(--amber);
+  --on-cta: var(--navy);
+  --ok: #2E8B57;
+  --ok-fg: #1D6940;
+  --ok-bg: #E3F0E7;
+  --ko: #C0533E;
+  --ko-fg: #9E3D2B;
+  --ko-bg: #F7E5DF;
+  --focus: var(--slate);
+  --panel: var(--navy);
+  --on-panel: var(--paper);
+  --on-panel-muted: #BCC5D6;
+
+  --font: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --gutter: 20px;
+  --measure: 36rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0B1326;
+    --surface: #111C35;
+    --fg: #E8E5DE;
+    --fg-strong: #F7F5F1;
+    --fg-muted: #A8B3C8;
+    --line: #27365A;
+    --track: #1E2B4A;
+    --fill: #F7F5F1;
+    --on-fill: var(--navy);
+    --ok: #5DBE89;
+    --ok-fg: #85D6A8;
+    --ok-bg: #11301F;
+    --ko: #E07F6A;
+    --ko-fg: #F29C88;
+    --ko-bg: #3A1B15;
+    --focus: #F7F5F1;
+    --panel: #16233F;
+    --on-panel: #F7F5F1;
+    --on-panel-muted: #B4BED1;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  font-feature-settings: "ss01" 0;
+  -webkit-font-smoothing: antialiased;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.wrap {
+  width: 100%;
+  max-width: calc(var(--measure) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+h1, h2, h3, h4, p { margin: 0; }
+h1, h2, h3, h4 { color: var(--fg-strong); line-height: 1.2; }
+
+a { color: inherit; }
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+[hidden] { display: none !important; }
+
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; border: 0;
+}
+
+/* En-tête */
+.topbar { padding-top: 18px; padding-bottom: 18px; }
+.brand {
+  font-weight: 800;
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
+  color: var(--fg-strong);
+}
+
+main { flex: 1; }
+.screen { padding-bottom: 48px; }
+
+/* Boutons */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 14px 22px;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  font: inherit;
+  font-weight: 700;
+  font-size: 1.0625rem;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .12s ease, background-color .15s ease;
+}
+.btn:active { transform: scale(.985); }
+.btn-primary { background: var(--fill); color: var(--on-fill); }
+.btn-cta { background: var(--cta); color: var(--on-cta); font-weight: 800; }
+.btn-cta:hover { background: #EE9460; }
+.btn-ghost { background: transparent; color: var(--on-panel); border-color: currentColor; }
+.btn-ghost:hover { background: rgba(247, 245, 241, .08); }
+
+.text-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 2px;
+  border: 0;
+  background: none;
+  color: var(--fg-strong);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.hint {
+  margin-top: 12px;
+  color: var(--ko-fg);
+  font-weight: 600;
+  font-size: .9375rem;
+}
+
+/* Accueil */
+.hero { padding-top: 28px; }
+.hero-title {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hero-main {
+  font-size: clamp(2.75rem, 14.2vw, 6.25rem);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: .92;
+  white-space: nowrap;
+}
+.hero-by {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--fg-muted);
+}
+.pulse {
+  display: block;
+  width: calc(100% + var(--gutter));
+  height: auto;
+  margin: 26px 0 22px;
+  color: var(--fg-strong);
+  overflow: visible;
+}
+.pulse path { stroke-dasharray: 1; stroke-dashoffset: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .pulse path { animation: trace 1.6s cubic-bezier(.45, 0, .2, 1) .15s both; }
+}
+@keyframes trace { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+.hero-lead {
+  font-size: clamp(1.25rem, 5.2vw, 1.5rem);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  color: var(--fg-strong);
+  max-width: 26ch;
+}
+.hero-lead span { display: block; font-weight: 500; color: var(--fg); }
+
+.profile {
+  margin: 34px 0 0;
+  padding: 0;
+  border: 0;
+}
+.profile legend {
+  padding: 0;
+  margin-bottom: 12px;
+  font-weight: 700;
+  color: var(--fg-strong);
+}
+.profile-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.profile-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 100%;
+  padding: 16px 16px 16px 16px;
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.profile-option input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.profile-name { font-weight: 800; font-size: 1.0625rem; line-height: 1.25; color: var(--fg-strong); }
+.profile-desc { font-size: .875rem; line-height: 1.4; color: var(--fg-muted); }
+.profile-option:has(input:checked) { border-color: var(--fill); box-shadow: inset 0 0 0 1px var(--fill); }
+.profile-option:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
+.profile-check {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  display: grid;
+  place-items: center;
+}
+.profile-check svg { width: 12px; height: 12px; opacity: 0; }
+.profile-option:has(input:checked) .profile-check { background: var(--fill); border-color: var(--fill); color: var(--on-fill); }
+.profile-option:has(input:checked) .profile-check svg { opacity: 1; }
+.profile-option .profile-name { padding-right: 26px; }
+
+.start { margin-top: 22px; }
+.reassure {
+  margin-top: 14px;
+  font-size: .9375rem;
+  color: var(--fg-muted);
+}
+.resume {
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  font-size: .9375rem;
+  color: var(--fg-muted);
+}
+
+/* Quiz */
+.progress {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--track);
+  overflow: hidden;
+  margin-top: 4px;
+}
+.progress-fill {
+  height: 100%;
+  width: 0;
+  background: var(--fill);
+  border-radius: 3px;
+  transition: width .35s ease;
+}
+.q-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  font-size: .9375rem;
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+.q-count { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.q-text {
+  margin-top: 22px;
+  font-size: clamp(1.3rem, 5.4vw, 1.625rem);
+  font-weight: 800;
+  line-height: 1.28;
+  letter-spacing: -0.018em;
+}
+.q-text:focus { outline: none; }
+.choices {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+}
+.choice {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 14px;
+  align-items: start;
+  min-height: 56px;
+  padding: 15px 16px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.choice input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 24px; height: 24px;
+  margin: 0;
+  border: 2px solid var(--fg-muted);
+  border-radius: 50%;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.choice input::after {
+  content: "";
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--fill);
+  transform: scale(0);
+  transition: transform .12s ease;
+}
+.choice input:checked { border-color: var(--fill); }
+.choice input:checked::after { transform: scale(1); }
+.choice input:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.choices:not(.is-locked) .choice:has(input:checked) { border-color: var(--fill); }
+.choice-text { line-height: 1.42; }
+.choice-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: .875rem;
+  font-weight: 800;
+}
+.choice-status svg { width: 16px; height: 16px; flex: none; }
+
+.choices.is-locked .choice { cursor: default; }
+.choices.is-locked .choice input { cursor: default; }
+.choice.is-correct { border-color: var(--ok); background: var(--ok-bg); }
+.choice.is-correct .choice-status { color: var(--ok-fg); }
+.choice.is-correct input { border-color: var(--ok); }
+.choice.is-correct input::after { background: var(--ok); }
+.choice.is-wrong { border-color: var(--ko); background: var(--ko-bg); }
+.choice.is-wrong .choice-status { color: var(--ko-fg); }
+.choice.is-wrong input { border-color: var(--ko); }
+.choice.is-wrong input::after { background: var(--ko); }
+.choice.is-other { border-color: var(--line); color: var(--fg-muted); }
+
+.feedback {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.feedback-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 1.0625rem;
+}
+.feedback-title svg { width: 20px; height: 20px; flex: none; }
+.feedback.is-correct .feedback-title { color: var(--ok-fg); }
+.feedback.is-wrong .feedback-title { color: var(--ko-fg); }
+.feedback-expl { margin-top: 6px; }
+.q-submit { margin-top: 22px; }
+
+/* Résultat */
+.result-head { padding-top: 12px; }
+.result-label { font-size: 1.0625rem; font-weight: 700; color: var(--fg-muted); }
+.score {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 6px;
+  color: var(--fg-strong);
+}
+.score-value {
+  font-size: clamp(6.5rem, 38vw, 10.5rem);
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  line-height: .82;
+  font-variant-numeric: tabular-nums;
+}
+.score-max { font-size: 1.625rem; font-weight: 700; color: var(--fg-muted); letter-spacing: -0.02em; }
+.level-name {
+  margin-top: 22px;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+.level-msg { margin-top: 6px; max-width: 34ch; font-size: 1.125rem; }
+
+.scale { margin-top: 26px; }
+.scale-track {
+  position: relative;
+  display: flex;
+  gap: 3px;
+  height: 10px;
+}
+.scale-seg { height: 100%; background: var(--track); }
+.scale-seg:first-child { border-radius: 5px 0 0 5px; }
+.scale-seg:last-child { border-radius: 0 5px 5px 0; }
+.scale-seg.is-current { background: var(--fill); }
+.scale-marker {
+  position: absolute;
+  top: -5px;
+  width: 4px;
+  height: 20px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--fg-strong);
+  box-shadow: 0 0 0 3px var(--bg);
+}
+.scale-labels {
+  display: flex;
+  gap: 3px;
+  margin-top: 8px;
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--fg-muted);
+  line-height: 1.2;
+}
+.scale-labels span { min-width: 0; overflow-wrap: anywhere; }
+.scale-labels .is-current { color: var(--fg-strong); font-weight: 800; }
+
+.block { margin-top: 44px; }
+.block-title { font-size: 1.3125rem; font-weight: 800; letter-spacing: -0.015em; }
+.block-sub { margin-top: 4px; color: var(--fg-muted); font-size: .9375rem; }
+
+.axes { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 16px; }
+.axis-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-weight: 700;
+}
+.axis-name { color: var(--fg-strong); }
+.axis-pct { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bar {
+  margin-top: 6px;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--track);
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 5px;
+  background: var(--fill);
+  transition: width .8s cubic-bezier(.2, .7, .2, 1);
+}
+
+.recos {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  counter-reset: reco;
+  display: grid;
+  gap: 22px;
+}
+.reco {
+  counter-increment: reco;
+  display: grid;
+  grid-template-columns: 2.25rem 1fr;
+  gap: 4px 12px;
+}
+.reco::before {
+  content: counter(reco);
+  grid-row: 1 / span 3;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.reco-title { font-size: 1.125rem; font-weight: 800; }
+.reco-axis { font-size: .875rem; font-weight: 600; color: var(--fg-muted); }
+.reco-text { margin-top: 2px; }
+
+.cta-panel {
+  margin-top: 48px;
+  padding: 28px 22px 24px;
+  border-radius: 22px;
+  background: var(--panel);
+  color: var(--on-panel);
+}
+.cta-title {
+  color: var(--on-panel);
+  font-size: clamp(1.45rem, 6vw, 1.75rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.cta-sub { margin-top: 10px; color: var(--on-panel-muted); }
+.cta-actions { display: grid; gap: 12px; margin-top: 22px; }
+.cta-positioning {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(247, 245, 241, .18);
+  font-size: .9375rem;
+  color: var(--on-panel-muted);
+}
+.cta-panel :focus-visible { outline-color: var(--on-panel); }
+
+.after {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 20px;
+  margin-top: 18px;
+}
+.share-status { flex-basis: 100%; font-size: .9375rem; color: var(--fg-muted); }
+
+/* Erreur */
+.error-title { padding-top: 28px; font-size: 1.75rem; font-weight: 800; }
+.error-text { margin-top: 10px; }
+.error-screen .btn { margin-top: 22px; }
+
+/* Pied de page */
+.foot {
+  padding-top: 20px;
+  padding-bottom: 28px;
+  border-top: 1px solid var(--line);
+  font-size: .875rem;
+  color: var(--fg-muted);
+}
+.foot-brand { font-weight: 800; color: var(--fg-strong); }
+.foot p + p { margin-top: 6px; }
+.foot .text-btn { font-size: .875rem; min-height: 44px; }
+
+@media (min-width: 640px) {
+  :root { --gutter: 32px; }
+  .topbar { padding-top: 28px; }
+  .hero { padding-top: 48px; }
+  .choice:hover:not(:has(input:disabled)) { border-color: var(--fg-muted); }
+  .profile-option:hover { border-color: var(--fg-muted); }
+  .profile-option:has(input:checked):hover { border-color: var(--fill); }
+  .cta-panel { padding: 36px 36px 30px; }
+  .cta-actions { grid-template-columns: 1fr 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+<header class="wrap topbar">
+  <span class="brand">Manica</span>
+</header>
+
+<main id="main">
+  <section class="wrap screen" id="ecran-accueil" aria-labelledby="titre-accueil">
+    <div class="hero">
+      <h1 class="hero-title" id="titre-accueil">
+        <span class="hero-main">Check-up IA</span>
+        <span class="hero-by">by Manica</span>
+      </h1>
+      <svg class="pulse" viewBox="0 0 600 48" aria-hidden="true" focusable="false">
+        <path d="M0 30 H196 C202 30 204 21 211 21 C218 21 220 30 226 30 H242 L249 35 L262 2 L277 46 L286 30 H306 C314 30 317 17 328 17 C339 17 342 30 350 30 H600" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" pathLength="1"/>
+      </svg>
+      <p class="hero-lead">Où en êtes-vous vraiment avec l’IA&#8239;? <span>5 minutes, 20 questions, un score sur&nbsp;100.</span></p>
+    </div>
+
+    <fieldset class="profile">
+      <legend>Vous passez le test…</legend>
+      <div class="profile-options">
+        <label class="profile-option">
+          <input type="radio" name="profil" value="perso">
+          <span class="profile-check" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="profile-name">Pour moi</span>
+          <span class="profile-desc">Vos usages, à titre personnel et au travail</span>
+        </label>
+        <label class="profile-option">
+          <input type="radio" name="profil" value="entreprise">
+          <span class="profile-check" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="profile-name">Pour mon entreprise</span>
+          <span class="profile-desc">La maturité IA de votre organisation</span>
+        </label>
+      </div>
+    </fieldset>
+    <p class="hint" id="hint-profil" role="status" hidden>Choisissez d’abord pour qui vous passez le test.</p>
+
+    <button type="button" class="btn btn-primary start" id="btn-commencer">Commencer le test</button>
+    <p class="reassure">Un test gratuit proposé par Manica. Pas d’inscription, pas de mail demandé.</p>
+
+    <div class="resume" id="bloc-reprise" hidden>
+      <p id="texte-reprise"></p>
+      <button type="button" class="text-btn" id="btn-reprendre"></button>
+    </div>
+  </section>
+
+  <section class="wrap screen" id="ecran-quiz" aria-labelledby="q-texte" hidden>
+    <div class="progress" aria-hidden="true"><div class="progress-fill" id="q-progression"></div></div>
+    <p class="q-meta"><span id="q-axe"></span><span class="q-count" id="q-compteur"></span></p>
+    <form id="q-form" novalidate>
+      <h2 class="q-text" id="q-texte" tabindex="-1"></h2>
+      <div class="choices" id="q-choix" role="radiogroup" aria-labelledby="q-texte"></div>
+      <p class="hint" id="hint-choix" role="status" hidden>Choisissez une réponse pour continuer.</p>
+      <div class="feedback" id="q-feedback" aria-live="polite" hidden>
+        <p class="feedback-title" id="q-feedback-titre"></p>
+        <p class="feedback-expl" id="q-feedback-texte"></p>
+      </div>
+      <button type="submit" class="btn btn-primary q-submit" id="q-bouton">Valider ma réponse</button>
+    </form>
+  </section>
+
+  <section class="wrap screen" id="ecran-resultat" aria-labelledby="r-titre" hidden>
+    <div class="result-head">
+      <h2 class="result-label" id="r-titre" tabindex="-1">Votre résultat</h2>
+      <p class="score"><span class="sr-only" id="r-score-lu"></span><span class="score-value" id="r-score" aria-hidden="true">0</span><span class="score-max" aria-hidden="true">/100</span></p>
+      <p class="level-name" id="r-niveau"></p>
+      <p class="level-msg" id="r-message"></p>
+      <div class="scale" aria-hidden="true">
+        <div class="scale-track" id="r-echelle"></div>
+        <div class="scale-labels" id="r-echelle-libelles"></div>
+      </div>
+    </div>
+
+    <section class="block" aria-labelledby="r-axes-titre">
+      <h3 class="block-title" id="r-axes-titre">Détail par axe</h3>
+      <ul class="axes" id="r-axes"></ul>
+    </section>
+
+    <section class="block" aria-labelledby="r-recos-titre">
+      <h3 class="block-title" id="r-recos-titre">Vos 3 priorités</h3>
+      <p class="block-sub">À partir de vos axes les moins solides.</p>
+      <ol class="recos" id="r-recos"></ol>
+    </section>
+
+    <section class="cta-panel" aria-labelledby="cta-titre">
+      <h3 class="cta-title" id="cta-titre"></h3>
+      <p class="cta-sub" id="cta-sous-titre"></p>
+      <div class="cta-actions">
+        <a class="btn btn-cta" id="cta-rdv" href="#" target="_blank" rel="noopener"></a>
+        <a class="btn btn-ghost" id="cta-mail" href="#"></a>
+      </div>
+      <p class="cta-positioning" id="cta-positionnement"></p>
+    </section>
+
+    <div class="after">
+      <button type="button" class="text-btn" id="btn-partager"></button>
+      <button type="button" class="text-btn" id="btn-refaire">Refaire le test</button>
+      <p class="share-status" id="statut-partage" role="status" hidden></p>
+    </div>
+  </section>
+
+  <section class="wrap screen error-screen" id="ecran-erreur" aria-labelledby="erreur-titre" hidden>
+    <h2 class="error-title" id="erreur-titre" tabindex="-1">Le test n’a pas pu se charger</h2>
+    <p class="error-text">Vérifiez votre connexion, puis rechargez la page.</p>
+    <button type="button" class="btn btn-primary" id="btn-recharger">Recharger la page</button>
+  </section>
+</main>
+
+<footer class="wrap foot">
+  <p><span class="foot-brand">Manica</span> — IA utile et accompagnée.</p>
+  <p>Votre score est calculé dans votre navigateur : aucune réponse ne quitte votre appareil.</p>
+  <p id="mention-beta" hidden></p>
+  <button type="button" class="text-btn" id="btn-installer" hidden>Installer l’application</button>
+</footer>
+
+<noscript><p class="wrap">Le Check-up IA a besoin de JavaScript pour calculer votre score dans votre navigateur.</p></noscript>
+
+<script>
+(() => {
+  'use strict';
+
+  // === LOGIQUE PURE (testée par tools/validate.mjs, sans DOM) ===
+  const RANG_DIFFICULTE = { facile: 0, moyen: 1, avance: 2 };
+
+  function melanger(liste, rnd) {
+    const a = liste.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function questionsDisponibles(questions, axeId, profil, statuts) {
+    return questions.filter(q => q.axe === axeId
+      && (q.profil === 'tous' || q.profil === profil)
+      && statuts.includes(q.statut));
+  }
+
+  // Tire `parAxe` questions par axe (au moins une facile et une avancée),
+  // puis ordonne le test du plus facile au plus difficile.
+  function tirerQuestions(questions, axes, profil, parAxe, statuts, rnd) {
+    const tirage = [];
+    for (const axe of axes) {
+      const pool = melanger(questionsDisponibles(questions, axe.id, profil, statuts), rnd);
+      const choisies = [];
+      for (const difficulte of ['facile', 'avance']) {
+        const q = pool.find(x => x.difficulte === difficulte);
+        if (q) choisies.push(q);
+      }
+      for (const q of pool) {
+        if (choisies.length >= parAxe) break;
+        if (!choisies.includes(q)) choisies.push(q);
+      }
+      if (choisies.length < parAxe) {
+        throw new Error(`Axe « ${axe.id} » : pas assez de questions pour le profil ${profil}`);
+      }
+      tirage.push(...choisies);
+    }
+    return melanger(tirage, rnd)
+      .sort((a, b) => RANG_DIFFICULTE[a.difficulte] - RANG_DIFFICULTE[b.difficulte]);
+  }
+
+  // Ordre d'affichage des choix : 0 = bonne réponse, 1 à 3 = distracteurs.
+  function choixAffiches(q, ordre) {
+    const tous = [q.bonne_reponse, ...q.distracteurs];
+    return ordre.map(i => tous[i]);
+  }
+
+  function niveauPour(score, niveaux) {
+    return niveaux.reduce((retenu, n) => (score >= n.min ? n : retenu), niveaux[0]);
+  }
+
+  function calculerResultat(items, reponses, questionsParId, axes, config) {
+    const parAxe = new Map(axes.map(a => [a.id, { bonnes: 0, total: 0 }]));
+    let bonnes = 0;
+    items.forEach((item, i) => {
+      const stat = parAxe.get(questionsParId.get(item.id).axe);
+      stat.total++;
+      if (item.ordre[reponses[i]] === 0) { stat.bonnes++; bonnes++; }
+    });
+    const score = bonnes * config.quiz.points_par_bonne_reponse;
+    const detail = axes.map(a => {
+      const s = parAxe.get(a.id);
+      return { id: a.id, bonnes: s.bonnes, total: s.total, pct: s.total ? Math.round(100 * s.bonnes / s.total) : 0 };
+    });
+    // Tri stable : à égalité, l'ordre des axes de config.json départage.
+    const faibles = detail.slice().sort((a, b) => a.pct - b.pct).slice(0, 3);
+    return { score, bonnes, detail, faibles, niveau: niveauPour(score, config.niveaux) };
+  }
+
+  function remplir(modele, valeurs) {
+    return modele.replace(/\{(\w+)\}/g, (brut, cle) => (cle in valeurs ? String(valeurs[cle]) : brut));
+  }
+
+  function libelleAxe(axe, profil) {
+    return profil === 'perso' && axe.libelle_perso ? axe.libelle_perso : axe.libelle;
+  }
+
+  function valeursModele(config, profil, resultat) {
+    const detail = resultat.detail
+      .map(d => `- ${libelleAxe(config.axes.find(a => a.id === d.id), profil)} : ${d.pct} %`)
+      .join('\n');
+    return {
+      score: resultat.score,
+      niveau: resultat.niveau.nom,
+      profil: config.profils[profil].libelle,
+      detail_axes: detail
+    };
+  }
+
+  function lienMail(config, profil, resultat) {
+    const valeurs = valeursModele(config, profil, resultat);
+    const objet = remplir(config.mail.objet, valeurs);
+    const corps = remplir(config.mail.corps, valeurs).replace(/\r?\n/g, '\r\n');
+    return `mailto:${config.contact.email}?subject=${encodeURIComponent(objet)}&body=${encodeURIComponent(corps)}`;
+  }
+
+  // Typographie française à l'affichage : apostrophe courbe, espaces fines insécables.
+  function typo(texte) {
+    return texte
+      .replace(/'/g, '’')
+      .replace(/ ([?!:;»%])/g, ' $1')
+      .replace(/« /g, '« ');
+  }
+  // === FIN LOGIQUE PURE ===
+
+  const CLE_STOCKAGE = 'checkup-ia:v1';
+  const mouvementReduit = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = id => document.getElementById(id);
+
+  const ICONES = {
+    juste: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5 8 14.5 16 5.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    faux: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5 14.5 14.5M14.5 5.5 5.5 14.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>'
+  };
+
+  let config = null;
+  let questionsParId = new Map();
+  let session = null;
+
+  // Point d'accroche pour une mesure d'audience sans cookie (Umami, Plausible…).
+  // v1 : rien n'est envoyé. Événements : test_demarre, test_termine, clic_rdv, clic_mail, partage_linkedin.
+  function suivre(evenement) {}
+
+  function lireSession() {
+    try {
+      const s = JSON.parse(localStorage.getItem(CLE_STOCKAGE));
+      return sessionValide(s) ? s : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function ecrireSession() {
+    try {
+      if (session) localStorage.setItem(CLE_STOCKAGE, JSON.stringify(session));
+      else localStorage.removeItem(CLE_STOCKAGE);
+    } catch (e) {
+      // Stockage indisponible : le test fonctionne, sans reprise possible.
+    }
+  }
+
+  function sessionValide(s) {
+    return Boolean(s && config.profils[s.profil]
+      && Array.isArray(s.items) && s.items.length
+      && s.items.every(it => questionsParId.has(it.id) && Array.isArray(it.ordre) && it.ordre.length === 4)
+      && Array.isArray(s.reponses) && Number.isInteger(s.index));
+  }
+
+  function sessionTerminee(s) {
+    return s.index >= s.items.length;
+  }
+
+  async function chargerJson(url) {
+    const reponse = await fetch(url);
+    if (!reponse.ok) throw new Error(`${url} : HTTP ${reponse.status}`);
+    return reponse.json();
+  }
+
+  const chargement = Promise.all([chargerJson('config.json'), chargerJson('questions.json')])
+    .then(([c, banque]) => {
+      config = c;
+      questionsParId = new Map(banque.questions.map(q => [q.id, q]));
+      const publiees = banque.questions.filter(q => config.quiz.statuts_publies.includes(q.statut));
+      if (publiees.some(q => q.statut !== 'valide')) {
+        $('mention-beta').textContent = typo(config.quiz.mention_beta);
+        $('mention-beta').hidden = false;
+      }
+      session = lireSession();
+      afficherReprise();
+    });
+
+  chargement.catch(() => afficher('ecran-erreur'));
+
+  function afficher(idEcran) {
+    for (const ecran of document.querySelectorAll('main > .screen')) ecran.hidden = ecran.id !== idEcran;
+    window.scrollTo(0, 0);
+    const titre = $(idEcran).querySelector('[tabindex="-1"]');
+    if (titre) titre.focus({ preventScroll: true });
+  }
+
+  // --- Accueil ---
+  function afficherReprise() {
+    const bloc = $('bloc-reprise');
+    if (!session) { bloc.hidden = true; return; }
+    if (sessionTerminee(session)) {
+      $('texte-reprise').textContent = 'Vous avez déjà passé le test sur cet appareil.';
+      $('btn-reprendre').textContent = 'Revoir mon dernier résultat';
+    } else {
+      $('texte-reprise').textContent = `Vous avez un test en cours (question ${session.index + 1} sur ${session.items.length}).`;
+      $('btn-reprendre').textContent = 'Reprendre le test';
+    }
+    bloc.hidden = false;
+  }
+
+  function profilChoisi() {
+    const coche = document.querySelector('input[name="profil"]:checked');
+    return coche ? coche.value : null;
+  }
+
+  for (const radio of document.querySelectorAll('input[name="profil"]')) {
+    radio.addEventListener('change', () => { $('hint-profil').hidden = true; });
+  }
+
+  $('btn-commencer').addEventListener('click', async () => {
+    const profil = profilChoisi();
+    if (!profil) {
+      $('hint-profil').hidden = false;
+      document.querySelector('input[name="profil"]').focus();
+      return;
+    }
+    await chargement;
+    const banque = [...questionsParId.values()];
+    const tirees = tirerQuestions(banque, config.axes, profil,
+      config.quiz.questions_par_axe, config.quiz.statuts_publies, Math.random);
+    session = {
+      profil,
+      items: tirees.map(q => ({ id: q.id, ordre: melanger([0, 1, 2, 3], Math.random) })),
+      reponses: [],
+      index: 0
+    };
+    ecrireSession();
+    suivre('test_demarre');
+    afficherQuestion();
+  });
+
+  $('btn-reprendre').addEventListener('click', () => {
+    if (!session) return;
+    if (sessionTerminee(session)) afficherResultat(false);
+    else afficherQuestion();
+  });
+
+  // --- Quiz ---
+  function afficherQuestion() {
+    const total = session.items.length;
+    const item = session.items[session.index];
+    const q = questionsParId.get(item.id);
+    const axe = config.axes.find(a => a.id === q.axe);
+
+    $('q-progression').style.width = `${(session.index / total) * 100}%`;
+    $('q-axe').textContent = typo(libelleAxe(axe, session.profil));
+    $('q-compteur').textContent = `Question ${session.index + 1} / ${total}`;
+    $('q-texte').textContent = typo(q.question);
+
+    const liste = $('q-choix');
+    liste.replaceChildren();
+    liste.classList.remove('is-locked');
+    choixAffiches(q, item.ordre).forEach((texte, position) => {
+      const label = document.createElement('label');
+      label.className = 'choice';
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'choix';
+      input.value = String(position);
+      input.addEventListener('change', () => { $('hint-choix').hidden = true; });
+      const corps = document.createElement('span');
+      const libelle = document.createElement('span');
+      libelle.className = 'choice-text';
+      libelle.textContent = typo(texte);
+      corps.append(libelle);
+      label.append(input, corps);
+      liste.append(label);
+    });
+
+    $('hint-choix').hidden = true;
+    $('q-feedback').hidden = true;
+    $('q-bouton').textContent = 'Valider ma réponse';
+
+    afficher('ecran-quiz');
+    const dejaRepondu = session.reponses[session.index];
+    if (dejaRepondu !== undefined && dejaRepondu !== null) montrerCorrection(dejaRepondu, false);
+  }
+
+  function montrerCorrection(positionChoisie, deplacerFocus) {
+    const total = session.items.length;
+    const item = session.items[session.index];
+    const q = questionsParId.get(item.id);
+    const positionJuste = item.ordre.indexOf(0);
+    const juste = positionChoisie === positionJuste;
+
+    const liste = $('q-choix');
+    liste.classList.add('is-locked');
+    [...liste.children].forEach((label, position) => {
+      const input = label.querySelector('input');
+      input.checked = position === positionChoisie;
+      input.disabled = true;
+      let statut = null;
+      if (position === positionJuste) {
+        label.classList.add('is-correct');
+        statut = ICONES.juste + '<span>Bonne réponse</span>';
+      } else if (position === positionChoisie) {
+        label.classList.add('is-wrong');
+        statut = ICONES.faux + '<span>Votre réponse</span>';
+      } else {
+        label.classList.add('is-other');
+      }
+      if (statut) {
+        const marque = document.createElement('span');
+        marque.className = 'choice-status';
+        marque.innerHTML = statut;
+        label.lastElementChild.append(marque);
+      }
+    });
+
+    const feedback = $('q-feedback');
+    feedback.className = `feedback ${juste ? 'is-correct' : 'is-wrong'}`;
+    $('q-feedback-titre').innerHTML = (juste ? ICONES.juste : ICONES.faux)
+      + `<span>${juste ? 'Bonne réponse' : 'Pas tout à fait'}</span>`;
+    if (!juste) {
+      const rappel = document.createElement('span');
+      rappel.className = 'sr-only';
+      rappel.textContent = ` La bonne réponse était : ${typo(q.bonne_reponse)}.`;
+      $('q-feedback-titre').append(rappel);
+    }
+    $('q-feedback-texte').textContent = typo(q.explication);
+    feedback.hidden = false;
+
+    $('q-progression').style.width = `${((session.index + 1) / total) * 100}%`;
+    const bouton = $('q-bouton');
+    bouton.textContent = session.index + 1 >= total ? 'Voir mon résultat' : 'Question suivante';
+    if (deplacerFocus) bouton.focus();
+  }
+
+  $('q-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const dejaRepondu = session.reponses[session.index];
+    if (dejaRepondu === undefined || dejaRepondu === null) {
+      const coche = $('q-choix').querySelector('input:checked');
+      if (!coche) { $('hint-choix').hidden = false; return; }
+      session.reponses[session.index] = Number(coche.value);
+      ecrireSession();
+      montrerCorrection(Number(coche.value), true);
+      return;
+    }
+    session.index++;
+    ecrireSession();
+    if (sessionTerminee(session)) {
+      suivre('test_termine');
+      afficherResultat(true);
+    } else {
+      afficherQuestion();
+    }
+  });
+
+  // --- Résultat ---
+  let resultatCourant = null;
+
+  function afficherResultat(animer) {
+    const resultat = calculerResultat(session.items, session.reponses, questionsParId, config.axes, config);
+    resultatCourant = resultat;
+    const profil = session.profil;
+    const anime = animer && !mouvementReduit;
+
+    $('r-score-lu').textContent = `Score : ${resultat.score} sur 100.`;
+    $('r-niveau').textContent = `Niveau ${resultat.niveau.nom}`;
+    $('r-message').textContent = typo(resultat.niveau.message);
+
+    const echelle = $('r-echelle');
+    const libelles = $('r-echelle-libelles');
+    echelle.replaceChildren();
+    libelles.replaceChildren();
+    config.niveaux.forEach((n, i) => {
+      const fin = i + 1 < config.niveaux.length ? config.niveaux[i + 1].min : 101;
+      const courant = n === resultat.niveau;
+      const seg = document.createElement('span');
+      seg.className = 'scale-seg' + (courant ? ' is-current' : '');
+      seg.style.flex = String(fin - n.min);
+      echelle.append(seg);
+      const lib = document.createElement('span');
+      lib.textContent = n.nom;
+      lib.style.flex = String(fin - n.min);
+      if (courant) lib.className = 'is-current';
+      libelles.append(lib);
+    });
+    const marqueur = document.createElement('span');
+    marqueur.className = 'scale-marker';
+    marqueur.style.left = `${Math.min(100, Math.max(0, resultat.score))}%`;
+    echelle.append(marqueur);
+
+    const axes = $('r-axes');
+    axes.replaceChildren();
+    const remplissages = [];
+    resultat.detail.forEach(d => {
+      const axe = config.axes.find(a => a.id === d.id);
+      const li = document.createElement('li');
+      li.innerHTML = '<div class="axis-head"><span class="axis-name"></span><span class="axis-pct"></span></div>'
+        + '<div class="bar" aria-hidden="true"><div class="bar-fill"></div></div>';
+      li.querySelector('.axis-name').textContent = typo(libelleAxe(axe, profil));
+      li.querySelector('.axis-pct').textContent = typo(`${d.pct} %`);
+      const barre = li.querySelector('.bar-fill');
+      remplissages.push([barre, d.pct]);
+      axes.append(li);
+    });
+
+    const recos = $('r-recos');
+    recos.replaceChildren();
+    resultat.faibles.forEach(d => {
+      const axe = config.axes.find(a => a.id === d.id);
+      const reco = config.recommandations[d.id][profil];
+      const li = document.createElement('li');
+      li.className = 'reco';
+      li.innerHTML = '<h4 class="reco-title"></h4><p class="reco-axis"></p><p class="reco-text"></p>';
+      li.querySelector('.reco-title').textContent = typo(reco.titre);
+      li.querySelector('.reco-axis').textContent = typo(`${libelleAxe(axe, profil)} : ${d.pct} %`);
+      li.querySelector('.reco-text').textContent = typo(reco.texte);
+      recos.append(li);
+    });
+
+    $('cta-titre').textContent = typo(config.cta.titre);
+    $('cta-sous-titre').textContent = typo(config.cta.sous_titre[profil]);
+    $('cta-rdv').textContent = config.cta.bouton_rdv;
+    $('cta-rdv').href = config.contact.lien_rdv;
+    $('cta-mail').textContent = config.cta.bouton_mail;
+    $('cta-mail').href = lienMail(config, profil, resultat);
+    $('cta-positionnement').textContent = typo(config.cta.positionnement[profil]);
+    $('btn-partager').textContent = config.partage.bouton;
+    $('statut-partage').hidden = true;
+
+    afficher('ecran-resultat');
+
+    const scoreEl = $('r-score');
+    if (!anime) {
+      scoreEl.textContent = String(resultat.score);
+      remplissages.forEach(([barre, pct]) => { barre.style.transition = 'none'; barre.style.width = `${pct}%`; });
+      return;
+    }
+    scoreEl.textContent = '0';
+    const debut = performance.now();
+    const duree = 1000;
+    const pas = t => {
+      const p = Math.min(1, (t - debut) / duree);
+      scoreEl.textContent = String(Math.round(resultat.score * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) requestAnimationFrame(pas);
+    };
+    requestAnimationFrame(pas);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      remplissages.forEach(([barre, pct]) => { barre.style.transition = ''; barre.style.width = `${pct}%`; });
+    }));
+  }
+
+  $('cta-rdv').addEventListener('click', () => suivre('clic_rdv'));
+  $('cta-mail').addEventListener('click', () => suivre('clic_mail'));
+
+  $('btn-partager').addEventListener('click', async () => {
+    if (!resultatCourant) return;
+    suivre('partage_linkedin');
+    const texte = remplir(config.partage.texte, valeursModele(config, session.profil, resultatCourant));
+    const url = config.url_app;
+    if (navigator.share && matchMedia('(pointer: coarse)').matches) {
+      try {
+        await navigator.share({ title: 'Check-up IA by Manica', text: texte, url });
+        return;
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;
+      }
+    }
+    let copie = false;
+    try {
+      await navigator.clipboard.writeText(`${texte} ${url}`);
+      copie = true;
+    } catch (e) {
+      copie = false;
+    }
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank', 'noopener');
+    const statut = $('statut-partage');
+    statut.textContent = copie
+      ? 'Texte copié : collez-le dans votre publication LinkedIn.'
+      : typo(`Texte à coller dans votre publication : « ${texte} »`);
+    statut.hidden = false;
+  });
+
+  $('btn-refaire').addEventListener('click', () => {
+    session = null;
+    resultatCourant = null;
+    ecrireSession();
+    afficherReprise();
+    afficher('ecran-accueil');
+  });
+
+  $('btn-recharger').addEventListener('click', () => location.reload());
+
+  // --- PWA ---
+  let invitationInstallation = null;
+  addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    invitationInstallation = event;
+    $('btn-installer').hidden = false;
+  });
+  $('btn-installer').addEventListener('click', async () => {
+    if (!invitationInstallation) return;
+    invitationInstallation.prompt();
+    await invitationInstallation.userChoice;
+    invitationInstallation = null;
+    $('btn-installer').hidden = true;
+  });
+  addEventListener('appinstalled', () => { $('btn-installer').hidden = true; });
+
+  if ('serviceWorker' in navigator
+    && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
+    addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  }
+})();
+</script>
+</body>
+</html>
