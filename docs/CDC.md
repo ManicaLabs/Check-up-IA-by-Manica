@@ -2,7 +2,7 @@
 
 > Handoff doc pour Claude Code. Source de vérité pour le code = le repo Git.
 > À mettre à jour à chaque déploiement, pas seulement en fin de projet.
-> Dernière mise à jour : 24/09/2026 — v1.1 (logo, bascule clair/sombre, mesure d'audience GoatCounter).
+> Dernière mise à jour : 24/09/2026 — v1.1.1 (logo, bascule clair/sombre, mesure d'audience GoatCounter).
 
 ---
 
@@ -102,7 +102,8 @@ LinkedIn met l'aperçu en cache : après changement de `og-image.png`, forcer le
 - Stockage bloqué : la bascule marche pour la visite, rien ne plante (testé).
 
 ### Mesure d'audience (GoatCounter)
-- Script `https://gc.zgo.at/count.v5.js`, `async`, avec `integrity` SRI et `crossorigin="anonymous"`, juste avant `</body>`. Compte la page vue au chargement.
+- Script `https://gc.zgo.at/count.v5.js`, `async`, avec `integrity` SRI et `crossorigin="anonymous"`, juste avant `</body>`.
+- Réglage `data-goatcounter-settings='{"no_onload": true}'` : la **page vue est comptée par l'app** (événement `load`, une fois la page visible, même logique que count.js), dans `compter()` sous try/catch. Raison : count.js lit `localStorage` sans protection ; avec un stockage bloqué (Safari/Firefox, cookies désactivés), son comptage automatique levait une `SecurityError` non interceptée (reproduit, puis corrigé en v1.1.1). Conséquence assumée : ces visiteurs ne sont pas comptés, sans erreur.
 - Événements via `suivre(evenement)` → `goatcounter.count({ path, title, event: true })` : `test_demarre`, `test_termine`, `clic_rdv`, `clic_mail`, `partage_linkedin`. Seuls le nom et un titre lisible partent, jamais les réponses ni le score.
 - `suivre()` ne fait rien si le script n'est pas chargé (hors ligne, bloqueur de pub) et avale toute exception : la mesure ne peut pas casser le test.
 - Le service worker ignore les requêtes d'autres origines : rien de GoatCounter n'est mis en cache par l'app.
@@ -207,6 +208,7 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`
 ## 8. État d'avancement
 
 - ✅ v1.0 (24/09/2026) : app complète, PWA installable et hors ligne, 47 questions `a_valider`, config, icônes, image OG, validation automatisée, déployée sur GitHub Pages.
+- ✅ v1.1.1 (24/09/2026) : page vue GoatCounter déclenchée par l'app (voir §3) — plus d'erreur JS quand le stockage est bloqué.
 - ✅ v1.1 (24/09/2026) : logo officiel (avec baseline sur l'accueil et l'image OG, sans baseline ailleurs), favicon et icônes PWA tirés du symbole, bascule clair/sombre mémorisée, GoatCounter avec les 5 événements. Les 47 questions ont été validées par Cédric (`statut: valide`) ; `statuts_publies` passe à `["valide"]` : une future question `a_valider` ne sera pas tirée tant qu'elle n'est pas relue. Le bandeau bêta ne s'affiche donc plus.
 - ✅ Tests v1.1 avant push : `validate.mjs` (+ contrôle des origines externes, SRI obligatoire, CSP) ; parcours complet Chrome headless en 5 configurations (clair, sombre système, sombre forcé, clair forcé sur système sombre, desktop sombre) : logo attendu par écran, chargé, inversé en sombre seulement ; thème conservé au rechargement ; les 5 événements émis ; stockage bloqué ; hors ligne ; seules origines externes contactées : `gc.zgo.at` (et `manica.goatcounter.com` en prod, intercepté pendant les tests).
 - ✅ Tests v1.0 avant push : `node tools/validate.mjs` (structure, 6 000 tirages simulés, scores, niveaux, modèles mail/partage, syntaxe JS, fichiers référencés) ; parcours complet dans Chrome headless en mobile clair, mobile sombre et desktop (reprise après rechargement, relecture du résultat, « Refaire », mailto, lien RDV, aucune requête externe, aucune erreur console, démarrage hors ligne).
@@ -243,6 +245,8 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`
 - **CSP** stricte dans `index.html` : toute ressource tierce sera bloquée tant que la CSP n'est pas ouverte explicitement. `validate.mjs` refuse toute origine externe hors GoatCounter et tout script externe sans SRI.
 - **GoatCounter SRI** : l'empreinte correspond à `count.v5.js` (figé). Pour changer de version : télécharger le fichier, recalculer `openssl dgst -sha384 -binary count.vX.js | openssl base64 -A`, mettre à jour `src` et `integrity`. Une empreinte fausse bloque le script en silence (plus de stats, l'app marche).
 - **Tests sur la prod** : intercepter/bloquer `manica.goatcounter.com` pour ne pas fausser les statistiques.
+- **Tester GoatCounter en local** : count.js ignore `localhost`. Pour reproduire la prod, servir sous un faux nom d'hôte (Chrome `--host-resolver-rules="MAP checkup.test 127.0.0.1"`, puis `http://checkup.test:8765/`).
+- **Ne pas retirer `no_onload`** sans avoir revérifié le cas « stockage bloqué ».
 - **Thème** : ne jamais réintroduire de `@media (prefers-color-scheme: dark)` dans le CSS — tout passe par `data-theme`, sinon la bascule manuelle ne peut plus forcer le mode clair.
 - **Logo** : ne pas éditer les fichiers générés, relancer `tools/build-assets.py`. Si le logo officiel devenait coloré, remplacer `invert(1)` par une plaque claire en mode sombre.
 - **Balises OG** : statiques et en URL absolue (les robots LinkedIn n'exécutent pas le JS). À mettre à jour si le domaine change.

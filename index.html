@@ -917,16 +917,31 @@ main { flex: 1; }
     partage_linkedin: 'Partage du score'
   };
 
-  function suivre(evenement) {
+  function compter(donnees) {
     try {
       const gc = window.goatcounter;
-      if (gc && typeof gc.count === 'function') {
-        gc.count({ path: evenement, title: TITRES_EVENEMENTS[evenement], event: true });
-      }
+      if (gc && typeof gc.count === 'function') gc.count(donnees);
     } catch (e) {
       // La mesure ne doit jamais gêner le test.
     }
   }
+
+  function suivre(evenement) {
+    compter({ path: evenement, title: TITRES_EVENEMENTS[evenement], event: true });
+  }
+
+  // Page vue : déclenchée ici (réglage no_onload de count.js) pour rester sous try/catch,
+  // car count.js lit localStorage sans protection et lèverait une erreur si le stockage est bloqué.
+  // Même logique que count.js : compter seulement une fois la page visible.
+  addEventListener('load', () => {
+    if (document.visibilityState === 'visible') { compter(); return; }
+    const quandVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      document.removeEventListener('visibilitychange', quandVisible);
+      compter();
+    };
+    document.addEventListener('visibilitychange', quandVisible);
+  });
 
   function lireSession() {
     try {
@@ -1344,8 +1359,10 @@ main { flex: 1; }
   }
 })();
 </script>
-<!-- GoatCounter : version figée + empreinte SRI, le navigateur refuse tout script modifié. -->
-<script data-goatcounter="https://manica.goatcounter.com/count" async src="https://gc.zgo.at/count.v5.js"
+<!-- GoatCounter : version figée + empreinte SRI, le navigateur refuse tout script modifié.
+     no_onload : la page vue est comptée par notre script (voir compter()). -->
+<script data-goatcounter="https://manica.goatcounter.com/count" data-goatcounter-settings='{"no_onload": true}'
+        async src="https://gc.zgo.at/count.v5.js"
         crossorigin="anonymous" integrity="sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ"></script>
 </body>
 </html>
