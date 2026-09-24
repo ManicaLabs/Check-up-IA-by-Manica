@@ -1,6 +1,6 @@
 # Check-up IA by Manica
 
-Test gratuit en ligne : 20 questions sur 5 axes, un score sur 100, des recommandations, et une prise de contact avec Manica.
+Test gratuit en ligne : 10 questions sur 5 axes (tirées dans une banque de 47), un score sur 100, des recommandations, et une prise de contact avec Manica.
 Zéro backend, zéro donnée collectée : tout est calculé dans le navigateur.
 
 **App** : https://manicalabs.github.io/Check-up-IA-by-Manica/

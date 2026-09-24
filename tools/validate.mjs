@@ -127,8 +127,9 @@ for (const p of profils) {
     const pool = banque.questions.filter(q => q.axe === axe && (q.profil === 'tous' || q.profil === p) && statuts.includes(q.statut));
     const nb = d => pool.filter(q => q.difficulte === d).length;
     if (pool.length < parAxe) erreur(`pool ${p} / ${axe} : ${pool.length} question(s) publiée(s), ${parAxe} requises`);
-    if (!nb('facile')) erreur(`pool ${p} / ${axe} : aucune question facile publiée`);
-    if (!nb('avance')) erreur(`pool ${p} / ${axe} : aucune question avancée publiée`);
+    const niveaux = DIFFICULTES.filter(d => nb(d)).length;
+    if (niveaux < Math.min(parAxe, DIFFICULTES.length)) erreur(`pool ${p} / ${axe} : ${niveaux} niveau(x) de difficulté publié(s), il en faut ${Math.min(parAxe, DIFFICULTES.length)} pour varier le tirage`);
+    for (const d of DIFFICULTES) if (!nb(d)) avertissements.push(`pool ${p} / ${axe} : aucune question « ${d} » publiée`);
   }
 }
 
@@ -149,6 +150,13 @@ const questionsParId = new Map(banque.questions.map(q => [q.id, q]));
 let graine = 42;
 const rnd = () => { graine = (graine * 1103515245 + 12345) % 2147483648; return graine / 2147483648; };
 const total = parAxe * axesIds.length;
+
+// Les textes qui annoncent un nombre de questions ou d'axes doivent correspondre au tirage réel.
+for (const f of ['index.html', 'config.json', 'manifest.webmanifest', 'tools/og-image.html', 'README.md']) {
+  const texte = lire(f);
+  for (const [, n] of texte.matchAll(/(\d+)\s+questions\b/g)) if (Number(n) !== total && Number(n) !== banque.questions.length) erreur(`${f} : « ${n} questions » annoncé, le test en tire ${total}`);
+  for (const [, n] of texte.matchAll(/(\d+)\s+axes\b/g)) if (Number(n) !== axesIds.length) erreur(`${f} : « ${n} axes » annoncé, il y en a ${axesIds.length}`);
+}
 const vus = new Map();
 if (!erreurs.length) {
   for (const p of profils) {
@@ -159,7 +167,7 @@ if (!erreurs.length) {
       for (const axe of axesIds) {
         const qs = tirage.filter(q => q.axe === axe);
         if (qs.length !== parAxe) erreur(`tirage ${p} : axe ${axe} a ${qs.length} questions`);
-        if (!qs.some(q => q.difficulte === 'facile') || !qs.some(q => q.difficulte === 'avance')) erreur(`tirage ${p} : axe ${axe} sans mixité de difficulté`);
+        if (new Set(qs.map(q => q.difficulte)).size !== Math.min(parAxe, DIFFICULTES.length)) erreur(`tirage ${p} : axe ${axe} sans difficultés variées (${qs.map(q => q.difficulte)})`);
       }
       if (tirage.some(q => q.profil !== 'tous' && q.profil !== p)) erreur(`tirage ${p} : question d’un autre profil`);
       tirage.forEach(q => vus.set(q.id, (vus.get(q.id) || 0) + 1));
@@ -171,8 +179,9 @@ if (!erreurs.length) {
       });
       const reponses = items.map(() => Math.floor(rnd() * 4));
       const r = L.calculerResultat(items, reponses, questionsParId, config.axes, config);
-      const attendu = items.filter((it, i) => it.ordre[reponses[i]] === 0).length * config.quiz.points_par_bonne_reponse;
-      if (r.score !== attendu || r.score % 5 || r.score < 0 || r.score > 100) erreur(`score incohérent : ${r.score} (attendu ${attendu})`);
+      const attendu = Math.round(100 * items.filter((it, i) => it.ordre[reponses[i]] === 0).length / items.length);
+      if (r.score !== attendu || r.score < 0 || r.score > 100) erreur(`score incohérent : ${r.score} (attendu ${attendu})`);
+      if (r.faibles.some((f, k) => k && (f.pct < r.faibles[k - 1].pct || (f.pct === r.faibles[k - 1].pct && f.lacune > r.faibles[k - 1].lacune)))) erreur('priorités mal ordonnées (score puis lacune)');
       if (r.faibles.length !== 3) erreur('il faut 3 axes faibles');
       if (r.niveau !== L.niveauPour(r.score, config.niveaux)) erreur('niveau incohérent');
       const mail = decodeURIComponent(L.lienMail(config, p, r));

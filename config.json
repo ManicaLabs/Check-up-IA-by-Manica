@@ -7,8 +7,7 @@
     "lien_rdv": "https://calendar.app.google/dQyJBwpYKtc184NdA"
   },
   "quiz": {
-    "questions_par_axe": 4,
-    "points_par_bonne_reponse": 5,
+    "questions_par_axe": 2,
     "statuts_publies": [
       "valide"
     ],
@@ -143,9 +142,9 @@
   "partage": {
     "titre": "Partager mon score",
     "mail_objet": "Check-up IA : j'ai obtenu {score}/100, et vous ?",
-    "texte": "J'ai fait le Check-up IA by Manica : {score}/100, niveau {niveau}. 20 questions, 5 minutes, sans inscription. Et vous, où en êtes-vous avec l'IA ?",
+    "texte": "J'ai fait le Check-up IA by Manica : {score}/100, niveau {niveau}. 10 questions, 3 minutes, sans inscription. Et vous, où en êtes-vous avec l'IA ?",
     "linkedin": {
-      "modele": "{accroche}\n\nLe Check-up IA by Manica : 20 questions sur 5 axes, 5 minutes, sans inscription.\n\n{points}\n\nCe que j'en retiens : {enseignement}\n\nEt vous, où en êtes-vous vraiment avec l'IA ?\n👉 {url}\n\n{hashtags}",
+      "modele": "{accroche}\n\nLe Check-up IA by Manica : 10 questions sur 5 axes, 3 minutes, sans inscription.\n\n{points}\n\nCe que j'en retiens : {enseignement}\n\nEt vous, où en êtes-vous vraiment avec l'IA ?\n👉 {url}\n\n{hashtags}",
       "ligne_fort": "Mon point fort : {axe} ({pct} %)",
       "ligne_chantier": "Mon prochain chantier : {axe}",
       "hashtags": "#IA #IntelligenceArtificielle #Productivité",

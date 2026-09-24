@@ -2,13 +2,13 @@
 
 > Handoff doc pour Claude Code. Source de vérité pour le code = le repo Git.
 > À mettre à jour à chaque déploiement, pas seulement en fin de projet.
-> Dernière mise à jour : 24/09/2026 — v1.3.1 (logo, bascule clair/sombre, GoatCounter, partage guidé remonté près du score).
+> Dernière mise à jour : 24/09/2026 — v1.4 (test en 10 questions, partage guidé près du score, logo, clair/sombre, GoatCounter).
 
 ---
 
 ## 1. Contexte & but
 
-**Ce que fait l'app** : un test gratuit en ligne, « Check-up IA by Manica » — 20 questions sur 5 axes, qui donne un score sur 100 et un niveau, puis oriente vers une prise de contact avec Manica (RDV ou mail).
+**Ce que fait l'app** : un test gratuit en ligne, « Check-up IA by Manica » — 10 questions sur 5 axes (tirées dans une banque de 47, depuis la v1.4 ; 20 auparavant), qui donne un score sur 100 et un niveau, puis oriente vers une prise de contact avec Manica (RDV ou mail).
 
 **Pour qui** : particuliers curieux d'IA (« Pour moi ») et dirigeants / responsables évaluant la maturité IA de leur entreprise (« Pour mon entreprise »). Le profil adapte l'axe 5 (questions et libellé), les recommandations, le sous-titre du CTA et la mention de positionnement.
 
@@ -80,7 +80,7 @@ LinkedIn met l'aperçu en cache : après changement de `og-image.png`, forcer le
 
 ### Écrans
 1. **Accueil** : titre « Check-up IA » / « by Manica », tracé ECG (animé une fois au chargement), accroche, choix du profil (2 cartes radio de taille égale, aucune présélection), bouton « Commencer le test », mention rassurante. Si une session existe : « Reprendre le test » ou « Revoir mon dernier résultat ».
-2. **Quiz** : barre de progression, axe + « Question X / 20 », énoncé, 4 choix (radios natifs stylés), « Valider ma réponse » → correction (bordure + icône + texte « Bonne réponse » / « Votre réponse »), explication, « Question suivante » (ou « Voir mon résultat »). Pas de retour arrière.
+2. **Quiz** : barre de progression, axe + « Question X / 10 », énoncé, 4 choix (radios natifs stylés), « Valider ma réponse » → correction (bordure + icône + texte « Bonne réponse » / « Votre réponse »), explication, « Question suivante » (ou « Voir mon résultat »). Pas de retour arrière.
 3. **Résultat** : score /100 en très grand (compteur animé), niveau + message, échelle des 4 niveaux avec repère, **« Partager mon score »** (icônes, visibles sans défiler sur mobile depuis la v1.3.1), barres par axe (avec %), 3 priorités (axes les plus faibles), bloc CTA (fond bleu nuit, bouton ambre « Réserver un échange », bouton « Nous écrire », mention de positionnement), « Refaire le test ».
 4. **Erreur** : si `config.json` / `questions.json` ne se chargent pas.
 
@@ -158,15 +158,16 @@ Schéma d'une question :
 
 ### Tirage
 - Pool = questions de l'axe, profil `tous` ou profil choisi, statut dans `config.quiz.statuts_publies`.
-- Par axe : 1 facile + 1 avancée tirées au hasard, puis complété au hasard jusqu'à `questions_par_axe` (4).
-- Les 20 questions sont ensuite mélangées puis triées par difficulté (faciles → moyennes → avancées) : le test monte en puissance, les axes restent entremêlés.
+- Par axe : `questions_par_axe` (2) questions de **difficultés différentes** — les niveaux (facile, moyen, avancé) sont pris dans un ordre aléatoire, une question par niveau tant que possible, puis complété au hasard. Avec 2 par axe, la paire de niveaux est donc aléatoire : **toutes les questions restent tirables**, y compris les « moyen » (l'ancienne règle « 1 facile + 1 avancée par axe » les aurait exclues). Avec 3 ou plus, chaque axe a les 3 niveaux.
+- Les 10 questions sont ensuite mélangées puis triées par difficulté (faciles → moyennes → avancées) : le test monte en puissance, les axes restent entremêlés.
+- Mesuré sur 10 000 tirages par profil : chaque question apparaît dans 16 à 34 % des tests (les « moyen », 4 par axe, un peu moins souvent que les faciles et avancées, 2 par axe) ; en moyenne 3,3 questions de chaque niveau par test ; 0,3 % des tests sans question facile.
 - Ordre des 4 choix mélangé à chaque question.
 
 ### Score
-- 5 points par bonne réponse (`points_par_bonne_reponse`) → /100.
-- Score par axe = bonnes / 4, en %.
+- Score /100 = part de bonnes réponses (`round(100 × bonnes / nombre de questions)`), indépendant du nombre de questions. Avec 10 questions : multiples de 10, donc seuils effectifs 0–30 Découverte, 40–60 Curieux, 70–80 Pratiquant, 90–100 Avancé.
+- Score par axe = bonnes / 2, en % (0, 50 ou 100 %).
 - Niveau = dernier niveau dont `min` ≤ score.
-- 3 priorités = 3 axes au plus faible %, égalités départagées par l'ordre des axes dans `config.json`.
+- 3 priorités = 3 axes au plus faible %. Les égalités sont fréquentes avec 2 questions par axe : elles sont départagées par la **lacune** (question ratée pondérée : facile 3, moyen 2, avancé 1 — rater une question facile signale une lacune plus nette), puis par l'ordre des axes dans `config.json`.
 
 ---
 
@@ -224,6 +225,7 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`
 ## 8. État d'avancement
 
 - ✅ v1.0 (24/09/2026) : app complète, PWA installable et hors ligne, 47 questions `a_valider`, config, icônes, image OG, validation automatisée, déployée sur GitHub Pages.
+- ✅ v1.4 (24/09/2026) : test raccourci à **10 questions** (2 par axe, difficultés différentes), banque de 47 conservée pour la rotation ; score en part de bonnes réponses ; priorités départagées par la lacune ; textes « 10 questions, 3 minutes » partout (accueil, meta, manifeste, image OG régénérée, partages, post LinkedIn). `validate.mjs` vérifie désormais que tout texte annonçant « N questions » ou « N axes » correspond au tirage réel.
 - ✅ v1.3.1 (24/09/2026) : icônes de partage remontées sous le score (visibles sans défiler sur mobile et sur ordinateur), plus de doublon en bas de page ; mesure avant/après en cours (§7).
 - ✅ v1.3 (24/09/2026) : partage LinkedIn en post complet pré-rédigé (personnalisé, modifiable, copie confirmée, image jointe possible) et partage Instagram guidé (fenêtre avec aperçu, choix Story/Publication, étapes adaptées à l'appareil) au lieu d'un téléchargement brut. Testé : contenu du post (6 000 tirages + cas 0/100 et 100/100), publication avec le texte modifié, copie et toast dans la fenêtre, images story et publication (dimensions), format par défaut, Échap, focus, clair/sombre, mobile/ordinateur. Toujours à vérifier sur téléphone : la feuille de partage native.
 - ✅ v1.2 (24/09/2026) : partage par icônes — LinkedIn (prioritaire, texte pré-rempli sur ordinateur), Facebook, Instagram (image du score générée dans le navigateur), e-mail, copie confirmée ; 4 nouveaux événements GoatCounter. Testé : liens par support, événements, copie + confirmation, image téléchargée et vérifiée (1080×1920), clair/sombre, mobile/ordinateur. Non testable en headless : la feuille de partage native (LinkedIn et Instagram sur mobile) — à vérifier sur téléphone.
@@ -258,7 +260,7 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`
 
 - **Avant tout push** : `node tools/validate.mjs` doit afficher `✓ Validation OK` (il extrait le `<script>` inline et lance `node --check`, valide les JSON, simule les tirages avec la vraie logique d'`index.html` entre les marqueurs `// === LOGIQUE PURE` et `// === FIN LOGIQUE PURE ===`).
 - **Garder la logique pure sans DOM** entre ces marqueurs, sinon `validate.mjs` ne peut plus l'évaluer.
-- **Valider des questions** : passer `statut` à `valide`. Pour ne publier que les questions relues, mettre `"statuts_publies": ["valide"]` dans `config.json` — `validate.mjs` vérifie alors que chaque pool garde ≥ 4 questions dont 1 facile et 1 avancée.
+- **Valider des questions** : passer `statut` à `valide`. Pour ne publier que les questions relues, mettre `"statuts_publies": ["valide"]` dans `config.json` — `validate.mjs` vérifie alors que chaque pool garde ≥ `questions_par_axe` questions sur au moins autant de niveaux de difficulté (2 aujourd'hui), et signale un niveau absent.
 - **localStorage** : toujours sous `try/catch`.
 - **CSS `:has()`** : `.choice:has(input:checked)` est plus spécifique que `.choice.is-wrong` ; l'état « sélectionné » est donc limité à `.choices:not(.is-locked)`. Garder ce schéma si on retouche les états.
 - **Texte sur l'ambre** : toujours bleu nuit (contraste).
@@ -274,6 +276,7 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`
 - **Cache GitHub Pages** ~10 min : prévenir Cédric qu'un changement peut tarder.
 - **Presse-papiers (et toute action discrète similaire)** : jamais d'écriture silencieuse. Chaque copie appelle `afficherToast()` juste après (confirmation visible + annonce `aria-live`), montre le texte copié, et gère l'échec sans prétendre avoir copié. Ne pas ouvrir d'onglet ou de fenêtre dans le même geste : il masquerait la confirmation (et les popups ouverts après un `await` sont souvent bloqués). `validate.mjs` échoue si un `clipboard.write…` ou `execCommand('copy')` n'est pas suivi d'un `afficherToast(` dans les 40 lignes.
 - **Partage LinkedIn** : `feed/?shareActive=true&text=` n'est pas documenté par LinkedIn. S'il cesse de marcher (on arrive sur le fil sans éditeur), remplacer `LIENS_PARTAGE.linkedinTexte` par `LIENS_PARTAGE.linkedin` (officiel, URL seule) dans `preparerPartage()`.
+- **Nombre de questions** : il se règle dans `config.quiz.questions_par_axe` (× 5 axes). Les textes qui l'annoncent (accueil, meta, manifeste, `tools/og-image.html` puis `og-image.png`, `config.partage`, README) doivent suivre — `validate.mjs` échoue sinon. Penser à régénérer `og-image.png` et à rafraîchir l'aperçu LinkedIn (Post Inspector).
 - **Toast et fenêtres** : un `<dialog>` ouvert est dans la couche supérieure ; tout message doit s'afficher dans sa propre région `.toast` (déjà géré par `afficherToast()`). Toute nouvelle fenêtre doit contenir la sienne.
 - **Post LinkedIn** : max 3 000 caractères, ~210 visibles avant « voir plus » ; garder le score dans la première ligne. `validate.mjs` le vérifie sur tous les tirages.
 - **Nouveau réseau de partage** : lien officiel si possible, pictogramme monochrome `currentColor`, `aria-label` + `title`, événement `partage_<réseau>` ajouté à `TITRES_EVENEMENTS`, et jamais de copie presse-papiers implicite (règle ci-dessous).

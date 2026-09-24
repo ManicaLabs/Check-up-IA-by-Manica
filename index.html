@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://manica.goatcounter.com; font-src 'self'; connect-src 'self' https://manica.goatcounter.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Check-up IA by Manica</title>
-<meta name="description" content="Où en êtes-vous vraiment avec l'IA ? 20 questions, 5 minutes, un score sur 100. Test gratuit, sans inscription, calculé dans votre navigateur.">
+<meta name="description" content="Où en êtes-vous vraiment avec l'IA ? 10 questions, 3 minutes, un score sur 100. Test gratuit, sans inscription, calculé dans votre navigateur.">
 <link rel="canonical" href="https://manicalabs.github.io/Check-up-IA-by-Manica/">
 <meta name="theme-color" content="#F7F5F1">
 <script>
@@ -29,7 +29,7 @@
 <meta property="og:locale" content="fr_FR">
 <meta property="og:site_name" content="Manica">
 <meta property="og:title" content="Check-up IA by Manica">
-<meta property="og:description" content="Où en êtes-vous vraiment avec l'IA ? 20 questions, 5 minutes, un score sur 100. Gratuit, sans inscription.">
+<meta property="og:description" content="Où en êtes-vous vraiment avec l'IA ? 10 questions, 3 minutes, un score sur 100. Gratuit, sans inscription.">
 <meta property="og:url" content="https://manicalabs.github.io/Check-up-IA-by-Manica/">
 <meta property="og:image" content="https://manicalabs.github.io/Check-up-IA-by-Manica/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -835,7 +835,7 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
       <svg class="pulse" viewBox="0 0 600 48" aria-hidden="true" focusable="false">
         <path d="M0 30 H196 C202 30 204 21 211 21 C218 21 220 30 226 30 H242 L249 35 L262 2 L277 46 L286 30 H306 C314 30 317 17 328 17 C339 17 342 30 350 30 H600" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" pathLength="1"/>
       </svg>
-      <p class="hero-lead">Où en êtes-vous vraiment avec l’IA&#8239;? <span>5 minutes, 20 questions, un score sur&nbsp;100.</span></p>
+      <p class="hero-lead">Où en êtes-vous vraiment avec l’IA&#8239;? <span>3 minutes, 10 questions, un score sur&nbsp;100.</span></p>
     </div>
 
     <fieldset class="profile">
@@ -1050,14 +1050,16 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
       && statuts.includes(q.statut));
   }
 
-  // Tire `parAxe` questions par axe (au moins une facile et une avancée),
-  // puis ordonne le test du plus facile au plus difficile.
+  // Tire `parAxe` questions par axe en variant les difficultés (une par niveau tant que possible,
+  // niveaux pris dans un ordre aléatoire : toute la banque reste tirable), puis ordonne le test
+  // du plus facile au plus difficile.
   function tirerQuestions(questions, axes, profil, parAxe, statuts, rnd) {
     const tirage = [];
     for (const axe of axes) {
       const pool = melanger(questionsDisponibles(questions, axe.id, profil, statuts), rnd);
       const choisies = [];
-      for (const difficulte of ['facile', 'avance']) {
+      for (const difficulte of melanger(Object.keys(RANG_DIFFICULTE), rnd)) {
+        if (choisies.length >= parAxe) break;
         const q = pool.find(x => x.difficulte === difficulte);
         if (q) choisies.push(q);
       }
@@ -1084,21 +1086,28 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
     return niveaux.reduce((retenu, n) => (score >= n.min ? n : retenu), niveaux[0]);
   }
 
+  // Une question facile ratée signale une lacune plus nette qu'une question avancée ratée.
+  const POIDS_LACUNE = { facile: 3, moyen: 2, avance: 1 };
+
   function calculerResultat(items, reponses, questionsParId, axes, config) {
-    const parAxe = new Map(axes.map(a => [a.id, { bonnes: 0, total: 0 }]));
+    const parAxe = new Map(axes.map(a => [a.id, { bonnes: 0, total: 0, lacune: 0 }]));
     let bonnes = 0;
     items.forEach((item, i) => {
-      const stat = parAxe.get(questionsParId.get(item.id).axe);
+      const q = questionsParId.get(item.id);
+      const stat = parAxe.get(q.axe);
       stat.total++;
       if (item.ordre[reponses[i]] === 0) { stat.bonnes++; bonnes++; }
+      else stat.lacune += POIDS_LACUNE[q.difficulte];
     });
-    const score = bonnes * config.quiz.points_par_bonne_reponse;
+    // Score sur 100 = part de bonnes réponses, quel que soit le nombre de questions.
+    const score = items.length ? Math.round(100 * bonnes / items.length) : 0;
     const detail = axes.map(a => {
       const s = parAxe.get(a.id);
-      return { id: a.id, bonnes: s.bonnes, total: s.total, pct: s.total ? Math.round(100 * s.bonnes / s.total) : 0 };
+      return { id: a.id, bonnes: s.bonnes, total: s.total, lacune: s.lacune, pct: s.total ? Math.round(100 * s.bonnes / s.total) : 0 };
     });
-    // Tri stable : à égalité, l'ordre des axes de config.json départage.
-    const faibles = detail.slice().sort((a, b) => a.pct - b.pct).slice(0, 3);
+    // À égalité de score, l'axe où l'on a raté les questions les plus faciles d'abord,
+    // puis l'ordre des axes de config.json (tri stable).
+    const faibles = detail.slice().sort((a, b) => a.pct - b.pct || b.lacune - a.lacune).slice(0, 3);
     return { score, bonnes, detail, faibles, niveau: niveauPour(score, config.niveaux) };
   }
 

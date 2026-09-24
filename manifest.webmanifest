@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Check-up IA by Manica",
   "short_name": "Check-up IA",
-  "description": "Où en êtes-vous vraiment avec l'IA ? 20 questions, 5 minutes, un score sur 100.",
+  "description": "Où en êtes-vous vraiment avec l'IA ? 10 questions, 3 minutes, un score sur 100.",
   "lang": "fr",
   "dir": "ltr",
   "start_url": "./",
