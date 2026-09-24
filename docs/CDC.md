@@ -2,7 +2,7 @@
 
 > Handoff doc pour Claude Code. Source de vérité pour le code = le repo Git.
 > À mettre à jour à chaque déploiement, pas seulement en fin de projet.
-> Dernière mise à jour : 24/09/2026 — v1.3 (logo, bascule clair/sombre, GoatCounter, partage LinkedIn et Instagram guidés).
+> Dernière mise à jour : 24/09/2026 — v1.3.1 (logo, bascule clair/sombre, GoatCounter, partage guidé remonté près du score).
 
 ---
 
@@ -81,7 +81,7 @@ LinkedIn met l'aperçu en cache : après changement de `og-image.png`, forcer le
 ### Écrans
 1. **Accueil** : titre « Check-up IA » / « by Manica », tracé ECG (animé une fois au chargement), accroche, choix du profil (2 cartes radio de taille égale, aucune présélection), bouton « Commencer le test », mention rassurante. Si une session existe : « Reprendre le test » ou « Revoir mon dernier résultat ».
 2. **Quiz** : barre de progression, axe + « Question X / 20 », énoncé, 4 choix (radios natifs stylés), « Valider ma réponse » → correction (bordure + icône + texte « Bonne réponse » / « Votre réponse »), explication, « Question suivante » (ou « Voir mon résultat »). Pas de retour arrière.
-3. **Résultat** : score /100 en très grand (compteur animé), niveau + message, échelle des 4 niveaux avec repère, barres par axe (avec %), 3 priorités (axes les plus faibles), bloc CTA (fond bleu nuit, bouton ambre « Réserver un échange », bouton « Nous écrire », mention de positionnement), « Partager mon score », « Refaire le test ».
+3. **Résultat** : score /100 en très grand (compteur animé), niveau + message, échelle des 4 niveaux avec repère, **« Partager mon score »** (icônes, visibles sans défiler sur mobile depuis la v1.3.1), barres par axe (avec %), 3 priorités (axes les plus faibles), bloc CTA (fond bleu nuit, bouton ambre « Réserver un échange », bouton « Nous écrire », mention de positionnement), « Refaire le test ».
 4. **Erreur** : si `config.json` / `questions.json` ne se chargent pas.
 
 ### Stockage local
@@ -111,7 +111,7 @@ LinkedIn met l'aperçu en cache : après changement de `og-image.png`, forcer le
 - GoatCounter ne compte pas `localhost` (comportement du script) : les tests locaux ne polluent pas les statistiques.
 
 ### Partage (v1.3)
-Zone « Partager mon score » sous le bloc CTA : 5 boutons ronds de 52 px, `aria-label` + `title` explicites, pictogrammes monochromes (`currentColor`, justes en clair et en sombre). LinkedIn en premier et en fond plein (prioritaire). Pictogrammes LinkedIn, Facebook, Instagram : paquet simple-icons (licence CC0), tracés intégrés dans le HTML, aucun appel externe.
+Zone « Partager mon score » juste sous le score (niveau et échelle), avant le détail par axe — remontée en v1.3.1 pour être vue au moment où l'on découvre son score (elle était après le bloc CTA, hors de vue pour la plupart des visiteurs mobiles). Si la mesure montre une baisse nette de `clic_rdv`, la redescendre après le bloc CTA. Contenu : 5 boutons ronds de 52 px, `aria-label` + `title` explicites, pictogrammes monochromes (`currentColor`, justes en clair et en sombre). LinkedIn en premier et en fond plein (prioritaire). Pictogrammes LinkedIn, Facebook, Instagram : paquet simple-icons (licence CC0), tracés intégrés dans le HTML, aucun appel externe.
 
 | Icône | Comportement |
 |---|---|
@@ -217,12 +217,14 @@ Palette du CDC appliquée telle quelle (en attente de validation ou de codes off
 
 GoatCounter (compte `manica`, tableau de bord https://manica.goatcounter.com), sans cookie — détails techniques au §3. Pas de Google Analytics.
 Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`. Taux de complétion = `test_termine` / `test_demarre`. Partage : somme des `partage_*` / `test_termine`, et répartition par réseau.
+**Mesure en cours (v1.3.1, 24/09/2026)** : partage remonté près du score. Comparer 2 à 3 semaines avant et après, sur le taux de partage (`partage_*` / `test_termine`) et surtout le taux de RDV (`clic_rdv` / `test_termine`). Trafic trop faible pour un test A/B : comparaison avant/après seulement.
 
 ---
 
 ## 8. État d'avancement
 
 - ✅ v1.0 (24/09/2026) : app complète, PWA installable et hors ligne, 47 questions `a_valider`, config, icônes, image OG, validation automatisée, déployée sur GitHub Pages.
+- ✅ v1.3.1 (24/09/2026) : icônes de partage remontées sous le score (visibles sans défiler sur mobile et sur ordinateur), plus de doublon en bas de page ; mesure avant/après en cours (§7).
 - ✅ v1.3 (24/09/2026) : partage LinkedIn en post complet pré-rédigé (personnalisé, modifiable, copie confirmée, image jointe possible) et partage Instagram guidé (fenêtre avec aperçu, choix Story/Publication, étapes adaptées à l'appareil) au lieu d'un téléchargement brut. Testé : contenu du post (6 000 tirages + cas 0/100 et 100/100), publication avec le texte modifié, copie et toast dans la fenêtre, images story et publication (dimensions), format par défaut, Échap, focus, clair/sombre, mobile/ordinateur. Toujours à vérifier sur téléphone : la feuille de partage native.
 - ✅ v1.2 (24/09/2026) : partage par icônes — LinkedIn (prioritaire, texte pré-rempli sur ordinateur), Facebook, Instagram (image du score générée dans le navigateur), e-mail, copie confirmée ; 4 nouveaux événements GoatCounter. Testé : liens par support, événements, copie + confirmation, image téléchargée et vérifiée (1080×1920), clair/sombre, mobile/ordinateur. Non testable en headless : la feuille de partage native (LinkedIn et Instagram sur mobile) — à vérifier sur téléphone.
 - ✅ v1.1.2 (24/09/2026) : correctif de transparence du partage — la copie dans le presse-papiers était de fait silencieuse (LinkedIn s'ouvrait aussitôt dans un nouvel onglet, le message restait en petit dans l'onglet quitté). Désormais : toast annoncé aux lecteurs d'écran, bouton « Copié ! », texte copié affiché, lien « Ouvrir LinkedIn » à la demande, message honnête en cas d'échec. Recherche globale : c'était le seul accès au presse-papiers du projet.
