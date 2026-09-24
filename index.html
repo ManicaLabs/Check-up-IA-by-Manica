@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://manica.goatcounter.com; font-src 'self'; connect-src 'self' https://manica.goatcounter.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://manica.goatcounter.com; font-src 'self'; connect-src 'self' https://manica.goatcounter.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Check-up IA by Manica</title>
 <meta name="description" content="Où en êtes-vous vraiment avec l'IA ? 20 questions, 5 minutes, un score sur 100. Test gratuit, sans inscription, calculé dans votre navigateur.">
 <link rel="canonical" href="https://manicalabs.github.io/Check-up-IA-by-Manica/">
@@ -692,6 +692,90 @@ main { flex: 1; }
   transition: opacity .2s ease, transform .2s ease;
 }
 .toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+
+/* Fenêtres de partage */
+.sheet {
+  width: min(calc(100% - 24px), 34rem);
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--bg);
+  color: var(--fg);
+  box-shadow: 0 24px 64px rgba(11, 19, 38, .35);
+}
+.sheet::backdrop { background: rgba(11, 19, 38, .62); }
+.sheet-inner { padding: 20px 20px 22px; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sheet-title { font-size: 1.3125rem; font-weight: 800; letter-spacing: -0.015em; }
+.sheet-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1.5px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--fg-strong);
+  cursor: pointer;
+}
+.sheet-close svg { width: 18px; height: 18px; }
+.sheet-note { margin-top: 10px; font-size: .9375rem; color: var(--fg-muted); }
+.sheet-actions { display: grid; gap: 10px; margin-top: 16px; }
+.btn-outline { background: var(--surface); color: var(--fg-strong); border-color: var(--line); }
+.text-btn-inline { display: inline; min-height: 0; padding: 0; font-size: inherit; }
+textarea.post {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-size: .9375rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.format {
+  display: inline-flex;
+  gap: 4px;
+  margin: 14px 0 0;
+  padding: 4px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.format label { position: relative; cursor: pointer; }
+.format input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.format span {
+  display: block;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 9px;
+  font-weight: 700;
+  color: var(--fg-muted);
+}
+.format input:checked + span { background: var(--fill); color: var(--on-fill); }
+.format input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+.apercu { margin-top: 14px; text-align: center; }
+.apercu img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 44vh;
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(11, 19, 38, .25);
+}
+.steps { margin: 16px 0 0; padding-left: 1.3em; font-size: .9375rem; }
+.steps li + li { margin-top: 4px; }
 .toast svg { width: 20px; height: 20px; flex: none; }
 
 /* Erreur */
@@ -833,16 +917,16 @@ main { flex: 1; }
     <section class="share" aria-labelledby="partage-titre">
       <h3 class="share-title" id="partage-titre"></h3>
       <div class="share-icons">
-        <a class="share-btn share-btn-main" id="partage-linkedin" href="https://www.linkedin.com/" target="_blank" rel="noopener"
+        <button type="button" class="share-btn share-btn-main" id="partage-linkedin" aria-haspopup="dialog"
            aria-label="Partager sur LinkedIn" title="Partager sur LinkedIn">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-        </a>
+        </button>
         <a class="share-btn" id="partage-facebook" href="https://www.facebook.com/" target="_blank" rel="noopener"
            aria-label="Partager sur Facebook" title="Partager sur Facebook">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>
         </a>
-        <button type="button" class="share-btn" id="partage-instagram"
-                aria-label="Partager sur Instagram : image de votre score" title="Partager sur Instagram (image de votre score)">
+        <button type="button" class="share-btn" id="partage-instagram" aria-haspopup="dialog"
+                aria-label="Partager sur Instagram" title="Partager sur Instagram">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></svg>
         </button>
         <a class="share-btn" id="partage-mail" href="mailto:" aria-label="Partager par e-mail" title="Partager par e-mail">
@@ -879,6 +963,65 @@ main { flex: 1; }
   <p id="mention-beta" hidden></p>
   <button type="button" class="text-btn" id="btn-installer" hidden>Installer l’application</button>
 </footer>
+
+<!-- Fenêtres de partage. Chacune a sa propre région live : un toast hors de la fenêtre serait masqué par son fond. -->
+<dialog class="sheet" id="dialogue-linkedin" aria-labelledby="dl-titre">
+  <div class="sheet-inner">
+    <div class="sheet-head">
+      <h2 class="sheet-title" id="dl-titre">Votre post LinkedIn</h2>
+      <button type="button" class="sheet-close" data-fermer aria-label="Fermer">
+        <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M5 5l10 10M15 5 5 15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <p class="sheet-note">Rédigé à partir de votre résultat. Modifiez-le librement avant de publier.</p>
+    <label class="sr-only" for="dl-texte">Texte du post LinkedIn</label>
+    <textarea class="post" id="dl-texte" rows="13" spellcheck="true"></textarea>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-primary" id="dl-publier" autofocus>Publier sur LinkedIn</button>
+      <button type="button" class="btn btn-outline" id="dl-copier">Copier le texte</button>
+    </div>
+    <p class="sheet-note" id="dl-aide"></p>
+    <p class="sheet-note">Pour un post avec image : <button type="button" class="text-btn text-btn-inline" id="dl-image">enregistrez l’image de votre score</button>, puis ajoutez-la dans LinkedIn.</p>
+    <div class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  </div>
+</dialog>
+
+<dialog class="sheet" id="dialogue-instagram" aria-labelledby="di-titre">
+  <div class="sheet-inner">
+    <div class="sheet-head">
+      <h2 class="sheet-title" id="di-titre">Partager sur Instagram</h2>
+      <button type="button" class="sheet-close" data-fermer aria-label="Fermer">
+        <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M5 5l10 10M15 5 5 15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <p class="sheet-note">Instagram ne partage pas de liens : on publie une image de votre score.</p>
+    <fieldset class="format">
+      <legend class="sr-only">Format de l’image</legend>
+      <label><input type="radio" name="format-image" value="story"><span>Story</span></label>
+      <label><input type="radio" name="format-image" value="post"><span>Publication</span></label>
+    </fieldset>
+    <div class="apercu">
+      <p class="sheet-note" id="di-attente">Préparation de l’image…</p>
+      <img id="di-apercu" alt="Aperçu de l’image de votre score" hidden>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-primary" id="di-action" autofocus></button>
+      <a class="btn btn-outline" id="di-ouvrir" href="https://www.instagram.com/" target="_blank" rel="noopener">Ouvrir Instagram</a>
+    </div>
+    <ol class="steps" id="di-etapes-mobile" hidden>
+      <li>Touchez « Partager l’image ».</li>
+      <li>Choisissez Instagram, puis Story ou Publication.</li>
+      <li>Pas tout de suite ? Choisissez « Enregistrer l’image » : elle vous attendra dans vos photos.</li>
+    </ol>
+    <ol class="steps" id="di-etapes-bureau" hidden>
+      <li>Téléchargez l’image.</li>
+      <li>Ouvrez Instagram et cliquez sur « Créer ».</li>
+      <li>Importez l’image, puis publiez.</li>
+    </ol>
+    <p class="sheet-note" id="di-note-story" hidden>Sur ordinateur, Instagram ne permet pas de publier une story : choisissez « Publication », ou envoyez-vous l’image sur votre téléphone.</p>
+    <div class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  </div>
+</dialog>
 
 <!-- Région live présente dès le chargement : son contenu est annoncé aux lecteurs d'écran. -->
 <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -984,6 +1127,25 @@ main { flex: 1; }
     const objet = remplir(config.mail.objet, valeurs);
     const corps = remplir(config.mail.corps, valeurs).replace(/\r?\n/g, '\r\n');
     return `mailto:${config.contact.email}?subject=${encodeURIComponent(objet)}&body=${encodeURIComponent(corps)}`;
+  }
+
+  // Post LinkedIn pré-rédigé à partir du résultat (modèle et textes dans config.partage.linkedin).
+  function postLinkedIn(config, profil, resultat) {
+    const li = config.partage.linkedin;
+    const axe = id => libelleAxe(config.axes.find(a => a.id === id), profil);
+    const fort = resultat.detail.reduce((max, d) => (d.pct > max.pct ? d : max), resultat.detail[0]);
+    const faible = resultat.faibles[0];
+    const points = [];
+    if (fort.pct > 0) points.push(remplir(li.ligne_fort, { axe: axe(fort.id), pct: fort.pct }));
+    if (faible.id !== fort.id && faible.pct < 100) points.push(remplir(li.ligne_chantier, { axe: axe(faible.id), pct: faible.pct }));
+    const texte = remplir(li.modele, {
+      accroche: remplir(resultat.niveau.accroche_linkedin, { score: resultat.score }),
+      points: points.join('\n'),
+      enseignement: li.enseignements[faible.id][profil],
+      url: config.url_app,
+      hashtags: li.hashtags
+    });
+    return typo(texte.replace(/\n{3,}/g, '\n\n').trim());
   }
 
   // Typographie française à l'affichage : apostrophe courbe, espaces fines insécables.
@@ -1372,10 +1534,17 @@ main { flex: 1; }
   // (toast + bouton), annoncée aux lecteurs d'écran, et le texte copié reste visible.
   let minuteurToast = null;
   let minuteurBouton = null;
+  let toastActif = null;
 
+  // Le toast s'affiche dans la fenêtre de partage ouverte s'il y en a une (sinon il serait sous son fond).
   function afficherToast(icone, message, annonce) {
-    const toast = $('toast');
+    const toast = document.querySelector('dialog[open] .toast') || $('toast');
     clearTimeout(minuteurToast);
+    if (toastActif && toastActif !== toast) {
+      toastActif.classList.remove('is-visible');
+      toastActif.replaceChildren();
+    }
+    toastActif = toast;
     toast.classList.remove('is-visible');
     toast.replaceChildren();
     // Contenu inséré un instant après avoir vidé la région : nouvelle annonce même si le message est identique.
@@ -1398,6 +1567,20 @@ main { flex: 1; }
     }, 50);
   }
 
+  // Copie confirmée à l'écran et annoncée : le seul chemin autorisé vers le presse-papiers.
+  async function copierAvecConfirmation(texte) {
+    let copie = false;
+    try {
+      await navigator.clipboard.writeText(texte);
+      copie = true;
+    } catch (e) {
+      copie = false;
+    }
+    if (copie) afficherToast(ICONES.juste, 'Texte copié ! Collez-le dans votre post.', `Contenu copié : ${texte}`);
+    else afficherToast(ICONES.faux, 'Copie impossible : sélectionnez le texte affiché pour le copier.');
+    return copie;
+  }
+
   // LinkedIn sur ordinateur : lien non officiel qui pré-remplit le texte (sans effet sur mobile).
   // Ailleurs : liens officiels, qui n'acceptent que l'URL (l'aperçu vient de og-image.png).
   const LIENS_PARTAGE = {
@@ -1417,16 +1600,16 @@ main { flex: 1; }
     const valeurs = valeursModele(config, session.profil, resultatCourant);
     const texte = remplir(config.partage.texte, valeurs);
     const url = config.url_app;
-    partage = { texte, url, image: null };
-    $('partage-linkedin').href = surMobile() ? LIENS_PARTAGE.linkedin(url) : LIENS_PARTAGE.linkedinTexte(`${texte} ${url}`);
+    partage = { texte, url, post: postLinkedIn(config, session.profil, resultatCourant), images: {} };
     $('partage-facebook').href = LIENS_PARTAGE.facebook(url);
     const objet = remplir(config.partage.mail_objet, valeurs);
     $('partage-mail').href = `mailto:?subject=${encodeURIComponent(objet)}&body=${encodeURIComponent(`${texte}\r\n\r\n${url}`)}`;
 
-    // Image Instagram préparée à l'avance : le partage natif doit suivre le clic de près.
+    // Image préparée à l'avance : le partage natif doit suivre le clic de près.
     const courant = partage;
     setTimeout(() => {
-      if (partage === courant && resultatCourant) imagePartage().catch(() => { courant.image = null; });
+      const format = partageFichiersPossible() ? 'story' : 'post';
+      if (partage === courant && resultatCourant) imagePartage(format).catch(() => { delete courant.images[format]; });
     }, 1500);
   }
 
@@ -1438,30 +1621,116 @@ main { flex: 1; }
     bouton.title = libelle;
   }
 
-  $('partage-linkedin').addEventListener('click', event => {
-    suivre('partage_linkedin');
-    // Mobile : la feuille de partage du téléphone transmet texte et lien à l'app LinkedIn.
-    if (!(surMobile() && navigator.share)) return;
-    event.preventDefault();
-    navigator.share({ title: 'Check-up IA by Manica', text: partage.texte, url: partage.url }).catch(e => {
-      if (e && e.name !== 'AbortError') window.open(LIENS_PARTAGE.linkedin(partage.url), '_blank', 'noopener');
+  // Fenêtres de partage : fermeture par Échap (natif), bouton « Fermer » ou clic sur le fond.
+  for (const dialogue of document.querySelectorAll('dialog.sheet')) {
+    dialogue.addEventListener('click', event => {
+      if (event.target === dialogue || event.target.closest('[data-fermer]')) dialogue.close();
     });
-  });
-  $('partage-facebook').addEventListener('click', () => suivre('partage_facebook'));
-  $('partage-mail').addEventListener('click', () => suivre('partage_mail'));
+  }
 
-  // Instagram n'a pas de lien de partage web : on partage une image du score.
-  $('partage-instagram').addEventListener('click', async () => {
-    suivre('partage_instagram');
-    let fichier;
+  // Le téléphone sait-il partager des fichiers (vers Instagram, la galerie photo…) ?
+  function partageFichiersPossible() {
     try {
-      fichier = await imagePartage();
+      return Boolean(navigator.canShare && navigator.canShare({ files: [new File([''], 'test.png', { type: 'image/png' })] }));
     } catch (e) {
-      partage.image = null;
-      afficherToast(ICONES.faux, 'L\'image n\'a pas pu être créée. Réessayez.');
+      return false;
+    }
+  }
+
+  // --- LinkedIn : post pré-rédigé, modifiable avant publication ---
+  $('partage-linkedin').addEventListener('click', () => {
+    $('dl-texte').value = partage.post;
+    $('dl-copier').textContent = 'Copier le texte';
+    $('dl-aide').textContent = typo(surMobile() && navigator.share
+      ? 'Choisissez LinkedIn dans le menu de partage qui va s\'ouvrir.'
+      : 'LinkedIn s\'ouvre dans un nouvel onglet, avec ce texte déjà rempli.');
+    $('dialogue-linkedin').showModal();
+  });
+
+  $('dl-publier').addEventListener('click', () => {
+    suivre('partage_linkedin');
+    const texte = $('dl-texte').value.trim() || partage.post;
+    if (surMobile() && navigator.share) {
+      navigator.share({ text: texte }).catch(e => {
+        if (e && e.name !== 'AbortError') window.open(LIENS_PARTAGE.linkedin(partage.url), '_blank', 'noopener');
+      });
       return;
     }
-    if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
+    window.open(LIENS_PARTAGE.linkedinTexte(texte), '_blank', 'noopener');
+    $('dialogue-linkedin').close();
+  });
+
+  $('dl-copier').addEventListener('click', async () => {
+    suivre('partage_copie');
+    const bouton = $('dl-copier');
+    if (await copierAvecConfirmation($('dl-texte').value)) {
+      bouton.textContent = typo('Copié !');
+      clearTimeout(minuteurBouton);
+      minuteurBouton = setTimeout(() => { bouton.textContent = 'Copier le texte'; }, 2000);
+    } else {
+      $('dl-texte').select();
+    }
+  });
+
+  $('dl-image').addEventListener('click', () => {
+    partagerImage('post', 'Image téléchargée : ajoutez-la à votre post LinkedIn.');
+  });
+
+  // --- Instagram : pas de lien de partage web, on publie une image du score ---
+  let formatInstagram = null;
+  let apercuUrl = null;
+
+  $('partage-instagram').addEventListener('click', () => {
+    const natif = partageFichiersPossible();
+    // Format par défaut : story sur mobile, publication sur ordinateur (Instagram n'y publie pas de stories).
+    if (!formatInstagram) {
+      formatInstagram = natif ? 'story' : 'post';
+      document.querySelector(`input[name="format-image"][value="${formatInstagram}"]`).checked = true;
+    }
+    $('di-action').textContent = typo(natif ? 'Partager l\'image' : 'Télécharger l\'image');
+    $('di-ouvrir').hidden = natif;
+    $('di-etapes-mobile').hidden = !natif;
+    $('di-etapes-bureau').hidden = natif;
+    $('dialogue-instagram').dataset.natif = String(natif);
+    $('dialogue-instagram').showModal();
+    afficherApercu();
+  });
+
+  for (const radio of document.querySelectorAll('input[name="format-image"]')) {
+    radio.addEventListener('change', () => {
+      formatInstagram = radio.value;
+      afficherApercu();
+    });
+  }
+
+  async function afficherApercu() {
+    const format = formatInstagram;
+    const bureau = $('dialogue-instagram').dataset.natif !== 'true';
+    $('di-note-story').hidden = !(bureau && format === 'story');
+    $('di-apercu').hidden = true;
+    $('di-attente').hidden = false;
+    const fichier = await fichierImage(format);
+    if (!fichier || format !== formatInstagram) return;
+    if (apercuUrl) URL.revokeObjectURL(apercuUrl);
+    apercuUrl = URL.createObjectURL(fichier);
+    const img = $('di-apercu');
+    img.width = 1080;
+    img.height = FORMATS_IMAGE[format].hauteur;
+    img.src = apercuUrl;
+    img.hidden = false;
+    $('di-attente').hidden = true;
+  }
+
+  $('di-action').addEventListener('click', () => {
+    suivre('partage_instagram');
+    partagerImage(formatInstagram, 'Image téléchargée : publiez-la depuis Instagram.');
+  });
+
+  // Feuille de partage du téléphone si possible (Instagram, « Enregistrer l'image »…), sinon téléchargement.
+  async function partagerImage(format, messageTelechargement) {
+    const fichier = await fichierImage(format);
+    if (!fichier) return;
+    if (partageFichiersPossible()) {
       try {
         await navigator.share({ files: [fichier], title: 'Mon check-up IA' });
         return;
@@ -1470,12 +1739,22 @@ main { flex: 1; }
       }
     }
     telecharger(fichier);
-    afficherToast(ICONES.juste, 'Image de votre score téléchargée : publiez-la depuis Instagram.');
-  });
+    afficherToast(ICONES.juste, messageTelechargement);
+  }
 
-  function imagePartage() {
-    if (!partage.image) partage.image = dessinerImage(resultatCourant, session.profil);
-    return partage.image;
+  async function fichierImage(format) {
+    try {
+      return await imagePartage(format);
+    } catch (e) {
+      delete partage.images[format];
+      afficherToast(ICONES.faux, 'L\'image n\'a pas pu être créée. Réessayez.');
+      return null;
+    }
+  }
+
+  function imagePartage(format) {
+    if (!partage.images[format]) partage.images[format] = dessinerImage(resultatCourant, session.profil, format);
+    return partage.images[format];
   }
 
   function chargerImage(src) {
@@ -1487,17 +1766,23 @@ main { flex: 1; }
     });
   }
 
-  // Image 1080×1920 (format story), dessinée dans le navigateur : rien n'est envoyé.
-  async function dessinerImage(resultat, profil) {
+  // Mise en page des images (px). Story : marges de 250 px en haut et en bas, masquées par l'interface d'Instagram.
+  const FORMATS_IMAGE = {
+    story: { hauteur: 1920, logo: 250, logoLargeur: 560, libelle: 570, taille: 380, score: 870, niveau: 990, axes: 1090, pas: 92, ecg: 1558, invite: 1622, adresse: 1674 },
+    post: { hauteur: 1350, logo: 80, logoLargeur: 480, libelle: 340, taille: 300, score: 600, niveau: 700, axes: 790, pas: 80, ecg: 1192, invite: 1262, adresse: 1310 }
+  };
+
+  // Image du score (story 1080×1920 ou publication 1080×1350), dessinée dans le navigateur : rien n'est envoyé.
+  async function dessinerImage(resultat, profil, format) {
+    const F = FORMATS_IMAGE[format];
     await document.fonts.load('800 100px Manrope');
     const logo = await chargerImage('img/logo-manica-baseline-clair-900.png');
     const L = 1080;
-    const H = 1920;
     const marge = 96;
     const utile = L - 2 * marge;
     const canvas = document.createElement('canvas');
     canvas.width = L;
-    canvas.height = H;
+    canvas.height = F.hauteur;
     const ctx = canvas.getContext('2d');
     const police = (graisse, taille) => `${graisse} ${taille}px Manrope, system-ui, sans-serif`;
     const barre = (x, y, largeur, hauteur, couleur) => {
@@ -1509,28 +1794,27 @@ main { flex: 1; }
     };
 
     ctx.fillStyle = '#101B33';
-    ctx.fillRect(0, 0, L, H);
-    // Marges hautes et basses de 250 px : zones masquées par l'interface des stories.
-    ctx.drawImage(logo, marge, 250, 560, 560 * logo.height / logo.width);
+    ctx.fillRect(0, 0, L, F.hauteur);
+    ctx.drawImage(logo, marge, F.logo, F.logoLargeur, F.logoLargeur * logo.height / logo.width);
 
     ctx.fillStyle = '#BCC5D6';
     ctx.font = police(700, 56);
-    ctx.fillText('Mon check-up IA', marge, 570);
+    ctx.fillText('Mon check-up IA', marge, F.libelle);
 
     const score = String(resultat.score);
     ctx.fillStyle = '#F7F5F1';
-    ctx.font = police(800, 380);
-    ctx.fillText(score, marge - 12, 870);
+    ctx.font = police(800, F.taille);
+    ctx.fillText(score, marge - 12, F.score);
     const largeurScore = ctx.measureText(score).width;
     ctx.fillStyle = '#BCC5D6';
     ctx.font = police(700, 88);
-    ctx.fillText('/100', marge - 12 + largeurScore + 18, 870);
+    ctx.fillText('/100', marge - 12 + largeurScore + 18, F.score);
 
     ctx.fillStyle = '#F7F5F1';
     ctx.font = police(800, 76);
-    ctx.fillText(`Niveau ${resultat.niveau.nom}`, marge, 990);
+    ctx.fillText(`Niveau ${resultat.niveau.nom}`, marge, F.niveau);
 
-    let y = 1090;
+    let y = F.axes;
     for (const d of resultat.detail) {
       const axe = config.axes.find(a => a.id === d.id);
       ctx.fillStyle = '#F7F5F1';
@@ -1542,7 +1826,7 @@ main { flex: 1; }
       ctx.textAlign = 'left';
       barre(marge, y + 22, utile, 18, '#1E2B4A');
       if (d.pct > 0) barre(marge, y + 22, utile * d.pct / 100, 18, '#F7F5F1');
-      y += 92;
+      y += F.pas;
     }
 
     ctx.strokeStyle = 'rgba(247, 245, 241, .85)';
@@ -1550,13 +1834,14 @@ main { flex: 1; }
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(0, 1558);
-    [[640, 1558], [654, 1566], [678, 1522], [704, 1590], [720, 1558], [L, 1558]].forEach(([px, py]) => ctx.lineTo(px, py));
+    ctx.moveTo(0, F.ecg);
+    [[640, 0], [654, 8], [678, -30], [704, 26], [720, 0]].forEach(([px, dy]) => ctx.lineTo(px, F.ecg + dy));
+    ctx.lineTo(L, F.ecg);
     ctx.stroke();
 
     ctx.fillStyle = '#BCC5D6';
     ctx.font = police(500, 38);
-    ctx.fillText('Faites le test, gratuit et sans inscription :', marge, 1622);
+    ctx.fillText('Faites le test, gratuit et sans inscription :', marge, F.invite);
     const adresse = config.url_app.replace(/^https:\/\//, '').replace(/\/$/, '');
     let taille = 44;
     do {
@@ -1564,10 +1849,10 @@ main { flex: 1; }
       taille -= 2;
     } while (ctx.measureText(adresse).width > utile && taille > 24);
     ctx.fillStyle = '#E8874A';
-    ctx.fillText(adresse, marge, 1674);
+    ctx.fillText(adresse, marge, F.adresse);
 
     const blob = await new Promise((ok, ko) => canvas.toBlob(b => (b ? ok(b) : ko(new Error('toBlob'))), 'image/png'));
-    return new File([blob], 'check-up-ia-manica.png', { type: 'image/png' });
+    return new File([blob], `check-up-ia-manica-${format}.png`, { type: 'image/png' });
   }
 
   function telecharger(fichier) {
@@ -1581,18 +1866,14 @@ main { flex: 1; }
     setTimeout(() => URL.revokeObjectURL(url), 10000);
   }
 
+  $('partage-facebook').addEventListener('click', () => suivre('partage_facebook'));
+  $('partage-mail').addEventListener('click', () => suivre('partage_mail'));
+
   $('partage-copier').addEventListener('click', async () => {
     if (!partage) return;
     suivre('partage_copie');
     const aCopier = `${partage.texte} ${partage.url}`;
-    let copie = false;
-    try {
-      await navigator.clipboard.writeText(aCopier);
-      copie = true;
-    } catch (e) {
-      copie = false;
-    }
-
+    const copie = await copierAvecConfirmation(aCopier);
     $('partage-libelle').textContent = typo(copie
       ? 'Texte copié dans votre presse-papiers :'
       : 'Copie impossible. Sélectionnez ce texte pour le copier :');
@@ -1600,14 +1881,10 @@ main { flex: 1; }
     $('lien-linkedin').href = LIENS_PARTAGE.linkedin(partage.url);
     $('partage-panneau').hidden = false;
     $('partage-panneau').scrollIntoView({ block: 'nearest', behavior: mouvementReduit ? 'auto' : 'smooth' });
-
     if (copie) {
       majBoutonCopier(true);
       clearTimeout(minuteurBouton);
       minuteurBouton = setTimeout(() => majBoutonCopier(false), 2000);
-      afficherToast(ICONES.juste, 'Texte copié ! Collez-le dans votre post.', `Contenu copié : ${aCopier}`);
-    } else {
-      afficherToast(ICONES.faux, 'Copie impossible : le texte à copier est affiché sous les icônes.');
     }
   });
 

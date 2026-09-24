@@ -2,7 +2,7 @@
 
 > Handoff doc pour Claude Code. Source de vérité pour le code = le repo Git.
 > À mettre à jour à chaque déploiement, pas seulement en fin de projet.
-> Dernière mise à jour : 24/09/2026 — v1.2 (logo, bascule clair/sombre, GoatCounter, partage par icônes).
+> Dernière mise à jour : 24/09/2026 — v1.3 (logo, bascule clair/sombre, GoatCounter, partage LinkedIn et Instagram guidés).
 
 ---
 
@@ -110,20 +110,22 @@ LinkedIn met l'aperçu en cache : après changement de `og-image.png`, forcer le
 - Le service worker ignore les requêtes d'autres origines : rien de GoatCounter n'est mis en cache par l'app.
 - GoatCounter ne compte pas `localhost` (comportement du script) : les tests locaux ne polluent pas les statistiques.
 
-### Partage (v1.2 : une icône par réseau)
-Zone « Partager mon score » sous le bloc CTA : 5 boutons ronds de 52 px, `aria-label` + `title` explicites, pictogrammes monochromes (`currentColor`, donc justes en clair et en sombre). LinkedIn en premier et en fond plein (prioritaire). Pictogrammes LinkedIn, Facebook, Instagram : paquet simple-icons (licence CC0), tracés intégrés dans le HTML, aucun appel externe.
+### Partage (v1.3)
+Zone « Partager mon score » sous le bloc CTA : 5 boutons ronds de 52 px, `aria-label` + `title` explicites, pictogrammes monochromes (`currentColor`, justes en clair et en sombre). LinkedIn en premier et en fond plein (prioritaire). Pictogrammes LinkedIn, Facebook, Instagram : paquet simple-icons (licence CC0), tracés intégrés dans le HTML, aucun appel externe.
 
-| Icône | Ordinateur | Mobile (pointeur tactile) |
-|---|---|---|
-| LinkedIn | `linkedin.com/feed/?shareActive=true&text=…` : éditeur de post **pré-rempli** avec le texte + l'URL (lien non officiel, ne marche que sur ordinateur) | feuille de partage du téléphone (`navigator.share`, texte + URL → app LinkedIn) ; sans Web Share : `sharing/share-offsite/?url=` (officiel, URL seule) |
-| Facebook | `facebook.com/sharer/sharer.php?u=` (officiel, URL seule : Facebook interdit le texte pré-rempli) | idem |
-| Instagram | pas de lien de partage web : **image du score** 1080×1920 (format story) dessinée en canvas, **téléchargée** + toast explicatif | la même image passée à la feuille de partage (`navigator.share({ files })`, Instagram y figure s'il est installé) ; sinon téléchargement |
-| E-mail | `mailto:?subject=…&body=…` (objet `partage.mail_objet`, corps = texte + URL), destinataire au choix | idem |
-| Copier | presse-papiers **toujours confirmé** (voir ci-dessous) | idem |
+| Icône | Comportement |
+|---|---|
+| LinkedIn | ouvre la fenêtre **« Votre post LinkedIn »** : post complet pré-rédigé à partir du résultat, **modifiable** (textarea). « Publier sur LinkedIn » : sur ordinateur, `feed/?shareActive=true&text=` ouvre l'éditeur LinkedIn pré-rempli avec le texte modifié (lien non officiel) ; sur mobile, feuille de partage du téléphone (texte → app LinkedIn), repli `share-offsite`. « Copier le texte » (confirmé). Lien « enregistrez l'image de votre score » (format publication) à joindre au post. |
+| Facebook | `facebook.com/sharer/sharer.php?u=` (officiel, URL seule : Facebook interdit le texte pré-rempli) |
+| Instagram | ouvre la fenêtre **« Partager sur Instagram »** : aperçu de l'image, choix **Story** (1080×1920) / **Publication** (1080×1350), défaut story sur mobile et publication sur ordinateur (Instagram n'y publie pas de stories). Mobile (partage de fichiers possible) : « Partager l'image » → feuille de partage (Instagram, « Enregistrer l'image ») + étapes. Ordinateur : « Télécharger l'image » + « Ouvrir Instagram » + 3 étapes, et une note si « Story » est choisi. |
+| E-mail | `mailto:?subject=…&body=…` (objet `partage.mail_objet`, corps = texte court + URL) |
+| Copier | presse-papiers **toujours confirmé** (voir ci-dessous) |
 
-- Copie : toast `#toast` 3 s (« Texte copié ! Collez-le dans votre post. »), région `role="status" aria-live="polite"` présente dès le chargement, texte copié complet annoncé aux lecteurs d'écran (`.sr-only`), couleurs inversées `--fill`/`--on-fill` (15,7:1 dans les deux modes) ; icône qui passe à une coche verte + `aria-label` « Texte copié » pendant 2 s ; panneau `#partage-panneau` qui reste affiché avec le texte exact copié et un lien « Ouvrir LinkedIn », défilé au-dessus du toast ; échec : toast « Copie impossible… », pas d'état « copié », texte proposé à la sélection.
-- Image Instagram : préparée en arrière-plan 1,5 s après l'affichage du résultat (le partage natif doit suivre le clic de près, sinon Safari le refuse) ; logo `img/logo-manica-baseline-clair-900.png` (pas de `ctx.filter`, absent de Safari < 18) ; marges de 250 px en haut et en bas (zones couvertes par l'interface des stories) ; rien n'est envoyé.
-- Textes : `config.partage.titre`, `.texte`, `.mail_objet`.
+- **Post LinkedIn** (`postLinkedIn()`, logique pure, testée) : accroche par niveau (`niveaux[].accroche_linkedin`, score dans la 1re ligne, visible avant « voir plus ») ; présentation du test ; « Mon point fort : axe (x %) » et « Mon prochain chantier : axe » (sans pourcentage, pour ne pas exposer un 0 %) ; « Ce que j'en retiens » tiré de l'axe le plus faible (`partage.linkedin.enseignements[axe][profil]`) ; invitation ; lien ; 3 hashtags en fin. ~550 caractères. Lignes omises si sans objet (point fort à 0 %, chantier à 100 % ou identique au point fort). Modèle et textes dans `config.partage.linkedin`. Conçu avec le skill marketing `social` (accroche, retours à la ligne, hashtags en fin).
+- **Copie** : `copierAvecConfirmation()`, seul chemin vers le presse-papiers : toast 3 s annoncé (`role="status" aria-live="polite"`, texte copié complet en `.sr-only`), couleurs inversées `--fill`/`--on-fill` (15,7:1). Depuis l'icône : coche verte + `aria-label` « Texte copié » 2 s, et panneau `#partage-panneau` avec le texte exact et un lien « Ouvrir LinkedIn ». Depuis la fenêtre LinkedIn : bouton « Copié ! » 2 s. Échec : « Copie impossible… », rien de marqué comme copié.
+- **Fenêtres** : `<dialog>` natif (`showModal`), focus initial sur l'action principale (`autofocus`), fermeture par Échap, bouton « Fermer » ou clic sur le fond. **Chaque fenêtre a sa propre région live `.toast`** : un toast hors de la fenêtre serait masqué par son fond ; `afficherToast()` choisit celle de la fenêtre ouverte.
+- **Images** : dessinées en canvas dans le navigateur (`FORMATS_IMAGE` : mise en page story et publication), préparées 1,5 s après l'affichage du résultat (format par défaut de l'appareil) pour que la feuille de partage suive le clic de près ; logo `img/logo-manica-baseline-clair-900.png` (pas de `ctx.filter`, absent de Safari < 18) ; aperçu en `blob:` (autorisé dans `img-src`) ; rien n'est envoyé.
+- Textes : `config.partage.titre`, `.texte`, `.mail_objet`, `.linkedin.*`, et `niveaux[].accroche_linkedin`.
 - L'aperçu des liens LinkedIn et Facebook = `og-image.png` (statique : le score ne peut pas y figurer sans backend).
 
 ---
@@ -221,6 +223,7 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`
 ## 8. État d'avancement
 
 - ✅ v1.0 (24/09/2026) : app complète, PWA installable et hors ligne, 47 questions `a_valider`, config, icônes, image OG, validation automatisée, déployée sur GitHub Pages.
+- ✅ v1.3 (24/09/2026) : partage LinkedIn en post complet pré-rédigé (personnalisé, modifiable, copie confirmée, image jointe possible) et partage Instagram guidé (fenêtre avec aperçu, choix Story/Publication, étapes adaptées à l'appareil) au lieu d'un téléchargement brut. Testé : contenu du post (6 000 tirages + cas 0/100 et 100/100), publication avec le texte modifié, copie et toast dans la fenêtre, images story et publication (dimensions), format par défaut, Échap, focus, clair/sombre, mobile/ordinateur. Toujours à vérifier sur téléphone : la feuille de partage native.
 - ✅ v1.2 (24/09/2026) : partage par icônes — LinkedIn (prioritaire, texte pré-rempli sur ordinateur), Facebook, Instagram (image du score générée dans le navigateur), e-mail, copie confirmée ; 4 nouveaux événements GoatCounter. Testé : liens par support, événements, copie + confirmation, image téléchargée et vérifiée (1080×1920), clair/sombre, mobile/ordinateur. Non testable en headless : la feuille de partage native (LinkedIn et Instagram sur mobile) — à vérifier sur téléphone.
 - ✅ v1.1.2 (24/09/2026) : correctif de transparence du partage — la copie dans le presse-papiers était de fait silencieuse (LinkedIn s'ouvrait aussitôt dans un nouvel onglet, le message restait en petit dans l'onglet quitté). Désormais : toast annoncé aux lecteurs d'écran, bouton « Copié ! », texte copié affiché, lien « Ouvrir LinkedIn » à la demande, message honnête en cas d'échec. Recherche globale : c'était le seul accès au presse-papiers du projet.
 - ✅ v1.1.1 (24/09/2026) : page vue GoatCounter déclenchée par l'app (voir §3) — plus d'erreur JS quand le stockage est bloqué.
@@ -269,6 +272,8 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`
 - **Cache GitHub Pages** ~10 min : prévenir Cédric qu'un changement peut tarder.
 - **Presse-papiers (et toute action discrète similaire)** : jamais d'écriture silencieuse. Chaque copie appelle `afficherToast()` juste après (confirmation visible + annonce `aria-live`), montre le texte copié, et gère l'échec sans prétendre avoir copié. Ne pas ouvrir d'onglet ou de fenêtre dans le même geste : il masquerait la confirmation (et les popups ouverts après un `await` sont souvent bloqués). `validate.mjs` échoue si un `clipboard.write…` ou `execCommand('copy')` n'est pas suivi d'un `afficherToast(` dans les 40 lignes.
 - **Partage LinkedIn** : `feed/?shareActive=true&text=` n'est pas documenté par LinkedIn. S'il cesse de marcher (on arrive sur le fil sans éditeur), remplacer `LIENS_PARTAGE.linkedinTexte` par `LIENS_PARTAGE.linkedin` (officiel, URL seule) dans `preparerPartage()`.
+- **Toast et fenêtres** : un `<dialog>` ouvert est dans la couche supérieure ; tout message doit s'afficher dans sa propre région `.toast` (déjà géré par `afficherToast()`). Toute nouvelle fenêtre doit contenir la sienne.
+- **Post LinkedIn** : max 3 000 caractères, ~210 visibles avant « voir plus » ; garder le score dans la première ligne. `validate.mjs` le vérifie sur tous les tirages.
 - **Nouveau réseau de partage** : lien officiel si possible, pictogramme monochrome `currentColor`, `aria-label` + `title`, événement `partage_<réseau>` ajouté à `TITRES_EVENEMENTS`, et jamais de copie presse-papiers implicite (règle ci-dessous).
 - **Wording formation vs accompagnement** : accompagnement par défaut.
 - **Noms d'outils IA** : jamais dans un énoncé ou une réponse sans vérification ; de préférence dans l'explication seulement.

@@ -1,5 +1,5 @@
 {
-  "_aide": "Paramètres modifiables sans toucher au code. Variables disponibles dans les modèles de texte : {score}, {niveau}, {profil}, {detail_axes}. Lancer node tools/validate.mjs après chaque modification.",
+  "_aide": "Paramètres modifiables sans toucher au code. Variables des modèles : {score}, {niveau}, {profil}, {detail_axes} (mail, partage) ; post LinkedIn : {accroche}, {points}, {enseignement}, {url}, {hashtags} ; lignes du post : {axe}, {pct}. Lancer node tools/validate.mjs après chaque modification.",
   "version": 1,
   "url_app": "https://manicalabs.github.io/Check-up-IA-by-Manica/",
   "contact": {
@@ -9,40 +9,66 @@
   "quiz": {
     "questions_par_axe": 4,
     "points_par_bonne_reponse": 5,
-    "statuts_publies": ["valide"],
+    "statuts_publies": [
+      "valide"
+    ],
     "mention_beta": "Version bêta : les questions sont en cours de relecture."
   },
   "profils": {
-    "perso": { "libelle": "Pour moi" },
-    "entreprise": { "libelle": "Pour mon entreprise" }
+    "perso": {
+      "libelle": "Pour moi"
+    },
+    "entreprise": {
+      "libelle": "Pour mon entreprise"
+    }
   },
   "axes": [
-    { "id": "fondamentaux", "libelle": "Fondamentaux" },
-    { "id": "usages", "libelle": "Usages concrets" },
-    { "id": "limites", "libelle": "Limites & fiabilité" },
-    { "id": "donnees", "libelle": "Données & sécurité" },
-    { "id": "entreprise", "libelle": "IA en entreprise", "libelle_perso": "IA au travail" }
+    {
+      "id": "fondamentaux",
+      "libelle": "Fondamentaux"
+    },
+    {
+      "id": "usages",
+      "libelle": "Usages concrets"
+    },
+    {
+      "id": "limites",
+      "libelle": "Limites & fiabilité"
+    },
+    {
+      "id": "donnees",
+      "libelle": "Données & sécurité"
+    },
+    {
+      "id": "entreprise",
+      "libelle": "IA en entreprise",
+      "libelle_perso": "IA au travail"
+    }
   ],
   "niveaux": [
     {
       "min": 0,
       "nom": "Découverte",
-      "message": "Vous démarrez : bonne nouvelle, les premiers gains sont souvent les plus rapides."
+      "message": "Vous démarrez : bonne nouvelle, les premiers gains sont souvent les plus rapides.",
+      "accroche_linkedin": "J'ai fait mon check-up IA : {score}/100. Il y a du chemin, et je sais maintenant par où commencer."
     },
     {
       "min": 40,
       "nom": "Curieux",
-      "message": "Vous avez les bases. L'enjeu maintenant : passer de l'usage ponctuel à l'usage utile."
+      "message": "Vous avez les bases. L'enjeu maintenant : passer de l'usage ponctuel à l'usage utile.",
+      "accroche_linkedin": "J'ai fait mon check-up IA : {score}/100. Les bases sont là. Le vrai enjeu : passer de l'usage ponctuel à l'usage utile."
     },
     {
       "min": 65,
       "nom": "Pratiquant",
-      "message": "Vous utilisez l'IA avec méthode. Prochaine étape : l'intégrer dans vos process."
+      "message": "Vous utilisez l'IA avec méthode. Prochaine étape : l'intégrer dans vos process.",
+      "accroche_linkedin": "J'ai fait mon check-up IA : {score}/100. J'utilise l'IA avec méthode, et le test m'a montré où progresser."
     },
     {
       "min": 85,
       "nom": "Avancé",
-      "message": "Solide. La question devient : comment en faire profiter toute l'équipe ?"
+      "message": "Solide. La question devient : comment en faire profiter toute l'équipe ?",
+      "accroche_linkedin": "J'ai fait mon check-up IA : {score}/100. Une bonne base, et une question qui reste : comment en faire profiter toute l'équipe ?"
     }
   ],
   "recommandations": {
@@ -117,6 +143,34 @@
   "partage": {
     "titre": "Partager mon score",
     "mail_objet": "Check-up IA : j'ai obtenu {score}/100, et vous ?",
-    "texte": "J'ai fait le Check-up IA by Manica : {score}/100, niveau {niveau}. 20 questions, 5 minutes, sans inscription. Et vous, où en êtes-vous avec l'IA ?"
+    "texte": "J'ai fait le Check-up IA by Manica : {score}/100, niveau {niveau}. 20 questions, 5 minutes, sans inscription. Et vous, où en êtes-vous avec l'IA ?",
+    "linkedin": {
+      "modele": "{accroche}\n\nLe Check-up IA by Manica : 20 questions sur 5 axes, 5 minutes, sans inscription.\n\n{points}\n\nCe que j'en retiens : {enseignement}\n\nEt vous, où en êtes-vous vraiment avec l'IA ?\n👉 {url}\n\n{hashtags}",
+      "ligne_fort": "Mon point fort : {axe} ({pct} %)",
+      "ligne_chantier": "Mon prochain chantier : {axe}",
+      "hashtags": "#IA #IntelligenceArtificielle #Productivité",
+      "enseignements": {
+        "fondamentaux": {
+          "perso": "comprendre comment un modèle construit ses réponses change la façon de s'en servir.",
+          "entreprise": "une équipe qui sait ce qu'est vraiment un modèle de langage fait de meilleurs choix d'usage."
+        },
+        "usages": {
+          "perso": "l'IA fait gagner du temps sur des tâches bien choisies, avec des consignes précises. Pas partout.",
+          "entreprise": "tout ne relève pas de l'IA générative : le gain vient d'abord du choix des bons cas d'usage."
+        },
+        "limites": {
+          "perso": "une réponse sûre d'elle n'est pas une réponse juste. Vérifier fait partie du travail.",
+          "entreprise": "ce qui sort d'une IA se vérifie avant d'être publié ou envoyé. C'est une règle, pas une option."
+        },
+        "donnees": {
+          "perso": "ce que je colle dans un outil IA ne reste pas forcément chez moi. Autant le savoir avant.",
+          "entreprise": "savoir quelles données vont dans quel outil, et où elles sont hébergées, n'a rien d'un détail."
+        },
+        "entreprise": {
+          "perso": "utiliser l'IA au travail, c'est aussi assumer tout ce qui part en son nom.",
+          "entreprise": "sans règles claires (qui choisit, qui valide, qui répond), l'IA reste une série de tests isolés."
+        }
+      }
+    }
   }
 }

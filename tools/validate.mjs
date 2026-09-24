@@ -41,7 +41,7 @@ for (const f of ['sw.js', 'tools/validate.mjs']) {
 // --- Logique pure extraite d'index.html ---
 const logique = scripts.join('\n').match(/\/\/ === LOGIQUE PURE[^\n]*\n([\s\S]*?)\/\/ === FIN LOGIQUE PURE ===/);
 if (!logique) throw new Error('Marqueurs LOGIQUE PURE introuvables dans index.html');
-const L = new Function(`${logique[1]}; return { melanger, tirerQuestions, choixAffiches, calculerResultat, niveauPour, remplir, lienMail, valeursModele, typo };`)();
+const L = new Function(`${logique[1]}; return { melanger, tirerQuestions, choixAffiches, calculerResultat, niveauPour, remplir, lienMail, valeursModele, postLinkedIn, typo };`)();
 
 // --- config.json ---
 const axesIds = config.axes.map(a => a.id);
@@ -63,6 +63,19 @@ for (const p of profils) {
   if (!config.cta.positionnement[p]) erreur(`config.json : cta.positionnement.${p} manquant`);
 }
 for (const k of ['titre', 'texte', 'mail_objet']) if (!config.partage?.[k]) erreur(`config.json : partage.${k} manquant`);
+// Post LinkedIn : textes présents et variables autorisées
+const li = config.partage?.linkedin || {};
+const variablesDe = t => [...String(t || '').matchAll(/\{(\w+)\}/g)].map(m => m[1]);
+for (const k of ['modele', 'ligne_fort', 'ligne_chantier', 'hashtags']) if (!li[k]) erreur(`config.json : partage.linkedin.${k} manquant`);
+for (const v of variablesDe(li.modele)) if (!['accroche', 'points', 'enseignement', 'url', 'hashtags'].includes(v)) erreur(`config.json : variable inconnue {${v}} dans partage.linkedin.modele`);
+for (const k of ['ligne_fort', 'ligne_chantier']) for (const v of variablesDe(li[k])) if (!['axe', 'pct'].includes(v)) erreur(`config.json : variable inconnue {${v}} dans partage.linkedin.${k}`);
+for (const n of config.niveaux) {
+  if (!n.accroche_linkedin) erreur(`config.json : accroche_linkedin manquante pour le niveau ${n.nom}`);
+  for (const v of variablesDe(n.accroche_linkedin)) if (v !== 'score') erreur(`config.json : variable inconnue {${v}} dans l'accroche LinkedIn ${n.nom}`);
+}
+for (const axe of config.axes.map(a => a.id)) for (const p of Object.keys(config.profils)) {
+  if (!li.enseignements?.[axe]?.[p]) erreur(`config.json : partage.linkedin.enseignements.${axe}.${p} manquant`);
+}
 if (!/^https:\/\//.test(config.contact.lien_rdv)) erreur('config.json : lien_rdv doit être une URL https');
 if (!/^[^@\s]+@[^@\s]+\.[a-z]+$/i.test(config.contact.email)) erreur('config.json : email invalide');
 const variables = new Set(['score', 'niveau', 'profil', 'detail_axes']);
@@ -119,6 +132,18 @@ for (const p of profils) {
   }
 }
 
+// --- Post LinkedIn généré ---
+let postsVerifies = 0;
+function verifierPost(post, r, p) {
+  postsVerifies++;
+  const ref = `post LinkedIn (${p}, ${r.score}/100)`;
+  if (/\{\w+\}/.test(post)) erreur(`${ref} : variable non remplacée\n${post}`);
+  if (post.length > 3000) erreur(`${ref} : ${post.length} caractères (max LinkedIn 3000)`);
+  if (!post.split('\n')[0].includes(`${r.score}/100`)) erreur(`${ref} : le score n'est pas dans la première ligne`);
+  if (!post.includes(config.url_app)) erreur(`${ref} : lien du test absent`);
+  if (/\n{3,}/.test(post)) erreur(`${ref} : lignes vides en trop`);
+}
+
 // --- Simulation de tirages ---
 const questionsParId = new Map(banque.questions.map(q => [q.id, q]));
 let graine = 42;
@@ -154,11 +179,25 @@ if (!erreurs.length) {
       if (/\{\w+\}/.test(mail)) erreur(`mail : variable non remplacée\n${mail}`);
       const partage = L.remplir(config.partage.texte, L.valeursModele(config, p, r));
       if (/\{\w+\}/.test(partage)) erreur('partage : variable non remplacée');
+      verifierPost(L.postLinkedIn(config, p, r), r, p);
       if (erreurs.length) break;
     }
   }
   const jamais = banque.questions.filter(q => statuts.includes(q.statut) && !vus.has(q.id)).map(q => q.id);
   if (jamais.length) erreur(`questions jamais tirées : ${jamais.join(', ')}`);
+
+  // Cas extrêmes du post LinkedIn : tout juste, tout faux
+  for (const p of profils) {
+    const tirage = L.tirerQuestions(banque.questions, config.axes, p, parAxe, statuts, rnd);
+    const items = tirage.map(q => ({ id: q.id, ordre: [0, 1, 2, 3] }));
+    for (const reponse of [0, 1]) {
+      const r = L.calculerResultat(items, items.map(() => reponse), questionsParId, config.axes, config);
+      const post = L.postLinkedIn(config, p, r);
+      verifierPost(post, r, p);
+      if (r.score === 100 && /chantier/i.test(post)) erreur(`post LinkedIn ${p} 100/100 : « prochain chantier » affiché à tort`);
+      if (r.score === 0 && /point fort/i.test(post)) erreur(`post LinkedIn ${p} 0/100 : « point fort » affiché à tort`);
+    }
+  }
 
   // Scores limites
   for (const [score, niveau] of [[0, 'Découverte'], [35, 'Découverte'], [40, 'Curieux'], [60, 'Curieux'], [65, 'Pratiquant'], [80, 'Pratiquant'], [85, 'Avancé'], [100, 'Avancé']]) {
@@ -216,6 +255,7 @@ for (const p of profils) {
   const detail = axesIds.map(a => `${a} ${banque.questions.filter(q => q.axe === a && (q.profil === 'tous' || q.profil === p)).length}`).join(', ');
   console.log(`  ${p} : ${detail}`);
 }
+console.log(`Posts LinkedIn vérifiés : ${postsVerifies}`);
 console.log(`Bonne réponse = choix le plus long : ${Math.round(partPlusLongue * 100)} %, le plus court : ${Math.round(partPlusCourte * 100)} %`);
 avertissements.forEach(a => console.log(`⚠ ${a}`));
 if (erreurs.length) {
