@@ -622,7 +622,52 @@ main { flex: 1; }
   gap: 8px 20px;
   margin-top: 18px;
 }
-.share-status { flex-basis: 100%; font-size: .9375rem; color: var(--fg-muted); }
+/* Texte copié : reste affiché pour que l'on sache toujours ce que contient le presse-papiers. */
+.share-panel {
+  margin-top: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  scroll-margin-bottom: 104px; /* reste visible au-dessus du toast */
+}
+.share-label { font-size: .9375rem; font-weight: 700; color: var(--fg-strong); }
+.share-text {
+  margin-top: 8px;
+  padding-left: 12px;
+  border-left: 3px solid var(--line);
+  font-size: .9375rem;
+  color: var(--fg);
+  user-select: all;
+  -webkit-user-select: all;
+}
+.share-panel .text-btn { margin-top: 6px; }
+
+/* Confirmation temporaire (toast). Couleurs inversées : navy/paper en clair, paper/navy en sombre (15,7:1). */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: var(--fill);
+  color: var(--on-fill);
+  font-weight: 700;
+  line-height: 1.35;
+  box-shadow: 0 8px 24px rgba(11, 19, 38, .28);
+  opacity: 0;
+  transform: translate(-50%, 12px);
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+}
+.toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+.toast svg { width: 20px; height: 20px; flex: none; }
 
 /* Erreur */
 .error-title { padding-top: 28px; font-size: 1.75rem; font-weight: 800; }
@@ -762,7 +807,11 @@ main { flex: 1; }
     <div class="after">
       <button type="button" class="text-btn" id="btn-partager"></button>
       <button type="button" class="text-btn" id="btn-refaire">Refaire le test</button>
-      <p class="share-status" id="statut-partage" role="status" hidden></p>
+    </div>
+    <div class="share-panel" id="partage-panneau" hidden>
+      <p class="share-label" id="partage-libelle"></p>
+      <p class="share-text" id="partage-texte"></p>
+      <a class="text-btn" id="lien-linkedin" href="https://www.linkedin.com/" target="_blank" rel="noopener">Ouvrir LinkedIn</a>
     </div>
   </section>
 
@@ -781,6 +830,9 @@ main { flex: 1; }
   <p id="mention-beta" hidden></p>
   <button type="button" class="text-btn" id="btn-installer" hidden>Installer l’application</button>
 </footer>
+
+<!-- Région live présente dès le chargement : son contenu est annoncé aux lecteurs d'écran. -->
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <noscript><p class="wrap">Le Check-up IA a besoin de JavaScript pour calculer votre score dans votre navigateur.</p></noscript>
 
@@ -1235,8 +1287,7 @@ main { flex: 1; }
     $('cta-mail').textContent = config.cta.bouton_mail;
     $('cta-mail').href = lienMail(config, profil, resultat);
     $('cta-positionnement').textContent = typo(config.cta.positionnement[profil]);
-    $('btn-partager').textContent = config.partage.bouton;
-    $('statut-partage').hidden = true;
+    reinitialiserPartage();
 
     afficher('ecran-resultat');
 
@@ -1263,6 +1314,43 @@ main { flex: 1; }
   $('cta-rdv').addEventListener('click', () => suivre('clic_rdv'));
   $('cta-mail').addEventListener('click', () => suivre('clic_mail'));
 
+  // --- Partage ---
+  // Règle : toute écriture dans le presse-papiers est confirmée à l'écran au moment où elle a lieu
+  // (toast + bouton), annoncée aux lecteurs d'écran, et le texte copié reste visible.
+  let minuteurToast = null;
+  let minuteurBouton = null;
+
+  function afficherToast(icone, message, annonce) {
+    const toast = $('toast');
+    clearTimeout(minuteurToast);
+    toast.classList.remove('is-visible');
+    toast.replaceChildren();
+    // Contenu inséré un instant après avoir vidé la région : nouvelle annonce même si le message est identique.
+    minuteurToast = setTimeout(() => {
+      const texte = document.createElement('span');
+      texte.textContent = typo(message);
+      toast.innerHTML = icone;
+      toast.append(texte);
+      if (annonce) {
+        const complement = document.createElement('span');
+        complement.className = 'sr-only';
+        complement.textContent = ` ${annonce}`;
+        toast.append(complement);
+      }
+      toast.classList.add('is-visible');
+      minuteurToast = setTimeout(() => {
+        toast.classList.remove('is-visible');
+        minuteurToast = setTimeout(() => toast.replaceChildren(), 250);
+      }, 3000);
+    }, 50);
+  }
+
+  function reinitialiserPartage() {
+    clearTimeout(minuteurBouton);
+    $('btn-partager').textContent = config.partage.bouton;
+    $('partage-panneau').hidden = true;
+  }
+
   $('btn-partager').addEventListener('click', async () => {
     if (!resultatCourant) return;
     suivre('partage_linkedin');
@@ -1276,19 +1364,35 @@ main { flex: 1; }
         if (e && e.name === 'AbortError') return;
       }
     }
+
+    // Sans feuille de partage native : copie du texte. LinkedIn ne s'ouvre pas tout seul,
+    // un nouvel onglet masquerait la confirmation de copie.
+    const aCopier = `${texte} ${url}`;
     let copie = false;
     try {
-      await navigator.clipboard.writeText(`${texte} ${url}`);
+      await navigator.clipboard.writeText(aCopier);
       copie = true;
     } catch (e) {
       copie = false;
     }
-    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank', 'noopener');
-    const statut = $('statut-partage');
-    statut.textContent = copie
-      ? 'Texte copié : collez-le dans votre publication LinkedIn.'
-      : typo(`Texte à coller dans votre publication : « ${texte} »`);
-    statut.hidden = false;
+
+    $('partage-libelle').textContent = typo(copie
+      ? 'Texte copié dans votre presse-papiers :'
+      : 'Copie impossible. Sélectionnez ce texte pour le copier :');
+    $('partage-texte').textContent = aCopier;
+    $('lien-linkedin').href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+    $('partage-panneau').hidden = false;
+    $('partage-panneau').scrollIntoView({ block: 'nearest', behavior: mouvementReduit ? 'auto' : 'smooth' });
+
+    if (copie) {
+      const bouton = $('btn-partager');
+      bouton.textContent = typo('Copié !');
+      clearTimeout(minuteurBouton);
+      minuteurBouton = setTimeout(() => { bouton.textContent = config.partage.bouton; }, 2000);
+      afficherToast(ICONES.juste, 'Texte copié ! Collez-le dans votre post LinkedIn.', `Contenu copié : ${aCopier}`);
+    } else {
+      afficherToast(ICONES.faux, 'Copie impossible : le texte à copier est affiché sous le bouton.');
+    }
   });
 
   $('btn-refaire').addEventListener('click', () => {

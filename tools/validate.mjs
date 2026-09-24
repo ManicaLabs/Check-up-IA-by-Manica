@@ -183,6 +183,15 @@ for (const f of ['config.json', 'questions.json', 'index.html', 'manifest.webman
 }
 if (!html.includes(`content="${config.url_app}og-image.png"`)) avertissements.push('og:image ne pointe pas vers url_app de config.json');
 
+// --- Presse-papiers : toute écriture doit être confirmée à l'écran (afficherToast) juste après ---
+const lignesHtml = html.split('\n');
+lignesHtml.forEach((ligne, i) => {
+  if (!/clipboard\.write|execCommand\(\s*['"](copy|cut)/.test(ligne)) return;
+  const suite = lignesHtml.slice(i, i + 40).join('\n');
+  if (!/afficherToast\(/.test(suite)) erreur(`index.html:${i + 1} : écriture dans le presse-papiers sans confirmation visible (afficherToast) dans les 40 lignes suivantes`);
+});
+if (!/<div class="toast" id="toast" role="status" aria-live="polite"/.test(html)) erreur('index.html : la région live #toast doit exister dès le chargement');
+
 // --- Appels externes : seul GoatCounter est autorisé, script tiers verrouillé par SRI ---
 const ORIGINES_AUTORISEES = ['https://gc.zgo.at', 'https://manica.goatcounter.com'];
 for (const [balise] of html.matchAll(/<(?:script|link|img|iframe|source)\b[^>]*>/g)) {

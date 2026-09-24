@@ -2,7 +2,7 @@
 
 > Handoff doc pour Claude Code. Source de vérité pour le code = le repo Git.
 > À mettre à jour à chaque déploiement, pas seulement en fin de projet.
-> Dernière mise à jour : 24/09/2026 — v1.1.1 (logo, bascule clair/sombre, mesure d'audience GoatCounter).
+> Dernière mise à jour : 24/09/2026 — v1.1.2 (logo, bascule clair/sombre, GoatCounter, partage transparent).
 
 ---
 
@@ -111,7 +111,13 @@ LinkedIn met l'aperçu en cache : après changement de `og-image.png`, forcer le
 
 ### Partage
 - Mobile (pointeur tactile + Web Share API) : feuille de partage native (LinkedIn y figure si l'app est installée), texte + URL.
-- Desktop : copie du texte dans le presse-papiers + ouverture de `linkedin.com/sharing/share-offsite/?url=…` (endpoint officiel, qui n'accepte que l'URL) ; un message invite à coller le texte. L'aperçu affiché = `og-image.png` (statique : le score ne peut pas y figurer sans backend).
+- Desktop (ou échec de la feuille native) : copie du texte + URL dans le presse-papiers, **toujours confirmée** :
+  - toast `#toast` 3 s (« Texte copié ! Collez-le dans votre post LinkedIn. »), région `role="status" aria-live="polite"` présente dès le chargement ; le texte copié complet est annoncé aux lecteurs d'écran (`.sr-only`) ; couleurs inversées `--fill`/`--on-fill` (15,7:1 en clair comme en sombre) ;
+  - bouton « Partager mon score » → « Copié ! » pendant 2 s ;
+  - panneau `#partage-panneau` qui reste affiché avec le texte exact copié et un lien « Ouvrir LinkedIn » (`linkedin.com/sharing/share-offsite/?url=…`, endpoint officiel, URL seule), défilé au-dessus du toast ;
+  - échec de copie (permission refusée, API absente) : toast « Copie impossible… », pas de « Copié ! », et le panneau propose le texte à sélectionner.
+- LinkedIn ne s'ouvre plus automatiquement (v1.1.2) : le nouvel onglet masquait la confirmation de copie.
+- L'aperçu LinkedIn = `og-image.png` (statique : le score ne peut pas y figurer sans backend).
 
 ---
 
@@ -208,6 +214,7 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`
 ## 8. État d'avancement
 
 - ✅ v1.0 (24/09/2026) : app complète, PWA installable et hors ligne, 47 questions `a_valider`, config, icônes, image OG, validation automatisée, déployée sur GitHub Pages.
+- ✅ v1.1.2 (24/09/2026) : correctif de transparence du partage — la copie dans le presse-papiers était de fait silencieuse (LinkedIn s'ouvrait aussitôt dans un nouvel onglet, le message restait en petit dans l'onglet quitté). Désormais : toast annoncé aux lecteurs d'écran, bouton « Copié ! », texte copié affiché, lien « Ouvrir LinkedIn » à la demande, message honnête en cas d'échec. Recherche globale : c'était le seul accès au presse-papiers du projet.
 - ✅ v1.1.1 (24/09/2026) : page vue GoatCounter déclenchée par l'app (voir §3) — plus d'erreur JS quand le stockage est bloqué.
 - ✅ v1.1 (24/09/2026) : logo officiel (avec baseline sur l'accueil et l'image OG, sans baseline ailleurs), favicon et icônes PWA tirés du symbole, bascule clair/sombre mémorisée, GoatCounter avec les 5 événements. Les 47 questions ont été validées par Cédric (`statut: valide`) ; `statuts_publies` passe à `["valide"]` : une future question `a_valider` ne sera pas tirée tant qu'elle n'est pas relue. Le bandeau bêta ne s'affiche donc plus.
 - ✅ Tests v1.1 avant push : `validate.mjs` (+ contrôle des origines externes, SRI obligatoire, CSP) ; parcours complet Chrome headless en 5 configurations (clair, sombre système, sombre forcé, clair forcé sur système sombre, desktop sombre) : logo attendu par écran, chargé, inversé en sombre seulement ; thème conservé au rechargement ; les 5 événements émis ; stockage bloqué ; hors ligne ; seules origines externes contactées : `gc.zgo.at` (et `manica.goatcounter.com` en prod, intercepté pendant les tests).
@@ -252,6 +259,7 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`
 - **Balises OG** : statiques et en URL absolue (les robots LinkedIn n'exécutent pas le JS). À mettre à jour si le domaine change.
 - **Service worker** : incrémenter `VERSION` si la liste `PRECACHE` change ; tout fichier ajouté au précache doit exister (vérifié par `validate.mjs`).
 - **Cache GitHub Pages** ~10 min : prévenir Cédric qu'un changement peut tarder.
+- **Presse-papiers (et toute action discrète similaire)** : jamais d'écriture silencieuse. Chaque copie appelle `afficherToast()` juste après (confirmation visible + annonce `aria-live`), montre le texte copié, et gère l'échec sans prétendre avoir copié. Ne pas ouvrir d'onglet ou de fenêtre dans le même geste : il masquerait la confirmation (et les popups ouverts après un `await` sont souvent bloqués). `validate.mjs` échoue si un `clipboard.write…` ou `execCommand('copy')` n'est pas suivi d'un `afficherToast(` dans les 40 lignes.
 - **Wording formation vs accompagnement** : accompagnement par défaut.
 - **Noms d'outils IA** : jamais dans un énoncé ou une réponse sans vérification ; de préférence dans l'explication seulement.
 
