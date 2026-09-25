@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://manica.goatcounter.com; font-src 'self'; connect-src 'self' https://manica.goatcounter.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Check-up IA by Manica</title>
 <meta name="description" content="Où en êtes-vous vraiment avec l'IA ? 10 questions, 3 minutes, un score sur 100. Test gratuit, sans inscription, calculé dans votre navigateur.">
@@ -76,6 +76,7 @@
   --panel: var(--navy);
   --on-panel: var(--paper);
   --on-panel-muted: #BCC5D6;
+  --fill-hover: #25365A;
 
   --font: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --gutter: 20px;
@@ -104,11 +105,29 @@
   --panel: #16233F;
   --on-panel: #F7F5F1;
   --on-panel-muted: #B4BED1;
+  --fill-hover: #E3DFD6;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent; /* pas de flash gris au tap : chaque contrôle a son :active */
+}
+
+/* Contrôles : tap immédiat (pas d'attente du double-tap) et pas de sélection du libellé à l'appui long.
+   Le contenu (questions, explications, texte copié) reste sélectionnable. */
+button, a, label { touch-action: manipulation; }
+button, .btn, .share-btn, .choice, .profile-option, .format label {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Pas de mot isolé en fin de ligne */
+h1, h2, h3, h4 { text-wrap: balance; }
+p, li { text-wrap: pretty; }
 
 body {
   margin: 0;
@@ -184,7 +203,6 @@ body:not([data-ecran="ecran-accueil"]) .logo-full { display: none; }
   background: var(--surface);
   color: var(--fg-strong);
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }
 .theme-toggle svg { width: 20px; height: 20px; }
 .theme-toggle .icon-sun,
@@ -212,15 +230,12 @@ main { flex: 1; }
   text-align: center;
   text-decoration: none;
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
   transition: transform .12s ease, background-color .15s ease;
 }
 .btn:active { transform: scale(.985); }
 .btn-primary { background: var(--fill); color: var(--on-fill); }
 .btn-cta { background: var(--cta); color: var(--on-cta); font-weight: 800; }
-.btn-cta:hover { background: #EE9460; }
 .btn-ghost { background: transparent; color: var(--on-panel); border-color: currentColor; }
-.btn-ghost:hover { background: rgba(247, 245, 241, .08); }
 
 .text-btn {
   display: inline-flex;
@@ -258,12 +273,6 @@ main { flex: 1; }
   letter-spacing: -0.045em;
   line-height: .92;
   white-space: nowrap;
-}
-.hero-by {
-  font-size: 1.25rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--fg-muted);
 }
 .pulse {
   display: block;
@@ -316,7 +325,6 @@ main { flex: 1; }
   border-radius: 16px;
   background: var(--surface);
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }
 .profile-option input {
   position: absolute;
@@ -406,7 +414,6 @@ main { flex: 1; }
   border-radius: 14px;
   background: var(--surface);
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }
 .choice input {
   appearance: none;
@@ -614,6 +621,23 @@ main { flex: 1; }
   color: var(--on-panel-muted);
 }
 .cta-panel :focus-visible { outline-color: var(--on-panel); }
+.cta-person { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.cta-photo {
+  flex: none;
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px rgba(247, 245, 241, .22);
+}
+.cta-who { display: flex; flex-direction: column; line-height: 1.3; }
+.cta-name { font-weight: 800; color: var(--on-panel); }
+.cta-role { font-size: .875rem; color: var(--on-panel-muted); }
+.cta-hint, .cta-mail-line { margin-top: 12px; font-size: .9375rem; color: var(--on-panel-muted); }
+.cta-mail-line { margin-top: 6px; }
+.cta-mail-line a { color: var(--on-panel); font-weight: 700; overflow-wrap: anywhere; }
+.cta-panel .text-btn { color: var(--on-panel); }
+.btn:disabled { cursor: progress; opacity: .75; }
 
 .after { margin-top: 18px; }
 
@@ -637,7 +661,6 @@ main { flex: 1; }
   background: var(--surface);
   color: var(--fg-strong);
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
   transition: transform .12s ease;
 }
 .share-btn:active { transform: scale(.94); }
@@ -697,6 +720,8 @@ main { flex: 1; }
 .sheet {
   width: min(calc(100% - 24px), 34rem);
   max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0;
   border: 1px solid var(--line);
   border-radius: 20px;
@@ -736,7 +761,7 @@ textarea.post {
   background: var(--surface);
   color: var(--fg);
   font: inherit;
-  font-size: .9375rem;
+  font-size: 1rem; /* 16 px minimum, sinon Safari iOS zoome la page à la saisie */
   line-height: 1.5;
   resize: vertical;
 }
@@ -800,13 +825,34 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
   .topbar { padding-top: 24px; }
   .logo-full { width: 320px; }
   .hero { padding-top: 32px; }
-  .choice:hover:not(:has(input:disabled)) { border-color: var(--fg-muted); }
-  .share-btn:not(.share-btn-main):hover { border-color: var(--fg-muted); }
-  .profile-option:hover { border-color: var(--fg-muted); }
-  .profile-option:has(input:checked):hover { border-color: var(--fill); }
   .cta-panel { padding: 36px 36px 30px; }
   .cta-actions { grid-template-columns: 1fr 1fr; }
 }
+
+/* Survols : uniquement avec une souris (sur écran tactile, :hover resterait collé après le tap). */
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover { background: var(--fill-hover); }
+  .btn-cta:hover { background: #EE9460; }
+  .btn-ghost:hover { background: rgba(247, 245, 241, .08); }
+  .btn-outline:hover { border-color: var(--fg-muted); }
+  .text-btn:hover { text-decoration-thickness: 2.5px; }
+  .choice:hover:not(:has(input:disabled)) { border-color: var(--fg-muted); }
+  .share-btn:not(.share-btn-main):hover,
+  .theme-toggle:hover,
+  .sheet-close:hover { border-color: var(--fg-muted); }
+  .share-btn-main:hover { background: var(--fill-hover); border-color: var(--fill-hover); }
+  .profile-option:hover { border-color: var(--fg-muted); }
+  .profile-option:has(input:checked):hover { border-color: var(--fill); }
+}
+
+/* Retour au toucher, sur tous les supports */
+.text-btn:active { opacity: .65; }
+.theme-toggle, .sheet-close { transition: transform .12s ease; }
+.theme-toggle:active, .sheet-close:active { transform: scale(.94); }
+.profile-option { transition: transform .12s ease; }
+.profile-option:active { transform: scale(.985); }
+.choices:not(.is-locked) .choice { transition: transform .12s ease; }
+.choices:not(.is-locked) .choice:active { transform: scale(.99); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
@@ -830,7 +876,6 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
     <div class="hero">
       <h1 class="hero-title" id="titre-accueil">
         <span class="hero-main">Check-up IA</span>
-        <span class="hero-by">by Manica</span>
       </h1>
       <svg class="pulse" viewBox="0 0 600 48" aria-hidden="true" focusable="false">
         <path d="M0 30 H196 C202 30 204 21 211 21 C218 21 220 30 226 30 H242 L249 35 L262 2 L277 46 L286 30 H306 C314 30 317 17 328 17 C339 17 342 30 350 30 H600" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" pathLength="1"/>
@@ -935,12 +980,18 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
     </section>
 
     <section class="cta-panel" aria-labelledby="cta-titre">
+      <div class="cta-person">
+        <img class="cta-photo" id="cta-photo" src="img/cedric-delalande.jpg" width="256" height="256" alt="" loading="lazy">
+        <p class="cta-who"><span class="cta-name" id="cta-nom"></span><span class="cta-role" id="cta-role"></span></p>
+      </div>
       <h3 class="cta-title" id="cta-titre"></h3>
       <p class="cta-sub" id="cta-sous-titre"></p>
       <div class="cta-actions">
         <a class="btn btn-cta" id="cta-rdv" href="#" target="_blank" rel="noopener"></a>
         <a class="btn btn-ghost" id="cta-mail" href="#"></a>
       </div>
+      <p class="cta-hint" id="cta-indice"></p>
+      <p class="cta-mail-line">Ou écrivez directement à <a id="cta-adresse" href="mailto:hello@manica.fr"></a> <button type="button" class="text-btn text-btn-inline" id="cta-copier-adresse">Copier l’adresse</button></p>
       <p class="cta-positioning" id="cta-positionnement"></p>
     </section>
     <div class="after">
@@ -960,6 +1011,7 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
   <p>IA utile et accompagnée.</p>
   <p>Votre score est calculé dans votre navigateur : aucune réponse ne quitte votre appareil.</p>
   <p>Mesure d’audience anonyme et sans cookie (GoatCounter).</p>
+  <a class="text-btn" href="mentions-legales.html">Mentions légales et confidentialité</a>
   <p id="mention-beta" hidden></p>
   <button type="button" class="text-btn" id="btn-installer" hidden>Installer l’application</button>
 </footer>
@@ -1190,7 +1242,8 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
     partage_facebook: 'Partage Facebook',
     partage_instagram: 'Partage Instagram (image)',
     partage_mail: 'Partage par e-mail',
-    partage_copie: 'Copie du texte de partage'
+    partage_copie: 'Copie du texte de partage',
+    copie_adresse: 'Copie de l\'adresse e-mail'
   };
 
   function compter(donnees) {
@@ -1254,8 +1307,10 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
     return reponse.json();
   }
 
+  let donneesPretes = false;
   const chargement = Promise.all([chargerJson('config.json'), chargerJson('questions.json')])
     .then(([c, banque]) => {
+      donneesPretes = true;
       config = c;
       questionsParId = new Map(banque.questions.map(q => [q.id, q]));
       const publiees = banque.questions.filter(q => config.quiz.statuts_publies.includes(q.statut));
@@ -1307,7 +1362,22 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
       document.querySelector('input[name="profil"]').focus();
       return;
     }
-    await chargement;
+    const bouton = $('btn-commencer');
+    if (!donneesPretes) {
+      // Réseau lent : le clic doit montrer qu'il a été pris en compte.
+      bouton.disabled = true;
+      bouton.setAttribute('aria-busy', 'true');
+      bouton.textContent = 'Chargement…';
+    }
+    try {
+      await chargement;
+    } catch (e) {
+      return; // l'écran d'erreur est déjà affiché
+    } finally {
+      bouton.disabled = false;
+      bouton.removeAttribute('aria-busy');
+      bouton.textContent = 'Commencer le test';
+    }
     const banque = [...questionsParId.values()];
     const tirees = tirerQuestions(banque, config.axes, profil,
       config.quiz.questions_par_axe, config.quiz.statuts_publies, Math.random);
@@ -1511,6 +1581,14 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
     $('cta-mail').textContent = config.cta.bouton_mail;
     $('cta-mail').href = lienMail(config, profil, resultat);
     $('cta-positionnement').textContent = typo(config.cta.positionnement[profil]);
+    const interlocuteur = config.cta.interlocuteur;
+    $('cta-photo').src = interlocuteur.photo;
+    $('cta-nom').textContent = interlocuteur.nom;
+    $('cta-role').textContent = typo(interlocuteur.role);
+    $('cta-indice').textContent = typo(remplir(config.cta.indice_rdv, { score: resultat.score }));
+    $('cta-adresse').textContent = config.contact.email;
+    $('cta-adresse').href = lienMail(config, profil, resultat);
+    $('cta-copier-adresse').textContent = typo('Copier l\'adresse');
     preparerPartage();
 
     afficher('ecran-resultat');
@@ -1537,6 +1615,19 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
 
   $('cta-rdv').addEventListener('click', () => suivre('clic_rdv'));
   $('cta-mail').addEventListener('click', () => suivre('clic_mail'));
+  $('cta-adresse').addEventListener('click', () => suivre('clic_mail'));
+
+  // Sans logiciel de messagerie (webmail), un lien mailto ne fait rien : l'adresse est aussi copiable.
+  let minuteurAdresse = null;
+  $('cta-copier-adresse').addEventListener('click', async () => {
+    suivre('copie_adresse');
+    const bouton = $('cta-copier-adresse');
+    if (await copierAvecConfirmation(config.contact.email, 'Adresse copiée : collez-la dans votre messagerie.')) {
+      bouton.textContent = typo('Copiée !');
+      clearTimeout(minuteurAdresse);
+      minuteurAdresse = setTimeout(() => { bouton.textContent = typo('Copier l\'adresse'); }, 2000);
+    }
+  });
 
   // --- Partage ---
   // Règle : toute écriture dans le presse-papiers est confirmée à l'écran au moment où elle a lieu
@@ -1577,7 +1668,7 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
   }
 
   // Copie confirmée à l'écran et annoncée : le seul chemin autorisé vers le presse-papiers.
-  async function copierAvecConfirmation(texte) {
+  async function copierAvecConfirmation(texte, message = 'Texte copié ! Collez-le dans votre post.') {
     let copie = false;
     try {
       await navigator.clipboard.writeText(texte);
@@ -1585,7 +1676,7 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
     } catch (e) {
       copie = false;
     }
-    if (copie) afficherToast(ICONES.juste, 'Texte copié ! Collez-le dans votre post.', `Contenu copié : ${texte}`);
+    if (copie) afficherToast(ICONES.juste, message, `Contenu copié : ${texte}`);
     else afficherToast(ICONES.faux, 'Copie impossible : sélectionnez le texte affiché pour le copier.');
     return copie;
   }

@@ -1,0 +1,13 @@
+{
+  "name": "checkup-ia-outils",
+  "private": true,
+  "description": "Outils de développement du Check-up IA (non publiés dans l'app) : test de bout en bout.",
+  "type": "module",
+  "scripts": {
+    "valider": "node validate.mjs",
+    "e2e": "node e2e.mjs"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^23.11.1"
+  }
+}

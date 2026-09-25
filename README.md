@@ -14,6 +14,8 @@ Puis valider avant de pousser :
 
 ```bash
 node tools/validate.mjs
+# Test de bout en bout dans Chrome (une fois : cd tools && npm install)
+node tools/e2e.mjs
 ```
 
 ## Tester en local

@@ -1,0 +1,4 @@
+# Outils de test : dépendances et captures locales
+tools/node_modules/
+tools/package-lock.json
+tools/.e2e-captures/

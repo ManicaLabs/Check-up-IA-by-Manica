@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Mentions légales et confidentialité — Check-up IA by Manica</title>
+<meta name="description" content="Éditeur, hébergement, données personnelles et mesure d'audience du Check-up IA by Manica.">
+<meta name="theme-color" content="#F7F5F1">
+<script>
+  // Même thème que le test : choix mémorisé, sinon préférence système.
+  (() => {
+    let choix = null;
+    try { choix = localStorage.getItem('checkup-ia:theme'); } catch (e) { /* stockage bloqué */ }
+    const theme = choix === 'dark' || choix === 'light' ? choix
+      : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.dataset.theme = theme;
+    document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#0B1326' : '#F7F5F1';
+  })();
+</script>
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body>
+<header class="wrap topbar">
+  <a href="./" aria-label="Retour au Check-up IA"><img class="logo" src="img/logo-manica-300.png" width="300" height="111" alt="Manica"></a>
+</header>
+
+<main class="wrap">
+  <h1>Mentions légales et confidentialité</h1>
+  <p class="muted">Dernière mise à jour : 25 septembre 2026.</p>
+
+  <h2>Éditeur du site</h2>
+  <div class="fiche">
+    <p><strong>MANICA LABS</strong>, société par actions simplifiée (SAS) au capital de 1 000 €</p>
+    <p>Siège social : 11 avenue Paul Verlaine, 38100 Grenoble</p>
+    <p>RCS Grenoble 999 397 490</p>
+    <p>N° de TVA intracommunautaire : FR82999397490</p>
+    <p>Contact : <a href="mailto:hello@manica.fr">hello@manica.fr</a></p>
+  </div>
+  <p class="apres-fiche">Directeur de la publication : Cédric Delalande, directeur général de Manica Labs.</p>
+
+  <h2>Hébergement</h2>
+  <p>GitHub, Inc. (service GitHub Pages), 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis — <a href="https://github.com">github.com</a>.</p>
+
+  <h2>Vos données</h2>
+  <p>Le Check-up IA est conçu pour ne rien collecter sur vous.</p>
+  <ul>
+    <li><strong>Aucune inscription, aucun formulaire.</strong> Aucune donnée personnelle ne vous est demandée.</li>
+    <li><strong>Vos réponses et votre score</strong> sont calculés dans votre navigateur et ne sont envoyés nulle part.</li>
+    <li><strong>Stockage sur votre appareil.</strong> Votre navigateur conserve le test en cours, votre dernier résultat et votre choix de thème (clair ou sombre), pour vous permettre de reprendre. Ces informations ne quittent pas votre appareil. « Refaire le test » efface le test en cours ; supprimer les données du site dans votre navigateur efface le reste. Aucun cookie n’est déposé.</li>
+    <li><strong>Mesure d’audience.</strong> Nous utilisons GoatCounter, un outil de statistiques sans cookie. Il enregistre de façon agrégée la page vue, la provenance, le navigateur et le système, la taille d’écran, la langue et le pays (déduit de l’adresse IP, qui n’est pas enregistrée), ainsi que des événements anonymes : début et fin du test, clics sur les boutons de contact et de partage. Ni vos réponses ni votre score ne sont transmis, et aucun identifiant ne vous suit d’un site à l’autre. Les statistiques sont hébergées par Hetzner en Finlande et en Allemagne ; le service est opéré par Martin Tournoij (Irlande). Sa politique : <a href="https://www.goatcounter.com/help/privacy">goatcounter.com/help/privacy</a>.</li>
+    <li><strong>Liens vers d’autres services.</strong> La prise de rendez-vous (Google Agenda), le partage (LinkedIn, Facebook, Instagram) et l’envoi d’e-mails vous font quitter le site : les règles de confidentialité de ces services s’appliquent alors.</li>
+    <li><strong>Si vous nous écrivez</strong>, votre adresse et votre message servent uniquement à vous répondre et à échanger avec vous. Ils ne sont ni revendus ni transmis à des tiers.</li>
+  </ul>
+
+  <div class="opt-out" id="opt-out" hidden>
+    <button type="button" class="btn" id="btn-opt-out"></button>
+    <p class="muted" id="opt-out-etat" role="status"></p>
+  </div>
+
+  <h2>Vos droits</h2>
+  <p>Vous pouvez demander l’accès à vos données, leur rectification ou leur effacement, ou vous opposer à leur traitement, en écrivant à <a href="mailto:hello@manica.fr">hello@manica.fr</a>. Vous pouvez aussi adresser une réclamation à la CNIL (<a href="https://www.cnil.fr">cnil.fr</a>).</p>
+
+  <h2>Propriété intellectuelle</h2>
+  <p>Les contenus du site (questions, textes, visuels, logo Manica) appartiennent à Manica Labs. Toute reproduction nécessite une autorisation préalable.</p>
+  <p class="muted">Crédits : police Manrope (licence SIL Open Font License) ; pictogrammes LinkedIn, Facebook et Instagram issus de Simple Icons (CC0), marques de leurs propriétaires respectifs.</p>
+
+  <a class="btn" href="./">Retour au Check-up IA</a>
+</main>
+
+<footer class="wrap foot">
+  <p class="muted">Manica — IA utile et accompagnée.</p>
+</footer>
+
+<script>
+  // Refus de la mesure d'audience : GoatCounter ne compte plus ce navigateur si « skipgc » vaut « t ».
+  (() => {
+    const CLE = 'skipgc';
+    const lire = () => { try { return localStorage.getItem(CLE) === 't'; } catch (e) { return null; } };
+    const refuse = lire();
+    if (refuse === null) return; // stockage bloqué : ce navigateur n'est de toute façon pas compté
+    const bloc = document.getElementById('opt-out');
+    const bouton = document.getElementById('btn-opt-out');
+    const etat = document.getElementById('opt-out-etat');
+    const afficher = actif => {
+      bouton.textContent = actif ? 'Accepter à nouveau la mesure d’audience' : 'Ne plus être compté dans les statistiques';
+      etat.textContent = actif
+        ? 'Ce navigateur n’est pas compté dans les statistiques.'
+        : 'Ce navigateur est compté de façon anonyme dans les statistiques.';
+    };
+    bouton.addEventListener('click', () => {
+      const actif = !lire();
+      try {
+        if (actif) localStorage.setItem(CLE, 't');
+        else localStorage.removeItem(CLE);
+      } catch (e) { /* stockage bloqué */ }
+      afficher(lire());
+    });
+    afficher(refuse);
+    bloc.hidden = false;
+  })();
+</script>
+</body>
+</html>

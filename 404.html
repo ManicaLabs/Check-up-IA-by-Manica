@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- GitHub Pages sert cette page pour toute adresse inconnue du site : les liens partent de la racine du projet.
+     À adapter si un domaine personnalisé est mis en place (base href="/"). -->
+<base href="/Check-up-IA-by-Manica/">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; form-action 'none'">
+<meta name="robots" content="noindex">
+<title>Page introuvable — Check-up IA by Manica</title>
+<meta name="theme-color" content="#F7F5F1">
+<script>
+  (() => {
+    let choix = null;
+    try { choix = localStorage.getItem('checkup-ia:theme'); } catch (e) { /* stockage bloqué */ }
+    const theme = choix === 'dark' || choix === 'light' ? choix
+      : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.dataset.theme = theme;
+    document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#0B1326' : '#F7F5F1';
+  })();
+</script>
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body>
+<header class="wrap topbar">
+  <a href="./" aria-label="Aller au Check-up IA"><img class="logo" src="img/logo-manica-300.png" width="300" height="111" alt="Manica"></a>
+</header>
+
+<main class="wrap">
+  <h1>Cette page n’existe pas</h1>
+  <p>Le lien est peut-être incomplet, ou la page a été déplacée. Le Check-up IA, lui, est toujours là : 10 questions, 3 minutes, un score sur 100.</p>
+  <a class="btn" href="./">Faire le Check-up IA</a>
+</main>
+
+<footer class="wrap foot">
+  <p class="muted">Manica — IA utile et accompagnée. <a href="mentions-legales.html">Mentions légales</a></p>
+</footer>
+</body>
+</html>

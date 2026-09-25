@@ -123,7 +123,7 @@
     }
   },
   "cta": {
-    "titre": "Et maintenant ? On en parle 30 minutes, sans engagement.",
+    "titre": "Et maintenant ? On en parle 30 minutes, sans engagement.",
     "sous_titre": {
       "perso": "Un échange pour faire le point sur vos usages et repérer ce qui vous ferait vraiment gagner du temps.",
       "entreprise": "Un échange pour faire le point sur la maturité IA de votre organisation et définir les prochaines étapes."
@@ -133,7 +133,13 @@
     "positionnement": {
       "perso": "Manica accompagne dans la durée celles et ceux qui veulent mettre en place une IA utile — pas une formation d'une journée.",
       "entreprise": "Manica accompagne les équipes dans la durée pour mettre en place une IA utile — pas une formation d'une journée."
-    }
+    },
+    "interlocuteur": {
+      "nom": "Cédric Delalande",
+      "role": "Directeur général de Manica Labs",
+      "photo": "img/cedric-delalande.jpg"
+    },
+    "indice_rdv": "Indiquez votre score ({score}/100) en réservant : l'échange partira de vos résultats."
   },
   "mail": {
     "objet": "Check-up IA — mon score : {score}/100",

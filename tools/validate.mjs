@@ -30,7 +30,7 @@ scripts.forEach((code, i) => {
     erreur(`index.html : erreur de syntaxe JS dans le bloc <script> n° ${i + 1}\n${e.stderr}`);
   }
 });
-for (const f of ['sw.js', 'tools/validate.mjs']) {
+for (const f of ['sw.js', 'tools/validate.mjs', 'tools/e2e.mjs']) {
   try {
     execFileSync(process.execPath, ['--check', join(racine, f)], { stdio: 'pipe' });
   } catch (e) {
@@ -63,6 +63,11 @@ for (const p of profils) {
   if (!config.cta.positionnement[p]) erreur(`config.json : cta.positionnement.${p} manquant`);
 }
 for (const k of ['titre', 'texte', 'mail_objet']) if (!config.partage?.[k]) erreur(`config.json : partage.${k} manquant`);
+const interlocuteur = config.cta?.interlocuteur || {};
+for (const k of ['nom', 'role', 'photo']) if (!interlocuteur[k]) erreur(`config.json : cta.interlocuteur.${k} manquant`);
+if (interlocuteur.photo && !existsSync(join(racine, interlocuteur.photo))) erreur(`config.json : photo introuvable ${interlocuteur.photo}`);
+if (!config.cta?.indice_rdv) erreur('config.json : cta.indice_rdv manquant');
+for (const [, v] of String(config.cta?.indice_rdv || '').matchAll(/\{(\w+)\}/g)) if (v !== 'score') erreur(`config.json : variable inconnue {${v}} dans cta.indice_rdv`);
 // Post LinkedIn : textes présents et variables autorisées
 const li = config.partage?.linkedin || {};
 const variablesDe = t => [...String(t || '').matchAll(/\{(\w+)\}/g)].map(m => m[1]);
@@ -152,7 +157,7 @@ const rnd = () => { graine = (graine * 1103515245 + 12345) % 2147483648; return 
 const total = parAxe * axesIds.length;
 
 // Les textes qui annoncent un nombre de questions ou d'axes doivent correspondre au tirage réel.
-for (const f of ['index.html', 'config.json', 'manifest.webmanifest', 'tools/og-image.html', 'README.md']) {
+for (const f of ['index.html', 'config.json', 'manifest.webmanifest', 'tools/og-image.html', 'README.md', '404.html', 'mentions-legales.html']) {
   const texte = lire(f);
   for (const [, n] of texte.matchAll(/(\d+)\s+questions\b/g)) if (Number(n) !== total && Number(n) !== banque.questions.length) erreur(`${f} : « ${n} questions » annoncé, le test en tire ${total}`);
   for (const [, n] of texte.matchAll(/(\d+)\s+axes\b/g)) if (Number(n) !== axesIds.length) erreur(`${f} : « ${n} axes » annoncé, il y en a ${axesIds.length}`);
@@ -231,6 +236,40 @@ for (const f of ['config.json', 'questions.json', 'index.html', 'manifest.webman
   if (!precache.includes(f)) erreur(`sw.js : ${f} absent du PRECACHE`);
 }
 if (!html.includes(`content="${config.url_app}og-image.png"`)) avertissements.push('og:image ne pointe pas vers url_app de config.json');
+
+// --- Pages secondaires (mentions légales, 404) : fichiers référencés présents, aucune ressource externe ---
+for (const f of ['mentions-legales.html', '404.html']) {
+  if (!existsSync(join(racine, f))) { erreur(`${f} manquant`); continue; }
+  const page = lire(f);
+  for (const [, u] of page.matchAll(/(?:href|src)="([^"#:]+?)"/g)) {
+    if (u === './' || u.startsWith('/')) continue;
+    if (!existsSync(join(racine, u))) erreur(`${f} : fichier référencé introuvable ${u}`);
+  }
+  for (const [balise] of page.matchAll(/<(?:script|link|img|iframe|source)\b[^>]*>/g)) {
+    if (/\b(?:src|href)="(?:https?:)?\/\//.test(balise)) erreur(`${f} : ressource externe interdite ${balise}`);
+  }
+  if (/\sstyle="/.test(page)) erreur(`${f} : style en ligne bloqué par la CSP (style-src 'self')`);
+}
+if (!/<base href="\/Check-up-IA-by-Manica\/">/.test(lire('404.html'))) avertissements.push('404.html : base href à adapter si le site change d\'adresse');
+
+// --- Mobile : survols réservés aux souris, champs de saisie à 16 px minimum (pas de zoom iOS) ---
+const css = ((html.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '').replace(/\/\*[\s\S]*?\*\//g, '');
+const debutSurvol = css.indexOf('@media (hover: hover) and (pointer: fine) {');
+let finSurvol = -1;
+if (debutSurvol >= 0) {
+  let profondeur = 0;
+  for (let i = css.indexOf('{', debutSurvol); i < css.length; i++) {
+    if (css[i] === '{') profondeur++;
+    if (css[i] === '}' && --profondeur === 0) { finSurvol = i; break; }
+  }
+}
+for (const m of css.matchAll(/:hover/g)) {
+  if (m.index < debutSurvol || m.index > finSurvol) erreur(`index.html : règle :hover hors de @media (hover: hover) and (pointer: fine) (resterait collée après un tap) : ${css.slice(Math.max(0, css.lastIndexOf('\n', m.index) + 1), m.index + 20).trim()}`);
+}
+for (const [, selecteur, corps] of css.matchAll(/([^{}]*\b(?:textarea|input|select)\b[^{}]*)\{([^}]*)\}/g)) {
+  const taille = corps.match(/font-size:\s*([\d.]+)(px|rem)/);
+  if (taille && (taille[2] === 'px' ? Number(taille[1]) : Number(taille[1]) * 16) < 16) erreur(`index.html : ${selecteur.trim()} en ${taille[1]}${taille[2]} (< 16 px : Safari iOS zoome à la saisie)`);
+}
 
 // --- Presse-papiers : toute écriture doit être confirmée à l'écran (afficherToast) juste après ---
 const lignesHtml = html.split('\n');

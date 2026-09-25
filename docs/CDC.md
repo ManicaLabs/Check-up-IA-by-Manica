@@ -2,7 +2,7 @@
 
 > Handoff doc pour Claude Code. Source de vérité pour le code = le repo Git.
 > À mettre à jour à chaque déploiement, pas seulement en fin de projet.
-> Dernière mise à jour : 24/09/2026 — v1.4 (test en 10 questions, partage guidé près du score, logo, clair/sombre, GoatCounter).
+> Dernière mise à jour : 24/09/2026 — v1.5 (10 questions, partage guidé, bloc RDV incarné, mentions légales, couche mobile).
 
 ---
 
@@ -52,6 +52,12 @@
 | `og-image.png` | Image de partage (1200×630) |
 | `fonts/manrope-latin.woff2`, `fonts/OFL.txt` | Police Manrope variable 400–800, sous-ensemble latin (25 Ko), licence OFL |
 | `tools/validate.mjs` | Validation avant push (voir §10) |
+| `tools/e2e.mjs`, `tools/package.json` | Test de bout en bout dans Chrome (serveur local intégré qui imite GitHub Pages, ou prod via `BASE=`) ; `puppeteer-core` en dépendance de développement |
+| `mentions-legales.html` | Mentions légales et confidentialité (éditeur, hébergeur, données, GoatCounter, refus de la mesure, droits) |
+| `404.html` | Page introuvable aux couleurs Manica, servie par GitHub Pages pour toute adresse inconnue |
+| `pages.css` | Styles des pages secondaires (mêmes jetons clair/sombre que le test) |
+| `img/cedric-delalande.jpg` | Photo du bloc RDV (256×256, 8 Ko) |
+| `.gitignore` | Exclut `tools/node_modules/`, `tools/package-lock.json`, `tools/.e2e-captures/` |
 | `tools/build-assets.py` | Génère logos web et icônes depuis les logos sources (Pillow) |
 | `tools/og-image.html` | Source de l'image OG |
 | `docs/CDC.md` | Ce document |
@@ -74,6 +80,8 @@ LinkedIn met l'aperçu en cache : après changement de `og-image.png`, forcer le
 ## 3. Architecture v1 (en prod)
 
 ### En-tête et pied de page
+- Depuis la v1.5, plus de « by Manica » sous le titre de l'accueil : le logo avec baseline juste au-dessus le dit déjà.
+- Pied de page : lien « Mentions légales et confidentialité ».
 - En-tête sur tous les écrans : logo à gauche, bouton de thème soleil/lune à droite (44×44 px).
 - Logo **avec baseline** sur l'accueil (280 px de large sur mobile, 320 px au-delà de 640 px) ; logo **sans baseline** compact (34 px de haut) sur quiz, résultat et erreur. Bascule pilotée par `body[data-ecran]`, posé par `afficher()`.
 - Pied de page : logo sans baseline (28 px), mention de confidentialité, mention de mesure d'audience, bouton d'installation.
@@ -81,7 +89,7 @@ LinkedIn met l'aperçu en cache : après changement de `og-image.png`, forcer le
 ### Écrans
 1. **Accueil** : titre « Check-up IA » / « by Manica », tracé ECG (animé une fois au chargement), accroche, choix du profil (2 cartes radio de taille égale, aucune présélection), bouton « Commencer le test », mention rassurante. Si une session existe : « Reprendre le test » ou « Revoir mon dernier résultat ».
 2. **Quiz** : barre de progression, axe + « Question X / 10 », énoncé, 4 choix (radios natifs stylés), « Valider ma réponse » → correction (bordure + icône + texte « Bonne réponse » / « Votre réponse »), explication, « Question suivante » (ou « Voir mon résultat »). Pas de retour arrière.
-3. **Résultat** : score /100 en très grand (compteur animé), niveau + message, échelle des 4 niveaux avec repère, **« Partager mon score »** (icônes, visibles sans défiler sur mobile depuis la v1.3.1), barres par axe (avec %), 3 priorités (axes les plus faibles), bloc CTA (fond bleu nuit, bouton ambre « Réserver un échange », bouton « Nous écrire », mention de positionnement), « Refaire le test ».
+3. **Résultat** : score /100 en très grand (compteur animé), niveau + message, échelle des 4 niveaux avec repère, **« Partager mon score »** (icônes, visibles sans défiler sur mobile depuis la v1.3.1), barres par axe (avec %), 3 priorités (axes les plus faibles), bloc CTA (fond bleu nuit : **photo, nom et fonction de Cédric** (`config.cta.interlocuteur`), titre, bouton ambre « Réserver un échange », bouton « Nous écrire », **« Indiquez votre score (xx/100) en réservant »** (`config.cta.indice_rdv`, Google Agenda ne recevant pas le contexte), **adresse `hello@manica.fr` en clair + « Copier l'adresse »** (un lien mailto ne fait rien sans logiciel de messagerie, cas des webmails), mention de positionnement), « Refaire le test ». « Commencer le test » affiche « Chargement… » si les questions ne sont pas encore chargées.
 4. **Erreur** : si `config.json` / `questions.json` ne se chargent pas.
 
 ### Stockage local
@@ -95,6 +103,16 @@ LinkedIn met l'aperçu en cache : après changement de `og-image.png`, forcer le
 - `sw.js` : précache du shell (liste `PRECACHE`), stratégie réseau d'abord avec `cache: 'no-cache'` (revalidation ETag), repli cache si hors ligne ou réseau > 4 s. Les navigations ignorent les paramètres d'URL (`?utm_…` de LinkedIn).
 - Bouton discret « Installer l'application » dans le pied de page quand le navigateur propose l'installation (`beforeinstallprompt`, Chrome/Android).
 - **Incrémenter `VERSION` dans `sw.js`** quand la liste `PRECACHE` change (sinon inutile : le contenu se rafraîchit en ligne).
+
+### Couche mobile (v1.5, skill `mobile-native`)
+- `-webkit-tap-highlight-color: transparent` une seule fois sur `html` ; chaque contrôle a son `:active`.
+- `touch-action: manipulation` sur `button, a, label` (pas d'attente du double-tap) ; `user-select: none` + `-webkit-touch-callout: none` sur les contrôles uniquement (le contenu reste sélectionnable).
+- Tous les `:hover` dans `@media (hover: hover) and (pointer: fine)` (sinon survol collé après un tap) — vérifié par `validate.mjs`.
+- Champs de saisie ≥ 16 px (sinon zoom iOS) — vérifié par `validate.mjs`.
+- Fenêtres de partage : `overscroll-behavior: contain` ; viewport `interactive-widget=resizes-content` (clavier Android).
+- `text-wrap: balance` sur les titres, `pretty` sur les paragraphes.
+- Manifeste : `theme_color` #F7F5F1 (haut de page clair ; la balise `theme-color` suit ensuite le thème).
+- À confirmer sur un vrai téléphone : survol, flash au tap, zoom, barre d'état de l'app installée sur iPhone.
 
 ### Thème clair / sombre
 - Un petit script dans le `<head>` pose `data-theme="light|dark"` sur `<html>` **avant l'affichage** (pas de flash) : choix mémorisé, sinon `prefers-color-scheme`.
@@ -217,7 +235,7 @@ Palette du CDC appliquée telle quelle (en attente de validation ou de codes off
 ## 7. Mesure d'audience
 
 GoatCounter (compte `manica`, tableau de bord https://manica.goatcounter.com), sans cookie — détails techniques au §3. Pas de Google Analytics.
-Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`. Taux de complétion = `test_termine` / `test_demarre`. Partage : somme des `partage_*` / `test_termine`, et répartition par réseau.
+Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail` + `copie_adresse`) / `test_termine` (`copie_adresse` depuis la v1.5). Taux de complétion = `test_termine` / `test_demarre`. Partage : somme des `partage_*` / `test_termine`, et répartition par réseau.
 **Mesure en cours (v1.3.1, 24/09/2026)** : partage remonté près du score. Comparer 2 à 3 semaines avant et après, sur le taux de partage (`partage_*` / `test_termine`) et surtout le taux de RDV (`clic_rdv` / `test_termine`). Trafic trop faible pour un test A/B : comparaison avant/après seulement.
 
 ---
@@ -225,6 +243,7 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`
 ## 8. État d'avancement
 
 - ✅ v1.0 (24/09/2026) : app complète, PWA installable et hors ligne, 47 questions `a_valider`, config, icônes, image OG, validation automatisée, déployée sur GitHub Pages.
+- ✅ v1.5 (25/09/2026) : passe d'audit (skills `redesign-existing-projects` et `mobile-native`) appliquée — mentions légales et confidentialité (données officielles Manica Labs, refus de la mesure d'audience), photo et fonction de Cédric dans le bloc RDV, indication du score à la réservation, adresse e-mail copiable, page 404, couche mobile (survol, tap, appui long, zoom iOS, défilement des fenêtres), titres sans mot isolé, état de chargement sur « Commencer », « by Manica » retiré de l'accueil, test de bout en bout remis dans le repo (`tools/e2e.mjs`). Non appliqué volontairement : déplacer le bloc RDV (attendre la mesure en cours, §7), changer d'outil de réservation (décision de Cédric).
 - ✅ v1.4 (24/09/2026) : test raccourci à **10 questions** (2 par axe, difficultés différentes), banque de 47 conservée pour la rotation ; score en part de bonnes réponses ; priorités départagées par la lacune ; textes « 10 questions, 3 minutes » partout (accueil, meta, manifeste, image OG régénérée, partages, post LinkedIn). `validate.mjs` vérifie désormais que tout texte annonçant « N questions » ou « N axes » correspond au tirage réel.
 - ✅ v1.3.1 (24/09/2026) : icônes de partage remontées sous le score (visibles sans défiler sur mobile et sur ordinateur), plus de doublon en bas de page ; mesure avant/après en cours (§7).
 - ✅ v1.3 (24/09/2026) : partage LinkedIn en post complet pré-rédigé (personnalisé, modifiable, copie confirmée, image jointe possible) et partage Instagram guidé (fenêtre avec aperçu, choix Story/Publication, étapes adaptées à l'appareil) au lieu d'un téléchargement brut. Testé : contenu du post (6 000 tirages + cas 0/100 et 100/100), publication avec le texte modifié, copie et toast dans la fenêtre, images story et publication (dimensions), format par défaut, Échap, focus, clair/sombre, mobile/ordinateur. Toujours à vérifier sur téléphone : la feuille de partage native.
@@ -258,6 +277,9 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`
 
 ## 10. Pièges connus & conventions
 
+- **Test de bout en bout** : `(cd tools && npm install)` une fois, puis `node tools/e2e.mjs` (local, serveur intégré) ou `BASE=https://manicalabs.github.io/Check-up-IA-by-Manica/ node tools/e2e.mjs` (prod). Captures dans `tools/.e2e-captures/`. Il vivait dans un dossier temporaire jusqu'à la v1.4 et a été perdu une fois : il reste dans le repo.
+- **Mentions légales** : à tenir à jour si l'entreprise change (siège, capital, dirigeant). Sources du 25/09/2026 : annuaire des entreprises (API recherche-entreprises.api.gouv.fr), Pappers, Societe.com. Relecture juridique conseillée.
+- **404.html** : `<base href="/Check-up-IA-by-Manica/">` ; à passer à `/` si un domaine personnalisé est mis en place.
 - **Avant tout push** : `node tools/validate.mjs` doit afficher `✓ Validation OK` (il extrait le `<script>` inline et lance `node --check`, valide les JSON, simule les tirages avec la vraie logique d'`index.html` entre les marqueurs `// === LOGIQUE PURE` et `// === FIN LOGIQUE PURE ===`).
 - **Garder la logique pure sans DOM** entre ces marqueurs, sinon `validate.mjs` ne peut plus l'évaluer.
 - **Valider des questions** : passer `statut` à `valide`. Pour ne publier que les questions relues, mettre `"statuts_publies": ["valide"]` dans `config.json` — `validate.mjs` vérifie alors que chaque pool garde ≥ `questions_par_axe` questions sur au moins autant de niveaux de difficulté (2 aujourd'hui), et signale un niveau absent.
@@ -292,6 +314,8 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail`) / `test_termine`
 3. Points encore ouverts côté Cédric :
    - validation ou correction de la palette ;
    - logo vectoriel (SVG) si disponible, pour une netteté parfaite à toute taille ;
+   - outil de réservation : garder Google Agenda (score indiqué à la main) ou passer à Cal.com / Calendly (pré-remplissage profil + score) ;
+   - après la mesure du partage (§7) : décider s'il faut rapprocher le bloc RDV du haut de page ;
    - confirmation du wording « accompagnement » ;
    - domaine personnalisé ou non ;
 4. Après chaque déploiement : mettre à jour §8 de ce document.

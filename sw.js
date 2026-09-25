@@ -1,7 +1,7 @@
 // Service worker du Check-up IA : rend l'app disponible hors ligne.
 // Réseau d'abord (contenu toujours frais en ligne), cache en secours.
 // Incrémenter VERSION à chaque déploiement qui modifie la liste PRECACHE.
-const VERSION = 'v1.2.0';
+const VERSION = 'v1.3.0';
 const CACHE = `checkup-ia-${VERSION}`;
 const PRECACHE = [
   './',
@@ -18,6 +18,9 @@ const PRECACHE = [
   'img/logo-manica-baseline-900.png',
   'img/logo-manica-300.png',
   'img/logo-manica-baseline-clair-900.png',
+  'img/cedric-delalande.jpg',
+  'mentions-legales.html',
+  'pages.css',
   'fonts/manrope-latin.woff2'
 ];
 const DELAI_RESEAU_MS = 4000;
