@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://manica.goatcounter.com; font-src 'self'; connect-src 'self' https://manica.goatcounter.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://manica.goatcounter.com; font-src 'self'; connect-src 'self' https://manica.goatcounter.com https://script.google.com https://script.googleusercontent.com; frame-src https://calendar.google.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Check-up IA by Manica</title>
-<meta name="description" content="Où en êtes-vous vraiment avec l'IA ? 10 questions, 3 minutes, un score sur 100. Test gratuit, sans inscription, calculé dans votre navigateur.">
+<meta name="description" content="Où en êtes-vous vraiment avec l'IA ? 10 questions adaptées à votre métier, 3 minutes : votre score sur 100 tout de suite, puis votre diagnostic détaillé. Gratuit.">
 <link rel="canonical" href="https://manicalabs.github.io/Check-up-IA-by-Manica/">
 <meta name="theme-color" content="#F7F5F1">
 <script>
@@ -29,7 +29,7 @@
 <meta property="og:locale" content="fr_FR">
 <meta property="og:site_name" content="Manica">
 <meta property="og:title" content="Check-up IA by Manica">
-<meta property="og:description" content="Où en êtes-vous vraiment avec l'IA ? 10 questions, 3 minutes, un score sur 100. Gratuit, sans inscription.">
+<meta property="og:description" content="Où en êtes-vous vraiment avec l'IA ? 10 questions adaptées à votre métier, 3 minutes, un score sur 100. Gratuit.">
 <meta property="og:url" content="https://manicalabs.github.io/Check-up-IA-by-Manica/">
 <meta property="og:image" content="https://manicalabs.github.io/Check-up-IA-by-Manica/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -119,7 +119,7 @@ html {
 /* Contrôles : tap immédiat (pas d'attente du double-tap) et pas de sélection du libellé à l'appui long.
    Le contenu (questions, explications, texte copié) reste sélectionnable. */
 button, a, label { touch-action: manipulation; }
-button, .btn, .share-btn, .choice, .profile-option, .format label {
+button, .btn, .share-btn, .choice, .role, .format label, summary {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
@@ -278,7 +278,7 @@ main { flex: 1; }
   display: block;
   width: calc(100% + var(--gutter));
   height: auto;
-  margin: 26px 0 22px;
+  margin: 18px 0 16px;
   color: var(--fg-strong);
   overflow: visible;
 }
@@ -298,65 +298,86 @@ main { flex: 1; }
 }
 .hero-lead span { display: block; font-weight: 500; color: var(--fg); }
 
-.profile {
-  margin: 34px 0 0;
-  padding: 0;
-  border: 0;
-}
-.profile legend {
-  padding: 0;
-  margin-bottom: 12px;
-  font-weight: 700;
-  color: var(--fg-strong);
-}
-.profile-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.profile-option {
+/* Choix du profil : un clic sur un profil lance le test. */
+.cible { margin-top: 24px; }
+.cible-titre { font-size: 1.0625rem; font-weight: 800; }
+.roles-pro { margin: 18px 0 10px; font-weight: 700; color: var(--fg-strong); }
+.roles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.role {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-height: 100%;
-  padding: 16px 16px 16px 16px;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: 64px;
+  padding: 14px 40px 14px 16px;
   border: 2px solid var(--line);
   border-radius: 16px;
   background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
   cursor: pointer;
+  transition: transform .12s ease, border-color .15s ease;
 }
-.profile-option input {
+.role-perso { margin-top: 12px; }
+.role-name { font-weight: 800; font-size: 1.0625rem; line-height: 1.25; color: var(--fg-strong); }
+.role-desc { font-size: .875rem; line-height: 1.35; color: var(--fg-muted); }
+.role-go {
   position: absolute;
-  opacity: 0;
-  inset: 0;
-  margin: 0;
-  cursor: pointer;
+  top: 50%;
+  right: 14px;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  color: var(--fg-muted);
 }
-.profile-name { font-weight: 800; font-size: 1.0625rem; line-height: 1.25; color: var(--fg-strong); }
-.profile-desc { font-size: .875rem; line-height: 1.4; color: var(--fg-muted); }
-.profile-option:has(input:checked) { border-color: var(--fill); box-shadow: inset 0 0 0 1px var(--fill); }
-.profile-option:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
-.profile-check {
-  position: absolute;
-  top: 12px; right: 12px;
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  border: 2px solid var(--line);
+.role:active { transform: scale(.985); }
+.role.is-active, .role[aria-expanded="true"] { border-color: var(--fill); box-shadow: inset 0 0 0 1px var(--fill); }
+.role[aria-busy="true"] { cursor: progress; opacity: .75; }
+.zone-autre {
   display: grid;
-  place-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 16px;
+  border: 2px solid var(--fill);
+  border-radius: 16px;
+  background: var(--surface);
 }
-.profile-check svg { width: 12px; height: 12px; opacity: 0; }
-.profile-option:has(input:checked) .profile-check { background: var(--fill); border-color: var(--fill); color: var(--on-fill); }
-.profile-option:has(input:checked) .profile-check svg { opacity: 1; }
-.profile-option .profile-name { padding-right: 26px; }
 
-.start { margin-top: 22px; }
+/* Champs de saisie (16 px minimum, sinon Safari iOS zoome la page) */
+.field { display: grid; gap: 6px; }
+.field label, .field-label { font-weight: 700; color: var(--fg-strong); font-size: .9375rem; }
+.field-opt { font-weight: 500; color: var(--fg-muted); }
+.field input {
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 1.0625rem;
+}
+.field input:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; border-color: var(--fill); }
+.field input[aria-invalid="true"] { border-color: var(--ko); }
+.field-err { font-size: .875rem; font-weight: 700; color: var(--ko-fg); }
+.piege { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+
 .reassure {
-  margin-top: 14px;
+  margin-top: 16px;
   font-size: .9375rem;
   color: var(--fg-muted);
 }
+
+/* Ce que vous obtenez */
+.gains { margin-top: 44px; }
+.gains-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 14px; }
+.gains-list li { display: grid; grid-template-columns: 28px 1fr; gap: 12px; align-items: start; }
+.gains-list svg { width: 22px; height: 22px; margin-top: 2px; color: var(--ok); }
+.gains-list strong { color: var(--fg-strong); }
 .resume {
   margin-top: 28px;
   padding-top: 18px;
@@ -398,89 +419,54 @@ main { flex: 1; }
   letter-spacing: -0.018em;
 }
 .q-text:focus { outline: none; }
+.q-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; margin-top: 6px; font-size: .9375rem; font-weight: 600; color: var(--fg-muted); }
+.q-top .q-count { margin-left: auto; }
+.q-back { font-size: .9375rem; text-decoration: none; gap: 4px; color: var(--fg-muted); }
+.q-back svg { width: 16px; height: 16px; }
+.q-body { transition: opacity .16s ease, transform .16s ease; }
+.q-body.is-leaving { opacity: 0; transform: translateX(-14px); }
+.q-body.is-entering { opacity: 0; transform: translateX(14px); transition: none; }
+
+/* Un clic sur une réponse = question suivante. Pas de correction pendant le test : tout est donné à la fin. */
 .choices {
   display: grid;
   gap: 10px;
-  margin-top: 24px;
+  margin-top: 22px;
 }
 .choice {
   display: grid;
-  grid-template-columns: 24px 1fr;
-  gap: 14px;
-  align-items: start;
-  min-height: 56px;
-  padding: 15px 16px;
+  grid-template-columns: 30px 1fr;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 60px;
+  padding: 13px 16px 13px 12px;
   border: 2px solid var(--line);
   border-radius: 14px;
   background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  line-height: 1.42;
+  text-align: left;
   cursor: pointer;
+  transition: transform .12s ease, border-color .12s ease;
 }
-.choice input {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 24px; height: 24px;
-  margin: 0;
-  border: 2px solid var(--fg-muted);
-  border-radius: 50%;
-  background: var(--surface);
+.choice-key {
   display: grid;
   place-items: center;
-  cursor: pointer;
-}
-.choice input::after {
-  content: "";
-  width: 12px; height: 12px;
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--line);
   border-radius: 50%;
-  background: var(--fill);
-  transform: scale(0);
-  transition: transform .12s ease;
-}
-.choice input:checked { border-color: var(--fill); }
-.choice input:checked::after { transform: scale(1); }
-.choice input:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
-.choices:not(.is-locked) .choice:has(input:checked) { border-color: var(--fill); }
-.choice-text { line-height: 1.42; }
-.choice-status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
   font-size: .875rem;
   font-weight: 800;
+  color: var(--fg-muted);
 }
-.choice-status svg { width: 16px; height: 16px; flex: none; }
-
+.choice:active { transform: scale(.99); }
+.choice.is-picked { border-color: var(--fill); box-shadow: inset 0 0 0 1px var(--fill); }
+.choice.is-picked .choice-key { border-color: var(--fill); background: var(--fill); color: var(--on-fill); }
 .choices.is-locked .choice { cursor: default; }
-.choices.is-locked .choice input { cursor: default; }
-.choice.is-correct { border-color: var(--ok); background: var(--ok-bg); }
-.choice.is-correct .choice-status { color: var(--ok-fg); }
-.choice.is-correct input { border-color: var(--ok); }
-.choice.is-correct input::after { background: var(--ok); }
-.choice.is-wrong { border-color: var(--ko); background: var(--ko-bg); }
-.choice.is-wrong .choice-status { color: var(--ko-fg); }
-.choice.is-wrong input { border-color: var(--ko); }
-.choice.is-wrong input::after { background: var(--ko); }
-.choice.is-other { border-color: var(--line); color: var(--fg-muted); }
-
-.feedback {
-  margin-top: 18px;
-  padding: 16px 18px;
-  border-radius: 14px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-}
-.feedback-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 800;
-  font-size: 1.0625rem;
-}
-.feedback-title svg { width: 20px; height: 20px; flex: none; }
-.feedback.is-correct .feedback-title { color: var(--ok-fg); }
-.feedback.is-wrong .feedback-title { color: var(--ko-fg); }
-.feedback-expl { margin-top: 6px; }
-.q-submit { margin-top: 22px; }
+.q-help { margin-top: 18px; font-size: .875rem; color: var(--fg-muted); }
 
 /* Résultat */
 .result-head { padding-top: 12px; }
@@ -493,22 +479,22 @@ main { flex: 1; }
   color: var(--fg-strong);
 }
 .score-value {
-  font-size: clamp(6.5rem, 38vw, 10.5rem);
+  font-size: clamp(4.75rem, 24vw, 7.5rem);
   font-weight: 800;
   letter-spacing: -0.06em;
   line-height: .82;
   font-variant-numeric: tabular-nums;
 }
-.score-max { font-size: 1.625rem; font-weight: 700; color: var(--fg-muted); letter-spacing: -0.02em; }
+.score-max { font-size: 1.375rem; font-weight: 700; color: var(--fg-muted); letter-spacing: -0.02em; }
 .level-name {
-  margin-top: 22px;
-  font-size: 1.75rem;
+  margin-top: 16px;
+  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.025em;
 }
-.level-msg { margin-top: 6px; max-width: 34ch; font-size: 1.125rem; }
+.level-msg { margin-top: 4px; max-width: 36ch; font-size: 1.0625rem; }
 
-.scale { margin-top: 26px; }
+.scale { margin-top: 20px; }
 .scale-track {
   position: relative;
   display: flex;
@@ -569,6 +555,64 @@ main { flex: 1; }
   background: var(--fill);
   transition: width .8s cubic-bezier(.2, .7, .2, 1);
 }
+/* Code couleur par axe : vert = acquis, bleu nuit = en cours, terre cuite = à renforcer (jamais la couleur seule). */
+.axis-tag { font-size: .8125rem; font-weight: 800; letter-spacing: .01em; }
+.axis[data-ton="ok"] .bar-fill { background: var(--ok); }
+.axis[data-ton="ok"] .axis-tag { color: var(--ok-fg); }
+.axis[data-ton="mid"] .axis-tag { color: var(--fg-muted); }
+.axis[data-ton="ko"] .bar-fill { background: var(--ko); }
+.axis[data-ton="ko"] .axis-tag { color: var(--ko-fg); }
+.axis-right { display: inline-flex; align-items: baseline; gap: 8px; }
+
+/* Formulaire de déblocage du diagnostic */
+.gate {
+  margin-top: 30px;
+  padding: 22px 20px 20px;
+  border: 2px solid var(--fill);
+  border-radius: 20px;
+  background: var(--surface);
+}
+.gate-title { font-size: clamp(1.3rem, 5.6vw, 1.5rem); font-weight: 800; letter-spacing: -0.02em; }
+.gate-teaser { margin-top: 6px; color: var(--fg-muted); }
+.gate-list { list-style: none; margin: 14px 0 18px; padding: 0; display: grid; gap: 8px; }
+.gate-list li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; }
+.gate-list svg { width: 20px; height: 20px; margin-top: 2px; color: var(--ok); }
+.gate form { display: grid; gap: 14px; }
+.optin { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: start; font-size: .9375rem; cursor: pointer; }
+.optin input { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--fill); }
+.gate-legal { font-size: .8125rem; color: var(--fg-muted); }
+.gate-legal a { font-weight: 700; }
+
+.diag-head { margin-top: 40px; scroll-margin-top: 12px; }
+.diag-head:focus { outline: none; }
+.diag-title { font-size: clamp(1.5rem, 6.4vw, 1.875rem); font-weight: 800; letter-spacing: -0.025em; }
+
+/* Corrigé question par question */
+.review { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 10px; }
+.rev { border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); }
+.rev summary {
+  display: grid;
+  grid-template-columns: 24px 1fr 18px;
+  gap: 10px;
+  align-items: start;
+  padding: 14px 14px;
+  cursor: pointer;
+  list-style: none;
+}
+.rev summary::-webkit-details-marker { display: none; }
+.rev-icon { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; }
+.rev-icon svg { width: 14px; height: 14px; }
+.rev.is-ok .rev-icon { background: var(--ok-bg); color: var(--ok-fg); }
+.rev.is-ko .rev-icon { background: var(--ko-bg); color: var(--ko-fg); }
+.rev-q { font-weight: 700; color: var(--fg-strong); line-height: 1.4; }
+.rev-meta { display: block; margin-top: 2px; font-size: .8125rem; font-weight: 600; color: var(--fg-muted); }
+.rev-chev { width: 18px; height: 18px; margin-top: 3px; color: var(--fg-muted); transition: transform .15s ease; }
+.rev[open] .rev-chev { transform: rotate(180deg); }
+.rev-body { padding: 0 14px 16px 48px; display: grid; gap: 6px; font-size: .9375rem; }
+.rev-line strong { color: var(--fg-strong); }
+.rev-line.is-ok strong { color: var(--ok-fg); }
+.rev-line.is-ko strong { color: var(--ko-fg); }
+.rev-expl { color: var(--fg); }
 
 .recos {
   list-style: none;
@@ -633,28 +677,41 @@ main { flex: 1; }
 .cta-who { display: flex; flex-direction: column; line-height: 1.3; }
 .cta-name { font-weight: 800; color: var(--on-panel); }
 .cta-role { font-size: .875rem; color: var(--on-panel-muted); }
-.cta-hint, .cta-mail-line { margin-top: 12px; font-size: .9375rem; color: var(--on-panel-muted); }
-.cta-mail-line { margin-top: 6px; }
-.cta-mail-line a { color: var(--on-panel); font-weight: 700; overflow-wrap: anywhere; }
-.cta-panel .text-btn { color: var(--on-panel); }
+.cta-reassure {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 12px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: .875rem;
+  font-weight: 700;
+  color: var(--on-panel);
+}
+.cta-reassure li { display: inline-flex; align-items: center; gap: 5px; }
+.cta-reassure svg { width: 14px; height: 14px; color: var(--amber); }
+.cta-sent { margin-top: 12px; font-size: .9375rem; color: var(--on-panel-muted); text-align: center; }
+.cta-mail { display: flex; justify-content: center; margin-top: 6px; }
+.cta-panel .text-btn { color: var(--on-panel); font-size: .9375rem; }
 .btn:disabled { cursor: progress; opacity: .75; }
 
 .after { margin-top: 18px; }
 
-/* Partage : une icône par réseau, LinkedIn mis en avant (fond plein). */
-.share { margin-top: 28px; }
-.share-title { font-size: 1.0625rem; font-weight: 800; }
+/* Partage : une icône par réseau, LinkedIn mis en avant (fond plein). Volontairement discret : le RDV passe d'abord. */
+.share { margin-top: 40px; }
+.share-title { font-size: 1rem; font-weight: 800; }
 .share-icons {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 12px;
+  gap: 10px;
+  margin-top: 10px;
 }
 .share-btn {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  width: 46px;
+  height: 46px;
   padding: 0;
   border: 1.5px solid var(--line);
   border-radius: 50%;
@@ -664,32 +721,77 @@ main { flex: 1; }
   transition: transform .12s ease;
 }
 .share-btn:active { transform: scale(.94); }
-.share-btn svg { width: 22px; height: 22px; }
+.share-btn svg { width: 20px; height: 20px; }
 .share-btn-main { border-color: var(--fill); background: var(--fill); color: var(--on-fill); }
 .share-btn .icon-ok,
 .share-btn.is-done .icon-copy { display: none; }
 .share-btn.is-done .icon-ok { display: block; }
 .share-btn.is-done { border-color: var(--ok); color: var(--ok-fg); }
-/* Texte copié : reste affiché pour que l'on sache toujours ce que contient le presse-papiers. */
-.share-panel {
-  margin-top: 14px;
-  padding: 16px 18px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--surface);
-  scroll-margin-bottom: 104px; /* reste visible au-dessus du toast */
+
+/* Bulle de rendez-vous : rappel permanent du CTA tant que le bloc RDV n'est pas à l'écran. */
+.bulle {
+  position: fixed;
+  right: calc(12px + env(safe-area-inset-right));
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 24px);
+  padding: 6px 18px 6px 6px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--on-panel);
+  font: inherit;
+  text-align: left;
+  box-shadow: 0 10px 28px rgba(11, 19, 38, .32);
+  cursor: pointer;
+  transition: opacity .2s ease, transform .2s ease, visibility .2s;
 }
-.share-label { font-size: .9375rem; font-weight: 700; color: var(--fg-strong); }
-.share-text {
-  margin-top: 8px;
-  padding-left: 12px;
-  border-left: 3px solid var(--line);
-  font-size: .9375rem;
-  color: var(--fg);
-  user-select: all;
-  -webkit-user-select: all;
+.bulle img { flex: none; width: 46px; height: 46px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--amber); }
+.bulle-txt { display: flex; flex-direction: column; line-height: 1.2; }
+.bulle-q { font-size: .8125rem; font-weight: 600; color: var(--on-panel-muted); }
+.bulle-a { font-weight: 800; }
+.bulle:not(.is-visible) { opacity: 0; transform: translateY(18px); visibility: hidden; pointer-events: none; }
+.bulle:active { transform: scale(.97); }
+body.bulle-active .foot { padding-bottom: 96px; }
+
+/* Qui est derrière + FAQ (accueil et résultat) */
+.apropos { padding-bottom: 40px; }
+body[data-ecran="ecran-quiz"] .apropos,
+body[data-ecran="ecran-erreur"] .apropos { display: none; }
+.apropos-carte {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 14px;
+  align-items: start;
+  margin-top: 16px;
 }
-.share-panel .text-btn { margin-top: 6px; }
+.apropos-carte img { width: 64px; height: 64px; border-radius: 18px; object-fit: cover; }
+.apropos-nom { font-weight: 800; color: var(--fg-strong); }
+.apropos-role { font-size: .875rem; color: var(--fg-muted); }
+.apropos-texte { margin-top: 14px; }
+.apropos-preuve { margin-top: 10px; padding-left: 12px; border-left: 3px solid var(--amber); font-weight: 600; }
+.faq { margin-top: 32px; }
+.faq-list { margin-top: 12px; border-top: 1px solid var(--line); }
+.faq details { border-bottom: 1px solid var(--line); }
+.faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  padding: 12px 0;
+  font-weight: 700;
+  color: var(--fg-strong);
+  cursor: pointer;
+  list-style: none;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary svg { flex: none; width: 18px; height: 18px; color: var(--fg-muted); transition: transform .15s ease; }
+.faq details[open] summary svg { transform: rotate(45deg); }
+.faq details p { padding: 0 0 16px; }
 
 /* Confirmation temporaire (toast). Couleurs inversées : navy/paper en clair, paper/navy en sombre (15,7:1). */
 .toast {
@@ -799,6 +901,12 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
   border-radius: 12px;
   box-shadow: 0 6px 20px rgba(11, 19, 38, .25);
 }
+/* Fenêtre de réservation : agenda Google intégré, pour ne pas quitter le site. */
+.sheet-cal { width: min(calc(100% - 16px), 46rem); height: calc(100dvh - 24px); max-height: calc(100dvh - 24px); overflow: hidden; }
+.sheet-cal .sheet-inner { display: flex; flex-direction: column; height: 100%; padding-bottom: 12px; }
+.cal-cadre { flex: 1; width: 100%; min-height: 0; margin-top: 12px; border: 0; border-radius: 12px; background: #fff; }
+.cal-note { margin-top: 6px; font-size: .875rem; color: var(--fg-muted); }
+.cal-note .text-btn { font-size: .875rem; min-height: 0; padding: 0; }
 .steps { margin: 16px 0 0; padding-left: 1.3em; font-size: .9375rem; }
 .steps li + li { margin-top: 4px; }
 .toast svg { width: 20px; height: 20px; flex: none; }
@@ -826,7 +934,8 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
   .logo-full { width: 320px; }
   .hero { padding-top: 32px; }
   .cta-panel { padding: 36px 36px 30px; }
-  .cta-actions { grid-template-columns: 1fr 1fr; }
+  .gate { padding: 28px 28px 24px; }
+  .roles-grid { grid-template-columns: 1fr 1fr; }
 }
 
 /* Survols : uniquement avec une souris (sur écran tactile, :hover resterait collé après le tap). */
@@ -836,23 +945,22 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
   .btn-ghost:hover { background: rgba(247, 245, 241, .08); }
   .btn-outline:hover { border-color: var(--fg-muted); }
   .text-btn:hover { text-decoration-thickness: 2.5px; }
-  .choice:hover:not(:has(input:disabled)) { border-color: var(--fg-muted); }
+  .choices:not(.is-locked) .choice:hover { border-color: var(--fg-muted); }
+  .choices:not(.is-locked) .choice:hover .choice-key { border-color: var(--fg-muted); }
   .share-btn:not(.share-btn-main):hover,
   .theme-toggle:hover,
   .sheet-close:hover { border-color: var(--fg-muted); }
   .share-btn-main:hover { background: var(--fill-hover); border-color: var(--fill-hover); }
-  .profile-option:hover { border-color: var(--fg-muted); }
-  .profile-option:has(input:checked):hover { border-color: var(--fill); }
+  .role:hover { border-color: var(--fg-muted); }
+  .role.is-active:hover, .role[aria-expanded="true"]:hover { border-color: var(--fill); }
+  .rev summary:hover .rev-q, .faq summary:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .bulle:hover { box-shadow: 0 12px 32px rgba(11, 19, 38, .42); }
 }
 
 /* Retour au toucher, sur tous les supports */
 .text-btn:active { opacity: .65; }
 .theme-toggle, .sheet-close { transition: transform .12s ease; }
 .theme-toggle:active, .sheet-close:active { transform: scale(.94); }
-.profile-option { transition: transform .12s ease; }
-.profile-option:active { transform: scale(.985); }
-.choices:not(.is-locked) .choice { transition: transform .12s ease; }
-.choices:not(.is-locked) .choice:active { transform: scale(.99); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
@@ -880,50 +988,78 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
       <svg class="pulse" viewBox="0 0 600 48" aria-hidden="true" focusable="false">
         <path d="M0 30 H196 C202 30 204 21 211 21 C218 21 220 30 226 30 H242 L249 35 L262 2 L277 46 L286 30 H306 C314 30 317 17 328 17 C339 17 342 30 350 30 H600" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" pathLength="1"/>
       </svg>
-      <p class="hero-lead">Où en êtes-vous vraiment avec l’IA&#8239;? <span>3 minutes, 10 questions, un score sur&nbsp;100.</span></p>
+      <p class="hero-lead">Où en êtes-vous vraiment avec l’IA&#8239;? <span>10 questions adaptées à votre métier, 3&nbsp;minutes. Votre score tout de suite, votre diagnostic détaillé ensuite.</span></p>
     </div>
 
-    <fieldset class="profile">
-      <legend>Vous passez le test…</legend>
-      <div class="profile-options">
-        <label class="profile-option">
-          <input type="radio" name="profil" value="perso">
-          <span class="profile-check" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          <span class="profile-name">Pour moi</span>
-          <span class="profile-desc">Vos usages, à titre personnel et au travail</span>
-        </label>
-        <label class="profile-option">
-          <input type="radio" name="profil" value="entreprise">
-          <span class="profile-check" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          <span class="profile-name">Pour mon entreprise</span>
-          <span class="profile-desc">La maturité IA de votre organisation</span>
-        </label>
+    <section class="cible" aria-labelledby="cible-titre">
+      <h2 class="cible-titre" id="cible-titre">Vous passez le test…</h2>
+      <button type="button" class="role role-perso" data-role="perso">
+        <span class="role-name">Pour moi</span>
+        <span class="role-desc">Vos usages, à titre personnel et au travail</span>
+        <svg class="role-go" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M7 4l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <p class="roles-pro" id="roles-pro">Pour mon entreprise, je suis…</p>
+      <div class="roles-grid" role="group" aria-labelledby="roles-pro">
+        <button type="button" class="role" data-role="dirigeant">
+          <span class="role-name">Dirigeant·e</span>
+          <span class="role-desc">Stratégie, gains, risques</span>
+          <svg class="role-go" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M7 4l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="role" data-role="dsi">
+          <span class="role-name">DSI / IT</span>
+          <span class="role-desc">Sécurité, intégration, données</span>
+          <svg class="role-go" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M7 4l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="role" data-role="marketing">
+          <span class="role-name">Marketing / Com</span>
+          <span class="role-desc">Contenus, marque, clients</span>
+          <svg class="role-go" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M7 4l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="role" data-role="autre" aria-expanded="false" aria-controls="zone-autre">
+          <span class="role-name">Autre métier</span>
+          <span class="role-desc">Précisez en un mot</span>
+          <svg class="role-go" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M7 4l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
       </div>
-    </fieldset>
-    <p class="hint" id="hint-profil" role="status" hidden>Choisissez d’abord pour qui vous passez le test.</p>
-
-    <button type="button" class="btn btn-primary start" id="btn-commencer">Commencer le test</button>
-    <p class="reassure">Un test gratuit proposé par Manica. Pas d’inscription, pas de mail demandé.</p>
+      <form class="zone-autre" id="zone-autre" novalidate hidden>
+        <div class="field">
+          <label for="autre-metier">Votre métier <span class="field-opt">(facultatif)</span></label>
+          <input id="autre-metier" type="text" maxlength="60" autocomplete="organization-title" enterkeyhint="go" placeholder="RH, juriste, commercial…">
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-autre">Commencer le test</button>
+      </form>
+    </section>
+    <p class="reassure">Gratuit, sans engagement. Votre score s’affiche dès la dernière réponse.</p>
 
     <div class="resume" id="bloc-reprise" hidden>
       <p id="texte-reprise"></p>
       <button type="button" class="text-btn" id="btn-reprendre"></button>
     </div>
+
+    <section class="gains" aria-labelledby="gains-titre">
+      <h2 class="block-title" id="gains-titre">Ce que vous obtenez</h2>
+      <ul class="gains-list">
+        <li><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M4 10.5 8 14.5 16 5.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span><strong>Un score sur 100</strong> et votre niveau, dès la dernière réponse.</span></li>
+        <li><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M4 10.5 8 14.5 16 5.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span><strong>Le corrigé de chaque réponse</strong>, avec une explication courte et concrète.</span></li>
+        <li><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M4 10.5 8 14.5 16 5.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span><strong>Vos 3 priorités</strong>, adaptées à votre métier, avec un premier pas pour chacune.</span></li>
+      </ul>
+    </section>
   </section>
 
   <section class="wrap screen" id="ecran-quiz" aria-labelledby="q-texte" hidden>
     <div class="progress" aria-hidden="true"><div class="progress-fill" id="q-progression"></div></div>
-    <p class="q-meta"><span id="q-axe"></span><span class="q-count" id="q-compteur"></span></p>
-    <form id="q-form" novalidate>
+    <div class="q-top">
+      <button type="button" class="text-btn q-back" id="q-retour" hidden>
+        <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M13 4l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Précédente
+      </button>
+      <span class="q-count" id="q-compteur"></span>
+    </div>
+    <div class="q-body" id="q-corps">
+      <p class="q-meta"><span id="q-axe"></span></p>
       <h2 class="q-text" id="q-texte" tabindex="-1"></h2>
-      <div class="choices" id="q-choix" role="radiogroup" aria-labelledby="q-texte"></div>
-      <p class="hint" id="hint-choix" role="status" hidden>Choisissez une réponse pour continuer.</p>
-      <div class="feedback" id="q-feedback" aria-live="polite" hidden>
-        <p class="feedback-title" id="q-feedback-titre"></p>
-        <p class="feedback-expl" id="q-feedback-texte"></p>
-      </div>
-      <button type="submit" class="btn btn-primary q-submit" id="q-bouton">Valider ma réponse</button>
-    </form>
+      <div class="choices" id="q-choix" role="group" aria-labelledby="q-texte"></div>
+      <p class="q-help" id="q-aide">Touchez votre réponse : la question suivante s’affiche aussitôt. Le corrigé vous attend à la fin.</p>
+    </div>
   </section>
 
   <section class="wrap screen" id="ecran-resultat" aria-labelledby="r-titre" hidden>
@@ -937,6 +1073,74 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
         <div class="scale-labels" id="r-echelle-libelles"></div>
       </div>
     </div>
+
+    <!-- Formulaire : le score est libre, le diagnostic détaillé se débloque avec nom + e-mail. -->
+    <section class="gate" id="r-gate" aria-labelledby="gate-titre">
+      <h3 class="gate-title" id="gate-titre">Votre diagnostic détaillé est prêt</h3>
+      <p class="gate-teaser" id="gate-accroche"></p>
+      <ul class="gate-list">
+        <li><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M4 10.5 8 14.5 16 5.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Le corrigé de vos réponses, avec les explications</span></li>
+        <li><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M4 10.5 8 14.5 16 5.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Votre profil sur les 5 axes</span></li>
+        <li><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M4 10.5 8 14.5 16 5.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="gate-priorites">Vos 3 priorités, avec un premier pas pour chacune</span></li>
+      </ul>
+      <form id="form-lead" novalidate>
+        <div class="field">
+          <label for="lead-nom">Prénom et nom</label>
+          <input id="lead-nom" name="nom" type="text" autocomplete="name" maxlength="80" required aria-describedby="err-nom">
+          <p class="field-err" id="err-nom" hidden>Indiquez votre nom.</p>
+        </div>
+        <div class="field">
+          <label for="lead-email" id="lead-email-libelle">E-mail</label>
+          <input id="lead-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="120" required aria-describedby="err-email" enterkeyhint="send">
+          <p class="field-err" id="err-email" hidden>Vérifiez votre adresse e-mail.</p>
+        </div>
+        <div class="piege" aria-hidden="true">
+          <label for="lead-site">Site web</label>
+          <input id="lead-site" name="site" type="text" tabindex="-1" autocomplete="off">
+        </div>
+        <label class="optin"><input type="checkbox" id="lead-optin" name="optin"><span>Prévenez-moi des prochains lives et contenus IA de Manica.</span></label>
+        <button type="submit" class="btn btn-primary" id="lead-envoyer">Voir mon diagnostic</button>
+        <p class="gate-legal" id="gate-legal">Vos coordonnées servent uniquement à Manica pour vous remettre votre diagnostic et en reparler avec vous. Jamais revendues. <a href="mentions-legales.html#vos-donnees">Confidentialité</a></p>
+      </form>
+    </section>
+
+    <div id="r-diagnostic" hidden>
+    <div class="diag-head" id="diag-tete" tabindex="-1">
+      <h2 class="diag-title" id="diag-titre">Votre diagnostic</h2>
+    </div>
+
+    <section class="block" aria-labelledby="r-axes-titre">
+      <h3 class="block-title" id="r-axes-titre">Détail par axe</h3>
+      <ul class="axes" id="r-axes"></ul>
+    </section>
+
+    <section class="block" aria-labelledby="r-recos-titre">
+      <h3 class="block-title" id="r-recos-titre">Vos 3 priorités</h3>
+      <p class="block-sub">À partir de vos axes les moins solides.</p>
+      <ol class="recos" id="r-recos"></ol>
+    </section>
+
+    <section class="cta-panel" id="cta-bloc" aria-labelledby="cta-titre">
+      <div class="cta-person">
+        <img class="cta-photo" id="cta-photo" src="img/cedric-delalande.jpg" width="256" height="256" alt="" loading="lazy">
+        <p class="cta-who"><span class="cta-name" id="cta-nom"></span><span class="cta-role" id="cta-role"></span></p>
+      </div>
+      <h3 class="cta-title" id="cta-titre"></h3>
+      <p class="cta-sub" id="cta-sous-titre"></p>
+      <div class="cta-actions">
+        <a class="btn btn-cta" id="cta-rdv" href="#" target="_blank" rel="noopener" aria-haspopup="dialog"></a>
+      </div>
+      <ul class="cta-reassure" id="cta-reassurance" role="list"></ul>
+      <p class="cta-sent" id="cta-transmis" hidden></p>
+      <div class="cta-mail"><a class="text-btn" id="cta-mail" href="#"></a></div>
+      <p class="cta-positioning" id="cta-positionnement"></p>
+    </section>
+
+    <section class="block" aria-labelledby="r-corrige-titre">
+      <h3 class="block-title" id="r-corrige-titre">Le corrigé, question par question</h3>
+      <p class="block-sub" id="r-corrige-sous-titre"></p>
+      <ol class="review" id="r-corrige"></ol>
+    </section>
 
     <section class="share" aria-labelledby="partage-titre">
       <h3 class="share-title" id="partage-titre"></h3>
@@ -962,38 +1166,7 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
         </button>
       </div>
     </section>
-    <div class="share-panel" id="partage-panneau" hidden>
-      <p class="share-label" id="partage-libelle"></p>
-      <p class="share-text" id="partage-texte"></p>
-      <a class="text-btn" id="lien-linkedin" href="https://www.linkedin.com/" target="_blank" rel="noopener">Ouvrir LinkedIn</a>
     </div>
-
-    <section class="block" aria-labelledby="r-axes-titre">
-      <h3 class="block-title" id="r-axes-titre">Détail par axe</h3>
-      <ul class="axes" id="r-axes"></ul>
-    </section>
-
-    <section class="block" aria-labelledby="r-recos-titre">
-      <h3 class="block-title" id="r-recos-titre">Vos 3 priorités</h3>
-      <p class="block-sub">À partir de vos axes les moins solides.</p>
-      <ol class="recos" id="r-recos"></ol>
-    </section>
-
-    <section class="cta-panel" aria-labelledby="cta-titre">
-      <div class="cta-person">
-        <img class="cta-photo" id="cta-photo" src="img/cedric-delalande.jpg" width="256" height="256" alt="" loading="lazy">
-        <p class="cta-who"><span class="cta-name" id="cta-nom"></span><span class="cta-role" id="cta-role"></span></p>
-      </div>
-      <h3 class="cta-title" id="cta-titre"></h3>
-      <p class="cta-sub" id="cta-sous-titre"></p>
-      <div class="cta-actions">
-        <a class="btn btn-cta" id="cta-rdv" href="#" target="_blank" rel="noopener"></a>
-        <a class="btn btn-ghost" id="cta-mail" href="#"></a>
-      </div>
-      <p class="cta-hint" id="cta-indice"></p>
-      <p class="cta-mail-line">Ou écrivez directement à <a id="cta-adresse" href="mailto:hello@manica.fr"></a> <button type="button" class="text-btn text-btn-inline" id="cta-copier-adresse">Copier l’adresse</button></p>
-      <p class="cta-positioning" id="cta-positionnement"></p>
-    </section>
     <div class="after">
       <button type="button" class="text-btn" id="btn-refaire">Refaire le test</button>
     </div>
@@ -1006,10 +1179,26 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
   </section>
 </main>
 
+<!-- Qui est derrière + FAQ : visible sur l'accueil (sous le choix du profil) et sur le résultat. Textes : config.json (a_propos, faq). -->
+<section class="wrap apropos" id="apropos" aria-labelledby="apropos-titre" hidden>
+  <h2 class="block-title" id="apropos-titre"></h2>
+  <div class="apropos-carte">
+    <img src="img/cedric-delalande.jpg" width="256" height="256" alt="" loading="lazy">
+    <p><span class="apropos-nom" id="apropos-nom"></span><br><span class="apropos-role" id="apropos-role"></span></p>
+  </div>
+  <p class="apropos-texte" id="apropos-texte"></p>
+  <p class="apropos-preuve" id="apropos-preuve"></p>
+  <a class="text-btn" id="apropos-linkedin" href="#" target="_blank" rel="noopener" hidden>Suivre Cédric sur LinkedIn</a>
+  <div class="faq">
+    <h2 class="block-title" id="faq-titre">Questions fréquentes</h2>
+    <div class="faq-list" id="faq"></div>
+  </div>
+</section>
+
 <footer class="wrap foot">
   <img class="logo logo-foot" src="img/logo-manica-300.png" width="300" height="111" alt="Manica">
   <p>IA utile et accompagnée.</p>
-  <p>Votre score est calculé dans votre navigateur : aucune réponse ne quitte votre appareil.</p>
+  <p>Votre score est calculé dans votre navigateur. Vos réponses ne sont transmises à Manica que si vous demandez votre diagnostic détaillé.</p>
   <p>Mesure d’audience anonyme et sans cookie (GoatCounter).</p>
   <a class="text-btn" href="mentions-legales.html">Mentions légales et confidentialité</a>
   <p id="mention-beta" hidden></p>
@@ -1075,6 +1264,26 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
   </div>
 </dialog>
 
+<dialog class="sheet sheet-cal" id="dialogue-rdv" aria-labelledby="dr-titre">
+  <div class="sheet-inner">
+    <div class="sheet-head">
+      <h2 class="sheet-title" id="dr-titre">Réserver votre échange</h2>
+      <button type="button" class="sheet-close" data-fermer aria-label="Fermer">
+        <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M5 5l10 10M15 5 5 15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <p class="cal-note" id="dr-note"></p>
+    <iframe class="cal-cadre" id="dr-cadre" title="Agenda de réservation de Cédric Delalande"></iframe>
+    <p class="cal-note">L’agenda ne s’affiche pas&#8239;? <a class="text-btn" id="dr-onglet" href="#" target="_blank" rel="noopener">Ouvrez-le dans un nouvel onglet</a>.</p>
+    <div class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  </div>
+</dialog>
+
+<button type="button" class="bulle" id="bulle-rdv" aria-haspopup="dialog" hidden>
+  <img src="img/cedric-delalande.jpg" width="256" height="256" alt="">
+  <span class="bulle-txt"><span class="bulle-q" id="bulle-question"></span><span class="bulle-a" id="bulle-action"></span></span>
+</button>
+
 <!-- Région live présente dès le chargement : son contenu est annoncé aux lecteurs d'écran. -->
 <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
@@ -1096,23 +1305,40 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
     return a;
   }
 
-  function questionsDisponibles(questions, axeId, profil, statuts) {
-    return questions.filter(q => q.axe === axeId
-      && (q.profil === 'tous' || q.profil === profil)
-      && statuts.includes(q.statut));
+  // Cible du test : { role, profil } (profil = perso | entreprise, déduit du rôle choisi à l'accueil).
+  function cibleDe(config, roleId) {
+    const role = config.roles.find(r => r.id === roleId);
+    return role ? { role: role.id, profil: role.profil } : null;
   }
 
-  // Tire `parAxe` questions par axe en variant les difficultés (une par niveau tant que possible,
-  // niveaux pris dans un ordre aléatoire : toute la banque reste tirable), puis ordonne le test
-  // du plus facile au plus difficile.
-  function tirerQuestions(questions, axes, profil, parAxe, statuts, rnd) {
+  // Une question est proposée si son profil correspond, et, si elle vise des métiers précis (roles),
+  // seulement à ces métiers.
+  function questionAccessible(q, cible) {
+    return (q.profil === 'tous' || q.profil === cible.profil)
+      && (!Array.isArray(q.roles) || q.roles.includes(cible.role));
+  }
+
+  // Question écrite pour ce visiteur : son métier, ou la vie perso pour le profil « Pour moi ».
+  function questionCiblee(q, cible) {
+    return Array.isArray(q.roles) ? q.roles.includes(cible.role) : (cible.profil === 'perso' && q.profil === 'perso');
+  }
+
+  function questionsDisponibles(questions, axeId, cible, statuts) {
+    return questions.filter(q => q.axe === axeId && questionAccessible(q, cible) && statuts.includes(q.statut));
+  }
+
+  // Tire `parAxe` questions par axe : d'abord `ciblees` question(s) écrite(s) pour le métier du visiteur
+  // quand il y en a, puis des difficultés variées (une par niveau tant que possible, niveaux dans un ordre
+  // aléatoire : toute la banque reste tirable). Le test est ensuite ordonné du plus facile au plus difficile.
+  function tirerQuestions(questions, axes, cible, parAxe, statuts, rnd, ciblees = 0) {
     const tirage = [];
     for (const axe of axes) {
-      const pool = melanger(questionsDisponibles(questions, axe.id, profil, statuts), rnd);
-      const choisies = [];
+      const pool = melanger(questionsDisponibles(questions, axe.id, cible, statuts), rnd);
+      const choisies = pool.filter(q => questionCiblee(q, cible)).slice(0, Math.min(ciblees, parAxe));
       for (const difficulte of melanger(Object.keys(RANG_DIFFICULTE), rnd)) {
         if (choisies.length >= parAxe) break;
-        const q = pool.find(x => x.difficulte === difficulte);
+        if (choisies.some(c => c.difficulte === difficulte)) continue;
+        const q = pool.find(x => x.difficulte === difficulte && !choisies.includes(x));
         if (q) choisies.push(q);
       }
       for (const q of pool) {
@@ -1120,7 +1346,7 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
         if (!choisies.includes(q)) choisies.push(q);
       }
       if (choisies.length < parAxe) {
-        throw new Error(`Axe « ${axe.id} » : pas assez de questions pour le profil ${profil}`);
+        throw new Error(`Axe « ${axe.id} » : pas assez de questions pour le profil ${cible.role}`);
       }
       tirage.push(...choisies);
     }
@@ -1171,23 +1397,83 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
     return profil === 'perso' && axe.libelle_perso ? axe.libelle_perso : axe.libelle;
   }
 
-  function valeursModele(config, profil, resultat) {
+  // « Pour moi », « Dirigeant·e », « Autre métier (juriste) »…
+  function libelleRole(config, cible, precision) {
+    const role = config.roles.find(r => r.id === cible.role);
+    return precision ? `${role.libelle} (${precision})` : role.libelle;
+  }
+
+  function valeursModele(config, cible, resultat, precision) {
     const detail = resultat.detail
-      .map(d => `- ${libelleAxe(config.axes.find(a => a.id === d.id), profil)} : ${d.pct} %`)
+      .map(d => `- ${libelleAxe(config.axes.find(a => a.id === d.id), cible.profil)} : ${d.pct} %`)
       .join('\n');
     return {
       score: resultat.score,
       niveau: resultat.niveau.nom,
-      profil: config.profils[profil].libelle,
+      profil: libelleRole(config, cible, precision),
       detail_axes: detail
     };
   }
 
-  function lienMail(config, profil, resultat) {
-    const valeurs = valeursModele(config, profil, resultat);
+  function lienMail(config, cible, resultat, precision) {
+    const valeurs = valeursModele(config, cible, resultat, precision);
     const objet = remplir(config.mail.objet, valeurs);
     const corps = remplir(config.mail.corps, valeurs).replace(/\r?\n/g, '\r\n');
     return `mailto:${config.contact.email}?subject=${encodeURIComponent(objet)}&body=${encodeURIComponent(corps)}`;
+  }
+
+  // Texte d'un élément configurable par métier, avec repli sur le profil (perso | entreprise).
+  function texteCible(table, cible) {
+    return table[cible.role] || table[cible.profil];
+  }
+
+  // Code couleur d'un axe : acquis (≥ 60 %), en cours, à renforcer (< 30 %).
+  function tonAxe(pct) {
+    if (pct >= 60) return { ton: 'ok', libelle: 'Acquis' };
+    if (pct >= 30) return { ton: 'mid', libelle: 'En cours' };
+    return { ton: 'ko', libelle: 'À renforcer' };
+  }
+
+  const EMAIL_VALIDE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+  // Données transmises à Manica quand le visiteur demande son diagnostic (voir docs/LEADS.md).
+  function donneesLead(config, s, resultat, questionsParId, contact, contexte) {
+    return {
+      v: 2,
+      id: contexte.id,
+      date: contexte.date,
+      nom: contact.nom.trim().slice(0, 80),
+      email: contact.email.trim().slice(0, 120),
+      optin: Boolean(contact.optin),
+      role: s.cible.role,
+      profil: libelleRole(config, s.cible, s.precision),
+      precision: s.precision || '',
+      score: resultat.score,
+      niveau: resultat.niveau.nom,
+      bonnes: resultat.bonnes,
+      total: s.items.length,
+      axes: resultat.detail.map(d => ({ id: d.id, libelle: libelleAxe(config.axes.find(a => a.id === d.id), s.cible.profil), pct: d.pct })),
+      priorites: resultat.faibles.map(d => ({ id: d.id, titre: config.recommandations[d.id][s.cible.profil].titre, texte: config.recommandations[d.id][s.cible.profil].texte })),
+      // Corrigé complet (comme à l'écran) : sert à l'e-mail au visiteur et au suivi par Manica.
+      reponses: s.items.map((it, i) => {
+        const q = questionsParId.get(it.id);
+        const choix = [q.bonne_reponse, ...q.distracteurs];
+        const juste = it.ordre[s.reponses[i]] === 0;
+        return {
+          id: it.id,
+          juste,
+          axe: libelleAxe(config.axes.find(a => a.id === q.axe), s.cible.profil),
+          question: typo(q.question),
+          reponse: typo(choix[it.ordre[s.reponses[i]]]),
+          bonne: juste ? '' : typo(q.bonne_reponse),
+          explication: typo(q.explication)
+        };
+      }),
+      recap: Boolean(config.leads.recap_par_mail),
+      lien_rdv: config.contact.lien_rdv,
+      source: contexte.source || {},
+      page: contexte.page || ''
+    };
   }
 
   // Post LinkedIn pré-rédigé à partir du résultat (modèle et textes dans config.partage.linkedin).
@@ -1218,32 +1504,42 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
   }
   // === FIN LOGIQUE PURE ===
 
-  const CLE_STOCKAGE = 'checkup-ia:v1';
+  const CLE_STOCKAGE = 'checkup-ia:v2';
+  const CLE_CONTACT = 'checkup-ia:contact';
+  const CLE_LEAD_ATTENTE = 'checkup-ia:lead-en-attente';
   const mouvementReduit = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const $ = id => document.getElementById(id);
 
   const ICONES = {
     juste: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5 8 14.5 16 5.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    faux: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5 14.5 14.5M14.5 5.5 5.5 14.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>'
+    faux: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5 14.5 14.5M14.5 5.5 5.5 14.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>',
+    chevron: '<svg class="rev-chev" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    plus: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+    point: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5 8 14.5 16 5.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
   };
+  const LETTRES = ['A', 'B', 'C', 'D'];
 
   let config = null;
   let questionsParId = new Map();
   let session = null;
 
   // Mesure d'audience GoatCounter (sans cookie). Seuls le nom de l'événement et son titre sont envoyés,
-  // jamais les réponses ni le score. Silencieux si le script n'est pas chargé (hors ligne, bloqueur).
+  // jamais les réponses, le score ni les coordonnées. Silencieux si le script n'est pas chargé (hors ligne, bloqueur).
   const TITRES_EVENEMENTS = {
     test_demarre: 'Test démarré',
     test_termine: 'Test terminé',
-    clic_rdv: 'Clic : réserver un échange',
+    formulaire_vu: 'Formulaire du diagnostic affiché',
+    lead_envoye: 'Diagnostic demandé : contact transmis',
+    lead_echec: 'Diagnostic demandé : envoi en échec',
+    rdv_ouvert: 'Agenda ouvert (bloc RDV)',
+    rdv_ouvert_bulle: 'Agenda ouvert (bulle)',
+    clic_rdv: 'Agenda ouvert dans un nouvel onglet',
     clic_mail: 'Clic : nous écrire',
     partage_linkedin: 'Partage LinkedIn',
     partage_facebook: 'Partage Facebook',
     partage_instagram: 'Partage Instagram (image)',
     partage_mail: 'Partage par e-mail',
-    partage_copie: 'Copie du texte de partage',
-    copie_adresse: 'Copie de l\'adresse e-mail'
+    partage_copie: 'Copie du texte de partage'
   };
 
   function compter(donnees) {
@@ -1255,8 +1551,8 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
     }
   }
 
-  function suivre(evenement) {
-    compter({ path: evenement, title: TITRES_EVENEMENTS[evenement], event: true });
+  function suivre(evenement, titre) {
+    compter({ path: evenement, title: titre || TITRES_EVENEMENTS[evenement] || evenement, event: true });
   }
 
   // Page vue : déclenchée ici (réglage no_onload de count.js) pour rester sous try/catch,
@@ -1272,26 +1568,35 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
     document.addEventListener('visibilitychange', quandVisible);
   });
 
-  function lireSession() {
+  // --- Stockage local (toujours sous try/catch : le test marche sans) ---
+  function lireStockage(cle) {
     try {
-      const s = JSON.parse(localStorage.getItem(CLE_STOCKAGE));
-      return sessionValide(s) ? s : null;
+      return JSON.parse(localStorage.getItem(cle));
     } catch (e) {
       return null;
     }
   }
 
-  function ecrireSession() {
+  function ecrireStockage(cle, valeur) {
     try {
-      if (session) localStorage.setItem(CLE_STOCKAGE, JSON.stringify(session));
-      else localStorage.removeItem(CLE_STOCKAGE);
+      if (valeur === null || valeur === undefined) localStorage.removeItem(cle);
+      else localStorage.setItem(cle, JSON.stringify(valeur));
     } catch (e) {
       // Stockage indisponible : le test fonctionne, sans reprise possible.
     }
   }
 
+  function lireSession() {
+    const s = lireStockage(CLE_STOCKAGE);
+    return sessionValide(s) ? s : null;
+  }
+
+  function ecrireSession() {
+    ecrireStockage(CLE_STOCKAGE, session);
+  }
+
   function sessionValide(s) {
-    return Boolean(s && config.profils[s.profil]
+    return Boolean(s && s.cible && cibleDe(config, s.cible.role)
       && Array.isArray(s.items) && s.items.length
       && s.items.every(it => questionsParId.has(it.id) && Array.isArray(it.ordre) && it.ordre.length === 4)
       && Array.isArray(s.reponses) && Number.isInteger(s.index));
@@ -1320,6 +1625,8 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
       }
       session = lireSession();
       afficherReprise();
+      remplirAPropos();
+      renvoyerLeadEnAttente();
     });
 
   chargement.catch(() => afficher('ecran-erreur'));
@@ -1330,6 +1637,7 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
     window.scrollTo(0, 0);
     const titre = $(idEcran).querySelector('[tabindex="-1"]');
     if (titre) titre.focus({ preventScroll: true });
+    majBulle();
   }
 
   // --- Accueil ---
@@ -1346,168 +1654,183 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
     bloc.hidden = false;
   }
 
-  function profilChoisi() {
-    const coche = document.querySelector('input[name="profil"]:checked');
-    return coche ? coche.value : null;
-  }
-
-  for (const radio of document.querySelectorAll('input[name="profil"]')) {
-    radio.addEventListener('change', () => { $('hint-profil').hidden = true; });
-  }
-
-  $('btn-commencer').addEventListener('click', async () => {
-    const profil = profilChoisi();
-    if (!profil) {
-      $('hint-profil').hidden = false;
-      document.querySelector('input[name="profil"]').focus();
-      return;
+  function remplirAPropos() {
+    const a = config.a_propos;
+    $('apropos-titre').textContent = typo(a.titre);
+    $('apropos-nom').textContent = config.cta.interlocuteur.nom;
+    $('apropos-role').textContent = typo(config.cta.interlocuteur.role);
+    $('apropos-texte').textContent = typo(a.texte);
+    $('apropos-preuve').textContent = typo(a.preuve);
+    $('apropos-preuve').hidden = !a.preuve;
+    if (a.linkedin) {
+      $('apropos-linkedin').href = a.linkedin;
+      $('apropos-linkedin').hidden = false;
     }
-    const bouton = $('btn-commencer');
+    const faq = $('faq');
+    faq.replaceChildren();
+    for (const item of config.faq) {
+      const details = document.createElement('details');
+      const resume = document.createElement('summary');
+      const q = document.createElement('span');
+      q.textContent = typo(item.q);
+      resume.append(q);
+      resume.insertAdjacentHTML('beforeend', ICONES.plus);
+      const r = document.createElement('p');
+      r.textContent = typo(item.r);
+      details.append(resume, r);
+      faq.append(details);
+    }
+    $('apropos').hidden = false;
+  }
+
+  // Un clic sur un profil lance le test. « Autre métier » ouvre d'abord un champ facultatif.
+  for (const bouton of document.querySelectorAll('.role[data-role]')) {
+    bouton.addEventListener('click', () => {
+      if (bouton.dataset.role === 'autre') {
+        const ouvert = bouton.getAttribute('aria-expanded') === 'true';
+        bouton.setAttribute('aria-expanded', String(!ouvert));
+        $('zone-autre').hidden = ouvert;
+        if (!ouvert) $('autre-metier').focus();
+        return;
+      }
+      demarrer(bouton.dataset.role, '', bouton);
+    });
+  }
+
+  $('zone-autre').addEventListener('submit', event => {
+    event.preventDefault();
+    const precision = $('autre-metier').value.replace(/\s+/g, ' ').trim().slice(0, 60);
+    demarrer('autre', precision, $('btn-autre'));
+  });
+
+  async function demarrer(roleId, precision, bouton) {
+    if (bouton.getAttribute('aria-busy') === 'true') return;
     if (!donneesPretes) {
       // Réseau lent : le clic doit montrer qu'il a été pris en compte.
-      bouton.disabled = true;
       bouton.setAttribute('aria-busy', 'true');
-      bouton.textContent = 'Chargement…';
+      bouton.classList.add('is-active');
     }
     try {
       await chargement;
     } catch (e) {
       return; // l'écran d'erreur est déjà affiché
     } finally {
-      bouton.disabled = false;
       bouton.removeAttribute('aria-busy');
-      bouton.textContent = 'Commencer le test';
+      bouton.classList.remove('is-active');
     }
+    const cible = cibleDe(config, roleId);
     const banque = [...questionsParId.values()];
-    const tirees = tirerQuestions(banque, config.axes, profil,
-      config.quiz.questions_par_axe, config.quiz.statuts_publies, Math.random);
+    const tirees = tirerQuestions(banque, config.axes, cible, config.quiz.questions_par_axe,
+      config.quiz.statuts_publies, Math.random, config.quiz.questions_ciblees_par_axe);
     session = {
-      profil,
+      cible,
+      precision,
       items: tirees.map(q => ({ id: q.id, ordre: melanger([0, 1, 2, 3], Math.random) })),
       reponses: [],
-      index: 0
+      index: 0,
+      debloque: false
     };
     ecrireSession();
     suivre('test_demarre');
-    afficherQuestion();
-  });
+    suivre(`profil_${roleId}`, `Profil : ${config.roles.find(r => r.id === roleId).libelle}`);
+    afficherQuestion(true);
+  }
 
   $('btn-reprendre').addEventListener('click', () => {
     if (!session) return;
     if (sessionTerminee(session)) afficherResultat(false);
-    else afficherQuestion();
+    else afficherQuestion(true);
   });
 
-  // --- Quiz ---
-  function afficherQuestion() {
+  // --- Quiz : un clic sur une réponse = question suivante. Le corrigé est donné à la fin. ---
+  let enTransition = false;
+
+  function afficherQuestion(nouvelEcran) {
     const total = session.items.length;
     const item = session.items[session.index];
     const q = questionsParId.get(item.id);
     const axe = config.axes.find(a => a.id === q.axe);
 
     $('q-progression').style.width = `${(session.index / total) * 100}%`;
-    $('q-axe').textContent = typo(libelleAxe(axe, session.profil));
+    $('q-axe').textContent = typo(libelleAxe(axe, session.cible.profil));
     $('q-compteur').textContent = `Question ${session.index + 1} / ${total}`;
     $('q-texte').textContent = typo(q.question);
+    $('q-retour').hidden = session.index === 0;
+    $('q-aide').hidden = session.index > 0;
 
     const liste = $('q-choix');
     liste.replaceChildren();
     liste.classList.remove('is-locked');
+    const dejaRepondu = session.reponses[session.index];
     choixAffiches(q, item.ordre).forEach((texte, position) => {
-      const label = document.createElement('label');
-      label.className = 'choice';
-      const input = document.createElement('input');
-      input.type = 'radio';
-      input.name = 'choix';
-      input.value = String(position);
-      input.addEventListener('change', () => { $('hint-choix').hidden = true; });
-      const corps = document.createElement('span');
+      const bouton = document.createElement('button');
+      bouton.type = 'button';
+      bouton.className = 'choice' + (position === dejaRepondu ? ' is-picked' : '');
+      bouton.dataset.position = String(position);
+      if (position === dejaRepondu) bouton.setAttribute('aria-pressed', 'true');
+      const cle = document.createElement('span');
+      cle.className = 'choice-key';
+      cle.setAttribute('aria-hidden', 'true');
+      cle.textContent = LETTRES[position];
       const libelle = document.createElement('span');
       libelle.className = 'choice-text';
       libelle.textContent = typo(texte);
-      corps.append(libelle);
-      label.append(input, corps);
-      liste.append(label);
+      bouton.append(cle, libelle);
+      liste.append(bouton);
     });
 
-    $('hint-choix').hidden = true;
-    $('q-feedback').hidden = true;
-    $('q-bouton').textContent = 'Valider ma réponse';
-
-    afficher('ecran-quiz');
-    const dejaRepondu = session.reponses[session.index];
-    if (dejaRepondu !== undefined && dejaRepondu !== null) montrerCorrection(dejaRepondu, false);
+    if (nouvelEcran) afficher('ecran-quiz');
+    else $('q-texte').focus({ preventScroll: true });
   }
 
-  function montrerCorrection(positionChoisie, deplacerFocus) {
-    const total = session.items.length;
-    const item = session.items[session.index];
-    const q = questionsParId.get(item.id);
-    const positionJuste = item.ordre.indexOf(0);
-    const juste = positionChoisie === positionJuste;
-
-    const liste = $('q-choix');
-    liste.classList.add('is-locked');
-    [...liste.children].forEach((label, position) => {
-      const input = label.querySelector('input');
-      input.checked = position === positionChoisie;
-      input.disabled = true;
-      let statut = null;
-      if (position === positionJuste) {
-        label.classList.add('is-correct');
-        statut = ICONES.juste + '<span>Bonne réponse</span>';
-      } else if (position === positionChoisie) {
-        label.classList.add('is-wrong');
-        statut = ICONES.faux + '<span>Votre réponse</span>';
-      } else {
-        label.classList.add('is-other');
-      }
-      if (statut) {
-        const marque = document.createElement('span');
-        marque.className = 'choice-status';
-        marque.innerHTML = statut;
-        label.lastElementChild.append(marque);
-      }
-    });
-
-    const feedback = $('q-feedback');
-    feedback.className = `feedback ${juste ? 'is-correct' : 'is-wrong'}`;
-    $('q-feedback-titre').innerHTML = (juste ? ICONES.juste : ICONES.faux)
-      + `<span>${juste ? 'Bonne réponse' : 'Pas tout à fait'}</span>`;
-    if (!juste) {
-      const rappel = document.createElement('span');
-      rappel.className = 'sr-only';
-      rappel.textContent = ` La bonne réponse était : ${typo(q.bonne_reponse)}.`;
-      $('q-feedback-titre').append(rappel);
+  $('q-choix').addEventListener('click', event => {
+    const bouton = event.target.closest('.choice');
+    if (!bouton || enTransition) return;
+    enTransition = true;
+    const position = Number(bouton.dataset.position);
+    $('q-choix').classList.add('is-locked');
+    for (const b of $('q-choix').children) {
+      b.classList.toggle('is-picked', b === bouton);
+      b.toggleAttribute('aria-pressed', b === bouton);
     }
-    $('q-feedback-texte').textContent = typo(q.explication);
-    feedback.hidden = false;
-
-    $('q-progression').style.width = `${((session.index + 1) / total) * 100}%`;
-    const bouton = $('q-bouton');
-    bouton.textContent = session.index + 1 >= total ? 'Voir mon résultat' : 'Question suivante';
-    if (deplacerFocus) bouton.focus();
-  }
-
-  $('q-form').addEventListener('submit', event => {
-    event.preventDefault();
-    const dejaRepondu = session.reponses[session.index];
-    if (dejaRepondu === undefined || dejaRepondu === null) {
-      const coche = $('q-choix').querySelector('input:checked');
-      if (!coche) { $('hint-choix').hidden = false; return; }
-      session.reponses[session.index] = Number(coche.value);
-      ecrireSession();
-      montrerCorrection(Number(coche.value), true);
-      return;
-    }
+    session.reponses[session.index] = position;
     session.index++;
     ecrireSession();
-    if (sessionTerminee(session)) {
-      suivre('test_termine');
-      afficherResultat(true);
-    } else {
-      afficherQuestion();
-    }
+    $('q-progression').style.width = `${(session.index / session.items.length) * 100}%`;
+    const corps = $('q-corps');
+    // Un court instant pour voir sa réponse marquée, puis la question suivante glisse.
+    setTimeout(() => {
+      if (sessionTerminee(session)) {
+        enTransition = false;
+        suivre('test_termine');
+        afficherResultat(true);
+        return;
+      }
+      if (session.index === 1 || session.index % 3 === 0) suivre(`question_${String(session.index + 1).padStart(2, '0')}`, `Question ${session.index + 1} atteinte`);
+      if (mouvementReduit) {
+        afficherQuestion(false);
+        enTransition = false;
+        return;
+      }
+      corps.classList.add('is-leaving');
+      setTimeout(() => {
+        afficherQuestion(false);
+        corps.classList.remove('is-leaving');
+        corps.classList.add('is-entering');
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          corps.classList.remove('is-entering');
+          enTransition = false;
+        }));
+      }, 160);
+    }, mouvementReduit ? 120 : 200);
+  });
+
+  // Retour à la question précédente : la réponse donnée reste marquée, un clic la remplace.
+  $('q-retour').addEventListener('click', () => {
+    if (enTransition || session.index === 0) return;
+    session.index--;
+    ecrireSession();
+    afficherQuestion(false);
   });
 
   // --- Résultat ---
@@ -1516,7 +1839,7 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
   function afficherResultat(animer) {
     const resultat = calculerResultat(session.items, session.reponses, questionsParId, config.axes, config);
     resultatCourant = resultat;
-    const profil = session.profil;
+    const cible = session.cible;
     const anime = animer && !mouvementReduit;
 
     $('r-score-lu').textContent = `Score : ${resultat.score} sur 100.`;
@@ -1545,18 +1868,68 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
     marqueur.style.left = `${Math.min(100, Math.max(0, resultat.score))}%`;
     echelle.append(marqueur);
 
+    // Formulaire (tant que le diagnostic n'est pas débloqué)
+    const total = session.items.length;
+    $('gate-accroche').textContent = typo(`${resultat.bonnes} bonne${resultat.bonnes > 1 ? 's' : ''} réponse${resultat.bonnes > 1 ? 's' : ''} sur ${total}. Découvrez lesquelles, pourquoi, et par où progresser.`);
+    $('gate-priorites').textContent = typo(cible.profil === 'perso'
+      ? 'Vos 3 priorités, avec un premier pas pour chacune'
+      : `Vos 3 priorités, adaptées à votre métier (${libelleRole(config, cible, session.precision)})`);
+    $('lead-email-libelle').textContent = cible.profil === 'perso' ? 'E-mail' : 'E-mail professionnel';
+    const contact = lireStockage(CLE_CONTACT);
+    if (contact && !$('lead-email').value) {
+      $('lead-nom').value = contact.nom || '';
+      $('lead-email').value = contact.email || '';
+    }
+    $('gate-legal').firstChild.textContent = typo(config.leads.recap_par_mail
+      ? 'Vous recevez aussi votre diagnostic par e-mail. Vos coordonnées servent uniquement à Manica pour vous le remettre et en reparler avec vous. Jamais revendues. '
+      : 'Vos coordonnées servent uniquement à Manica pour vous remettre votre diagnostic et en reparler avec vous. Jamais revendues. ');
+
+    remplirDiagnostic(resultat);
+    $('r-gate').hidden = session.debloque;
+    $('r-diagnostic').hidden = !session.debloque;
+    if (!session.debloque && animer) suivre('formulaire_vu');
+
+    afficher('ecran-resultat');
+
+    const scoreEl = $('r-score');
+    if (!anime) {
+      scoreEl.textContent = String(resultat.score);
+      if (session.debloque) remplirBarres(false);
+      return;
+    }
+    scoreEl.textContent = '0';
+    const debut = performance.now();
+    const duree = 900;
+    const pas = t => {
+      const p = Math.min(1, (t - debut) / duree);
+      scoreEl.textContent = String(Math.round(resultat.score * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) requestAnimationFrame(pas);
+    };
+    requestAnimationFrame(pas);
+    if (session.debloque) requestAnimationFrame(() => requestAnimationFrame(() => remplirBarres(true)));
+  }
+
+  // Diagnostic détaillé : axes (code couleur), priorités, bloc RDV, corrigé, partage.
+  function remplirDiagnostic(resultat) {
+    const cible = session.cible;
+    const profil = cible.profil;
+    const prenom = session.contact && session.contact.nom ? session.contact.nom.trim().split(/\s+/)[0] : '';
+    $('diag-titre').textContent = prenom ? `Votre diagnostic, ${prenom}` : 'Votre diagnostic';
+
     const axes = $('r-axes');
     axes.replaceChildren();
-    const remplissages = [];
     resultat.detail.forEach(d => {
       const axe = config.axes.find(a => a.id === d.id);
+      const t = tonAxe(d.pct);
       const li = document.createElement('li');
-      li.innerHTML = '<div class="axis-head"><span class="axis-name"></span><span class="axis-pct"></span></div>'
+      li.className = 'axis';
+      li.dataset.ton = t.ton;
+      li.dataset.pct = String(d.pct);
+      li.innerHTML = '<div class="axis-head"><span class="axis-name"></span><span class="axis-right"><span class="axis-tag"></span><span class="axis-pct"></span></span></div>'
         + '<div class="bar" aria-hidden="true"><div class="bar-fill"></div></div>';
       li.querySelector('.axis-name').textContent = typo(libelleAxe(axe, profil));
+      li.querySelector('.axis-tag').textContent = t.libelle;
       li.querySelector('.axis-pct').textContent = typo(`${d.pct} %`);
-      const barre = li.querySelector('.bar-fill');
-      remplissages.push([barre, d.pct]);
       axes.append(li);
     });
 
@@ -1574,60 +1947,230 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
       recos.append(li);
     });
 
-    $('cta-titre').textContent = typo(config.cta.titre);
-    $('cta-sous-titre').textContent = typo(config.cta.sous_titre[profil]);
-    $('cta-rdv').textContent = config.cta.bouton_rdv;
+    // Bloc RDV : un seul bouton principal (agenda intégré), réassurance juste dessous.
+    const cta = config.cta;
+    $('cta-titre').textContent = typo(cta.titre);
+    $('cta-sous-titre').textContent = typo(texteCible(cta.sous_titre, cible));
+    $('cta-rdv').textContent = typo(cta.bouton_rdv);
     $('cta-rdv').href = config.contact.lien_rdv;
-    $('cta-mail').textContent = config.cta.bouton_mail;
-    $('cta-mail').href = lienMail(config, profil, resultat);
-    $('cta-positionnement').textContent = typo(config.cta.positionnement[profil]);
-    const interlocuteur = config.cta.interlocuteur;
-    $('cta-photo').src = interlocuteur.photo;
-    $('cta-nom').textContent = interlocuteur.nom;
-    $('cta-role').textContent = typo(interlocuteur.role);
-    $('cta-indice').textContent = typo(remplir(config.cta.indice_rdv, { score: resultat.score }));
-    $('cta-adresse').textContent = config.contact.email;
-    $('cta-adresse').href = lienMail(config, profil, resultat);
-    $('cta-copier-adresse').textContent = typo('Copier l\'adresse');
+    $('cta-reassurance').innerHTML = cta.reassurance.map(() => `<li>${ICONES.point}<span></span></li>`).join('');
+    [...$('cta-reassurance').querySelectorAll('span')].forEach((s, i) => { s.textContent = typo(cta.reassurance[i]); });
+    $('cta-mail').textContent = typo(cta.bouton_mail);
+    $('cta-mail').href = lienMail(config, cible, resultat, session.precision);
+    $('cta-positionnement').textContent = typo(cta.positionnement[profil]);
+    $('cta-photo').src = cta.interlocuteur.photo;
+    $('cta-nom').textContent = cta.interlocuteur.nom;
+    $('cta-role').textContent = typo(cta.interlocuteur.role);
+    $('cta-transmis').textContent = typo(cta.resultats_transmis);
+    $('cta-transmis').hidden = !session.leadEnvoye;
+    $('bulle-question').textContent = typo(cta.bulle.question);
+    $('bulle-action').textContent = typo(cta.bulle.action);
+    $('bulle-rdv').setAttribute('aria-label', typo(`${cta.bulle.question} ${cta.bulle.action} avec ${cta.interlocuteur.nom}`));
+
+    // Corrigé : chaque question, la réponse donnée, la bonne réponse et l'explication.
+    const corrige = $('r-corrige');
+    corrige.replaceChildren();
+    session.items.forEach((item, i) => {
+      const q = questionsParId.get(item.id);
+      const affiches = choixAffiches(q, item.ordre);
+      const juste = item.ordre[session.reponses[i]] === 0;
+      const li = document.createElement('li');
+      const details = document.createElement('details');
+      details.className = `rev ${juste ? 'is-ok' : 'is-ko'}`;
+      details.innerHTML = `<summary><span class="rev-icon">${juste ? ICONES.juste : ICONES.faux}</span>`
+        + '<span><span class="rev-q"></span><span class="rev-meta"></span></span>' + ICONES.chevron + '</summary>'
+        + '<div class="rev-body"></div>';
+      details.querySelector('.rev-q').textContent = typo(q.question);
+      details.querySelector('.rev-meta').textContent = typo(`${juste ? 'Bonne réponse' : 'À revoir'} · ${libelleAxe(config.axes.find(a => a.id === q.axe), profil)}`);
+      const corps = details.querySelector('.rev-body');
+      const ligne = (classe, etiquette, texte) => {
+        const p = document.createElement('p');
+        p.className = `rev-line ${classe}`;
+        const s = document.createElement('strong');
+        s.textContent = typo(etiquette);
+        p.append(s, ' ', typo(texte));
+        corps.append(p);
+      };
+      ligne(juste ? 'is-ok' : 'is-ko', 'Votre réponse :', affiches[session.reponses[i]]);
+      if (!juste) ligne('is-ok', 'Bonne réponse :', q.bonne_reponse);
+      const expl = document.createElement('p');
+      expl.className = 'rev-expl';
+      expl.textContent = typo(q.explication);
+      corps.append(expl);
+      li.append(details);
+      corrige.append(li);
+    });
+    const ratees = session.items.filter((it, i) => it.ordre[session.reponses[i]] !== 0).length;
+    $('r-corrige-sous-titre').textContent = ratees
+      ? typo(`Touchez une question pour voir l'explication. ${ratees} à revoir en priorité.`)
+      : 'Touchez une question pour voir l’explication.';
+
     preparerPartage();
-
-    afficher('ecran-resultat');
-
-    const scoreEl = $('r-score');
-    if (!anime) {
-      scoreEl.textContent = String(resultat.score);
-      remplissages.forEach(([barre, pct]) => { barre.style.transition = 'none'; barre.style.width = `${pct}%`; });
-      return;
-    }
-    scoreEl.textContent = '0';
-    const debut = performance.now();
-    const duree = 1000;
-    const pas = t => {
-      const p = Math.min(1, (t - debut) / duree);
-      scoreEl.textContent = String(Math.round(resultat.score * (1 - Math.pow(1 - p, 3))));
-      if (p < 1) requestAnimationFrame(pas);
-    };
-    requestAnimationFrame(pas);
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      remplissages.forEach(([barre, pct]) => { barre.style.transition = ''; barre.style.width = `${pct}%`; });
-    }));
   }
 
-  $('cta-rdv').addEventListener('click', () => suivre('clic_rdv'));
-  $('cta-mail').addEventListener('click', () => suivre('clic_mail'));
-  $('cta-adresse').addEventListener('click', () => suivre('clic_mail'));
-
-  // Sans logiciel de messagerie (webmail), un lien mailto ne fait rien : l'adresse est aussi copiable.
-  let minuteurAdresse = null;
-  $('cta-copier-adresse').addEventListener('click', async () => {
-    suivre('copie_adresse');
-    const bouton = $('cta-copier-adresse');
-    if (await copierAvecConfirmation(config.contact.email, 'Adresse copiée : collez-la dans votre messagerie.')) {
-      bouton.textContent = typo('Copiée !');
-      clearTimeout(minuteurAdresse);
-      minuteurAdresse = setTimeout(() => { bouton.textContent = typo('Copier l\'adresse'); }, 2000);
+  function remplirBarres(animer) {
+    for (const li of $('r-axes').children) {
+      const barre = li.querySelector('.bar-fill');
+      barre.style.transition = animer ? '' : 'none';
+      barre.style.width = `${li.dataset.pct}%`;
     }
+  }
+
+  // --- Formulaire : nom + e-mail débloquent le diagnostic ---
+  function erreurChamp(champ, message, visible) {
+    champ.setAttribute('aria-invalid', String(visible));
+    message.hidden = !visible;
+  }
+
+  $('lead-nom').addEventListener('input', () => erreurChamp($('lead-nom'), $('err-nom'), false));
+  $('lead-email').addEventListener('input', () => erreurChamp($('lead-email'), $('err-email'), false));
+
+  $('form-lead').addEventListener('submit', event => {
+    event.preventDefault();
+    const nom = $('lead-nom').value.replace(/\s+/g, ' ').trim();
+    const email = $('lead-email').value.trim();
+    const nomOk = nom.length >= 2;
+    const emailOk = EMAIL_VALIDE.test(email);
+    erreurChamp($('lead-nom'), $('err-nom'), !nomOk);
+    erreurChamp($('lead-email'), $('err-email'), !emailOk);
+    if (!nomOk) { $('lead-nom').focus(); return; }
+    if (!emailOk) { $('lead-email').focus(); return; }
+
+    const contact = { nom, email, optin: $('lead-optin').checked };
+    const robot = Boolean($('lead-site').value);
+    ecrireStockage(CLE_CONTACT, { nom, email });
+    session.contact = { nom };
+    session.debloque = true;
+    session.leadEnvoye = false;
+    ecrireSession();
+
+    // Le diagnostic s'affiche tout de suite ; l'envoi se fait en arrière-plan.
+    if (!robot) {
+      const donnees = donneesLead(config, session, resultatCourant, questionsParId, contact, contexteLead());
+      const s = session;
+      envoyerLead(donnees).then(ok => {
+        suivre(ok ? 'lead_envoye' : 'lead_echec');
+        if (ok) {
+          s.leadEnvoye = true;
+          if (session === s) {
+            ecrireSession();
+            $('cta-transmis').hidden = false;
+            $('dr-note').textContent = noteAgenda();
+          }
+        } else {
+          ecrireStockage(CLE_LEAD_ATTENTE, donnees);
+        }
+      });
+    }
+    remplirDiagnostic(resultatCourant);
+    $('r-gate').hidden = true;
+    $('r-diagnostic').hidden = false;
+    $('diag-tete').scrollIntoView({ block: 'start', behavior: mouvementReduit ? 'auto' : 'smooth' });
+    $('diag-tete').focus({ preventScroll: true });
+    requestAnimationFrame(() => requestAnimationFrame(() => remplirBarres(!mouvementReduit)));
+    majBulle();
   });
+
+  function contexteLead() {
+    const parametres = new URLSearchParams(location.search);
+    const source = {};
+    for (const cle of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']) {
+      if (parametres.get(cle)) source[cle] = parametres.get(cle).slice(0, 100);
+    }
+    if (document.referrer && !document.referrer.startsWith(location.origin)) source.referrer = document.referrer.slice(0, 200);
+    let id;
+    try {
+      id = crypto.randomUUID();
+    } catch (e) {
+      id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    }
+    return { id, date: new Date().toISOString(), source, page: location.origin + location.pathname };
+  }
+
+  function avecDelai(ms) {
+    const controleur = new AbortController();
+    setTimeout(() => controleur.abort(), ms);
+    return controleur.signal;
+  }
+
+  // Envoi à l'application web Google Apps Script (docs/LEADS.md). Corps en text/plain : requête « simple »,
+  // sans pré-vérification CORS, que Apps Script accepte. Le script ignore un id déjà reçu (pas de doublon).
+  async function envoyerLead(donnees) {
+    const url = config.leads && config.leads.url;
+    if (!url) return false;
+    const options = { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(donnees) };
+    try {
+      const reponse = await fetch(url, { ...options, signal: avecDelai(15000) });
+      const json = await reponse.json();
+      if (json && json.ok) return true;
+    } catch (e) {
+      // Réponse illisible (CORS) ou réseau : on retente sans lire la réponse.
+    }
+    try {
+      await fetch(url, { ...options, mode: 'no-cors', signal: avecDelai(15000) });
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Un contact qui n'a pas pu partir (hors ligne…) est renvoyé à la visite suivante.
+  async function renvoyerLeadEnAttente() {
+    const donnees = lireStockage(CLE_LEAD_ATTENTE);
+    if (!donnees || !donnees.email) return;
+    if (await envoyerLead(donnees)) {
+      ecrireStockage(CLE_LEAD_ATTENTE, null);
+      suivre('lead_envoye');
+    }
+  }
+
+  // --- Prise de rendez-vous : agenda Google intégré dans une fenêtre, pour ne pas quitter le site ---
+  function noteAgenda() {
+    const r = config.cta.reassurance.join(' · ');
+    return typo(session && session.leadEnvoye ? `${r}. ${config.cta.resultats_transmis}` : `${r}.`);
+  }
+
+  function ouvrirAgenda(evenement) {
+    suivre(evenement);
+    const cadre = $('dr-cadre');
+    // L'agenda n'est chargé qu'à l'ouverture : aucune requête vers Google avant.
+    if (!cadre.getAttribute('src')) cadre.src = config.contact.lien_rdv_integre;
+    $('dr-onglet').href = config.contact.lien_rdv;
+    $('dr-note').textContent = noteAgenda();
+    $('dialogue-rdv').showModal();
+  }
+
+  $('cta-rdv').addEventListener('click', event => {
+    if (!config.contact.lien_rdv_integre || typeof HTMLDialogElement !== 'function') { suivre('clic_rdv'); return; }
+    event.preventDefault();
+    ouvrirAgenda('rdv_ouvert');
+  });
+  $('bulle-rdv').addEventListener('click', () => {
+    if (!config.contact.lien_rdv_integre || typeof HTMLDialogElement !== 'function') {
+      suivre('clic_rdv');
+      window.open(config.contact.lien_rdv, '_blank', 'noopener');
+      return;
+    }
+    ouvrirAgenda('rdv_ouvert_bulle');
+  });
+  $('dr-onglet').addEventListener('click', () => suivre('clic_rdv'));
+  $('cta-mail').addEventListener('click', () => suivre('clic_mail'));
+
+  // Bulle « Besoin de conseils sur l'IA ? » : visible sur le diagnostic tant que le bloc RDV n'est pas à l'écran.
+  let ctaVisible = false;
+  function majBulle() {
+    const bulle = $('bulle-rdv');
+    const active = Boolean(session && session.debloque && document.body.dataset.ecran === 'ecran-resultat');
+    bulle.hidden = !active;
+    document.body.classList.toggle('bulle-active', active);
+    bulle.classList.toggle('is-visible', active && !ctaVisible);
+  }
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(entrees => {
+      ctaVisible = entrees.some(e => e.isIntersecting);
+      majBulle();
+    }).observe($('cta-bloc'));
+  }
 
   // --- Partage ---
   // Règle : toute écriture dans le presse-papiers est confirmée à l'écran au moment où elle a lieu
@@ -1694,13 +2237,12 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
   function preparerPartage() {
     clearTimeout(minuteurBouton);
     majBoutonCopier(false);
-    $('partage-panneau').hidden = true;
     $('partage-titre').textContent = config.partage.titre;
 
-    const valeurs = valeursModele(config, session.profil, resultatCourant);
+    const valeurs = valeursModele(config, session.cible, resultatCourant, session.precision);
     const texte = remplir(config.partage.texte, valeurs);
     const url = config.url_app;
-    partage = { texte, url, post: postLinkedIn(config, session.profil, resultatCourant), images: {} };
+    partage = { texte, url, post: postLinkedIn(config, session.cible.profil, resultatCourant), images: {} };
     $('partage-facebook').href = LIENS_PARTAGE.facebook(url);
     const objet = remplir(config.partage.mail_objet, valeurs);
     $('partage-mail').href = `mailto:?subject=${encodeURIComponent(objet)}&body=${encodeURIComponent(`${texte}\r\n\r\n${url}`)}`;
@@ -1853,7 +2395,7 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
   }
 
   function imagePartage(format) {
-    if (!partage.images[format]) partage.images[format] = dessinerImage(resultatCourant, session.profil, format);
+    if (!partage.images[format]) partage.images[format] = dessinerImage(resultatCourant, session.cible.profil, format);
     return partage.images[format];
   }
 
@@ -1941,7 +2483,7 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
 
     ctx.fillStyle = '#BCC5D6';
     ctx.font = police(500, 38);
-    ctx.fillText('Faites le test, gratuit et sans inscription :', marge, F.invite);
+    ctx.fillText('Faites le test, gratuit, en 3 minutes :', marge, F.invite);
     const adresse = config.url_app.replace(/^https:\/\//, '').replace(/\/$/, '');
     let taille = 44;
     do {
@@ -1973,14 +2515,7 @@ textarea.post:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
     if (!partage) return;
     suivre('partage_copie');
     const aCopier = `${partage.texte} ${partage.url}`;
-    const copie = await copierAvecConfirmation(aCopier);
-    $('partage-libelle').textContent = typo(copie
-      ? 'Texte copié dans votre presse-papiers :'
-      : 'Copie impossible. Sélectionnez ce texte pour le copier :');
-    $('partage-texte').textContent = aCopier;
-    $('lien-linkedin').href = LIENS_PARTAGE.linkedin(partage.url);
-    $('partage-panneau').hidden = false;
-    $('partage-panneau').scrollIntoView({ block: 'nearest', behavior: mouvementReduit ? 'auto' : 'smooth' });
+    const copie = await copierAvecConfirmation(aCopier, 'Texte et lien copiés : collez-les où vous voulez.');
     if (copie) {
       majBoutonCopier(true);
       clearTimeout(minuteurBouton);

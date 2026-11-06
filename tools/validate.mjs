@@ -41,11 +41,21 @@ for (const f of ['sw.js', 'tools/validate.mjs', 'tools/e2e.mjs']) {
 // --- Logique pure extraite d'index.html ---
 const logique = scripts.join('\n').match(/\/\/ === LOGIQUE PURE[^\n]*\n([\s\S]*?)\/\/ === FIN LOGIQUE PURE ===/);
 if (!logique) throw new Error('Marqueurs LOGIQUE PURE introuvables dans index.html');
-const L = new Function(`${logique[1]}; return { melanger, tirerQuestions, choixAffiches, calculerResultat, niveauPour, remplir, lienMail, valeursModele, postLinkedIn, typo };`)();
+const L = new Function(`${logique[1]}; return { melanger, tirerQuestions, choixAffiches, calculerResultat, niveauPour, remplir, lienMail, valeursModele, postLinkedIn, typo, cibleDe, questionAccessible, questionCiblee, libelleRole, texteCible, tonAxe, donneesLead, EMAIL_VALIDE };`)();
 
 // --- config.json ---
 const axesIds = config.axes.map(a => a.id);
 const profils = Object.keys(config.profils);
+// --- Rôles (profils proposés à l'accueil) ---
+const roles = config.roles || [];
+const rolesIds = roles.map(r => r.id);
+if (!roles.length) erreur('config.json : roles manquant');
+if (new Set(rolesIds).size !== rolesIds.length) erreur('config.json : id de rôle en double');
+for (const r of roles) {
+  if (!r.id || !r.libelle) erreur(`config.json : rôle incomplet ${JSON.stringify(r)}`);
+  if (!profils.includes(r.profil)) erreur(`config.json : rôle ${r.id} rattaché à un profil inconnu « ${r.profil} »`);
+}
+for (const p of profils) if (!roles.some(r => r.profil === p)) erreur(`config.json : aucun rôle pour le profil ${p}`);
 if (new Set(axesIds).size !== axesIds.length) erreur('config.json : id d’axe en double');
 if (config.niveaux[0].min !== 0) erreur('config.json : le premier niveau doit commencer à 0');
 config.niveaux.forEach((n, i) => {
@@ -62,12 +72,27 @@ for (const p of profils) {
   if (!config.cta.sous_titre[p]) erreur(`config.json : cta.sous_titre.${p} manquant`);
   if (!config.cta.positionnement[p]) erreur(`config.json : cta.positionnement.${p} manquant`);
 }
+for (const k of Object.keys(config.cta.sous_titre)) if (!profils.includes(k) && !rolesIds.includes(k)) erreur(`config.json : cta.sous_titre.${k} ne correspond à aucun profil ni rôle`);
+if (!Array.isArray(config.cta.reassurance) || !config.cta.reassurance.length || config.cta.reassurance.length > 3) erreur('config.json : cta.reassurance doit lister 1 à 3 micro-réassurances');
+for (const k of ['bouton_rdv', 'bouton_mail', 'resultats_transmis']) if (!config.cta[k]) erreur(`config.json : cta.${k} manquant`);
+if (!config.cta.bulle?.question || !config.cta.bulle?.action) erreur('config.json : cta.bulle.question / action manquants');
+if (!/^https:\/\/calendar\.google\.com\/calendar\/appointments\/schedules\/[\w-]+\?gv=true$/.test(config.contact.lien_rdv_integre || '')) erreur('config.json : contact.lien_rdv_integre doit être l’agenda Google intégrable (…/calendar/appointments/schedules/…?gv=true)');
+if (typeof config.leads !== 'object' || !('url' in config.leads)) erreur('config.json : leads.url manquant');
+else if (!config.leads.url) avertissements.push('config.json : leads.url est vide, les contacts du formulaire ne sont transmis nulle part (voir docs/LEADS.md)');
+else if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(config.leads.url)) erreur('config.json : leads.url doit être une URL d’application web Apps Script (https://script.google.com/macros/s/…/exec)');
+if (!config.a_propos?.titre || !config.a_propos?.texte) erreur('config.json : a_propos.titre / texte manquants');
+if (config.a_propos?.linkedin && !/^https:\/\/(www\.)?linkedin\.com\//.test(config.a_propos.linkedin)) erreur('config.json : a_propos.linkedin doit être une URL linkedin.com');
+if (!Array.isArray(config.faq) || !config.faq.length || config.faq.some(f => !f.q || !f.r)) erreur('config.json : faq incomplète');
+if (!Number.isInteger(config.quiz.questions_ciblees_par_axe) || config.quiz.questions_ciblees_par_axe < 0 || config.quiz.questions_ciblees_par_axe > config.quiz.questions_par_axe) erreur('config.json : quiz.questions_ciblees_par_axe doit être un entier entre 0 et questions_par_axe');
+// Boutons de l'accueil ↔ rôles de config.json
+const boutonsRoles = [...html.matchAll(/data-role="([\w-]+)"/g)].map(m => m[1]);
+for (const id of rolesIds) if (!boutonsRoles.includes(id)) erreur(`index.html : pas de bouton data-role="${id}" pour le rôle de config.json`);
+for (const id of boutonsRoles) if (!rolesIds.includes(id)) erreur(`index.html : bouton data-role="${id}" sans rôle dans config.json`);
+for (const r of roles) if (r.precision && !html.includes('id="zone-autre"')) erreur(`index.html : le rôle ${r.id} demande une précision mais le champ est absent`);
 for (const k of ['titre', 'texte', 'mail_objet']) if (!config.partage?.[k]) erreur(`config.json : partage.${k} manquant`);
 const interlocuteur = config.cta?.interlocuteur || {};
 for (const k of ['nom', 'role', 'photo']) if (!interlocuteur[k]) erreur(`config.json : cta.interlocuteur.${k} manquant`);
 if (interlocuteur.photo && !existsSync(join(racine, interlocuteur.photo))) erreur(`config.json : photo introuvable ${interlocuteur.photo}`);
-if (!config.cta?.indice_rdv) erreur('config.json : cta.indice_rdv manquant');
-for (const [, v] of String(config.cta?.indice_rdv || '').matchAll(/\{(\w+)\}/g)) if (v !== 'score') erreur(`config.json : variable inconnue {${v}} dans cta.indice_rdv`);
 // Post LinkedIn : textes présents et variables autorisées
 const li = config.partage?.linkedin || {};
 const variablesDe = t => [...String(t || '').matchAll(/\{(\w+)\}/g)].map(m => m[1]);
@@ -103,6 +128,14 @@ for (const q of banque.questions) {
   ids.add(q.id);
   if (!axesIds.includes(q.axe)) erreur(`${ref} : axe inconnu « ${q.axe} »`);
   if (!['tous', ...profils].includes(q.profil)) erreur(`${ref} : profil inconnu « ${q.profil} »`);
+  if ('roles' in q) {
+    if (!Array.isArray(q.roles) || !q.roles.length) erreur(`${ref} : roles doit être une liste non vide`);
+    else for (const r of q.roles) {
+      const role = roles.find(x => x.id === r);
+      if (!role) erreur(`${ref} : rôle inconnu « ${r} »`);
+      else if (q.profil !== 'tous' && role.profil !== q.profil) erreur(`${ref} : rôle « ${r} » incompatible avec le profil ${q.profil}`);
+    }
+  }
   if (!DIFFICULTES.includes(q.difficulte)) erreur(`${ref} : difficulté inconnue « ${q.difficulte} »`);
   if (!STATUTS.includes(q.statut)) erreur(`${ref} : statut inconnu « ${q.statut} »`);
   for (const champ of ['question', 'bonne_reponse', 'explication']) {
@@ -127,14 +160,17 @@ for (const [part, sens] of [[partPlusLongue, 'long'], [partPlusCourte, 'court']]
 // --- Pools par profil et par axe ---
 const parAxe = config.quiz.questions_par_axe;
 const statuts = config.quiz.statuts_publies;
-for (const p of profils) {
+const ciblees = config.quiz.questions_ciblees_par_axe || 0;
+const cibles = roles.map(r => L.cibleDe(config, r.id));
+for (const c of cibles) {
   for (const axe of axesIds) {
-    const pool = banque.questions.filter(q => q.axe === axe && (q.profil === 'tous' || q.profil === p) && statuts.includes(q.statut));
+    const pool = banque.questions.filter(q => q.axe === axe && L.questionAccessible(q, c) && statuts.includes(q.statut));
     const nb = d => pool.filter(q => q.difficulte === d).length;
-    if (pool.length < parAxe) erreur(`pool ${p} / ${axe} : ${pool.length} question(s) publiée(s), ${parAxe} requises`);
+    if (pool.length < parAxe) erreur(`pool ${c.role} / ${axe} : ${pool.length} question(s) publiée(s), ${parAxe} requises`);
     const niveaux = DIFFICULTES.filter(d => nb(d)).length;
-    if (niveaux < Math.min(parAxe, DIFFICULTES.length)) erreur(`pool ${p} / ${axe} : ${niveaux} niveau(x) de difficulté publié(s), il en faut ${Math.min(parAxe, DIFFICULTES.length)} pour varier le tirage`);
-    for (const d of DIFFICULTES) if (!nb(d)) avertissements.push(`pool ${p} / ${axe} : aucune question « ${d} » publiée`);
+    if (niveaux < Math.min(parAxe, DIFFICULTES.length)) erreur(`pool ${c.role} / ${axe} : ${niveaux} niveau(x) de difficulté publié(s), il en faut ${Math.min(parAxe, DIFFICULTES.length)} pour varier le tirage`);
+    for (const d of DIFFICULTES) if (!nb(d)) avertissements.push(`pool ${c.role} / ${axe} : aucune question « ${d} » publiée`);
+    if (ciblees && c.role !== 'autre' && !pool.some(q => L.questionCiblee(q, c))) avertissements.push(`pool ${c.role} / ${axe} : aucune question écrite pour ce profil`);
   }
 }
 
@@ -148,6 +184,35 @@ function verifierPost(post, r, p) {
   if (!post.split('\n')[0].includes(`${r.score}/100`)) erreur(`${ref} : le score n'est pas dans la première ligne`);
   if (!post.includes(config.url_app)) erreur(`${ref} : lien du test absent`);
   if (/\n{3,}/.test(post)) erreur(`${ref} : lignes vides en trop`);
+}
+
+// --- Données transmises à Manica (formulaire du diagnostic) ---
+let leadsVerifies = 0;
+function verifierLead(c, items, reponses, r, precision) {
+  leadsVerifies++;
+  const s = { cible: c, precision, items, reponses };
+  const d = L.donneesLead(config, s, r, questionsParId, { nom: '  Ada Lovelace ', email: 'ada@exemple.fr ', optin: true }, { id: 'test-id', date: '2026-11-06T10:00:00.000Z', source: { utm_source: 'linkedin' }, page: config.url_app });
+  const ref = `lead (${c.role}, ${r.score}/100)`;
+  if (d.nom !== 'Ada Lovelace' || d.email !== 'ada@exemple.fr') erreur(`${ref} : nom ou e-mail mal nettoyé`);
+  if (d.score !== r.score || d.total !== items.length || d.reponses.length !== items.length) erreur(`${ref} : score ou réponses incohérents`);
+  if (d.reponses.filter(x => x.juste).length !== r.bonnes) erreur(`${ref} : nombre de réponses justes incohérent`);
+  if (d.priorites.length !== 3 || d.priorites.some(p => !p.titre || !p.texte)) erreur(`${ref} : priorités incomplètes`);
+  if (d.axes.length !== axesIds.length) erreur(`${ref} : axes incomplets`);
+  if (d.profil !== L.libelleRole(config, c, precision)) erreur(`${ref} : profil mal libellé`);
+  const json = JSON.stringify(d);
+  if (json.length > 30000) erreur(`${ref} : ${json.length} caractères, trop lourd pour un envoi`);
+  d.reponses.forEach((x, i) => {
+    const q = questionsParId.get(items[i].id);
+    if (x.id !== q.id || !x.question || !x.reponse || !x.explication || !x.axe) erreur(`${ref} : corrigé incomplet pour ${q.id}`);
+    if (x.juste !== (x.reponse === L.typo(q.bonne_reponse))) erreur(`${ref} : réponse donnée incohérente pour ${q.id}`);
+    if (x.juste ? x.bonne : x.bonne !== L.typo(q.bonne_reponse)) erreur(`${ref} : bonne réponse mal transmise pour ${q.id}`);
+  });
+}
+for (const [email, ok] of [['a@b.fr', true], ['prenom.nom@entreprise.co.uk', true], ['a@b', false], ['a b@c.fr', false], ['', false], ['a@b.c', false]]) {
+  if (L.EMAIL_VALIDE.test(email) !== ok) erreur(`EMAIL_VALIDE : « ${email} » devrait être ${ok ? 'accepté' : 'refusé'}`);
+}
+for (const [pct, ton] of [[0, 'ko'], [29, 'ko'], [30, 'mid'], [50, 'mid'], [59, 'mid'], [60, 'ok'], [100, 'ok']]) {
+  if (L.tonAxe(pct).ton !== ton) erreur(`tonAxe(${pct}) devrait être ${ton}`);
 }
 
 // --- Simulation de tirages ---
@@ -164,17 +229,20 @@ for (const f of ['index.html', 'config.json', 'manifest.webmanifest', 'tools/og-
 }
 const vus = new Map();
 if (!erreurs.length) {
-  for (const p of profils) {
-    for (let t = 0; t < 3000; t++) {
-      const tirage = L.tirerQuestions(banque.questions, config.axes, p, parAxe, statuts, rnd);
+  for (const c of cibles) {
+    const p = c.profil;
+    for (let t = 0; t < 2000; t++) {
+      const tirage = L.tirerQuestions(banque.questions, config.axes, c, parAxe, statuts, rnd, ciblees);
       if (tirage.length !== total) { erreur(`tirage ${p} : ${tirage.length} questions au lieu de ${total}`); break; }
       if (new Set(tirage.map(q => q.id)).size !== total) { erreur(`tirage ${p} : doublon`); break; }
       for (const axe of axesIds) {
         const qs = tirage.filter(q => q.axe === axe);
         if (qs.length !== parAxe) erreur(`tirage ${p} : axe ${axe} a ${qs.length} questions`);
-        if (new Set(qs.map(q => q.difficulte)).size !== Math.min(parAxe, DIFFICULTES.length)) erreur(`tirage ${p} : axe ${axe} sans difficultés variées (${qs.map(q => q.difficulte)})`);
+        if (new Set(qs.map(q => q.difficulte)).size !== Math.min(parAxe, DIFFICULTES.length)) erreur(`tirage ${c.role} : axe ${axe} sans difficultés variées (${qs.map(q => q.difficulte)})`);
+        const dispoCiblees = banque.questions.filter(q => q.axe === axe && statuts.includes(q.statut) && L.questionAccessible(q, c) && L.questionCiblee(q, c)).length;
+        if (qs.filter(q => L.questionCiblee(q, c)).length < Math.min(ciblees, dispoCiblees)) erreur(`tirage ${c.role} : axe ${axe} sans question écrite pour ce profil`);
       }
-      if (tirage.some(q => q.profil !== 'tous' && q.profil !== p)) erreur(`tirage ${p} : question d’un autre profil`);
+      if (tirage.some(q => !L.questionAccessible(q, c))) erreur(`tirage ${c.role} : question d’un autre profil ou métier`);
       tirage.forEach(q => vus.set(q.id, (vus.get(q.id) || 0) + 1));
 
       const items = tirage.map(q => ({ id: q.id, ordre: L.melanger([0, 1, 2, 3], rnd) }));
@@ -189,11 +257,15 @@ if (!erreurs.length) {
       if (r.faibles.some((f, k) => k && (f.pct < r.faibles[k - 1].pct || (f.pct === r.faibles[k - 1].pct && f.lacune > r.faibles[k - 1].lacune)))) erreur('priorités mal ordonnées (score puis lacune)');
       if (r.faibles.length !== 3) erreur('il faut 3 axes faibles');
       if (r.niveau !== L.niveauPour(r.score, config.niveaux)) erreur('niveau incohérent');
-      const mail = decodeURIComponent(L.lienMail(config, p, r));
+      const precision = c.role === 'autre' ? 'juriste' : '';
+      const mail = decodeURIComponent(L.lienMail(config, c, r, precision));
       if (/\{\w+\}/.test(mail)) erreur(`mail : variable non remplacée\n${mail}`);
-      const partage = L.remplir(config.partage.texte, L.valeursModele(config, p, r));
+      if (!mail.includes(L.libelleRole(config, c, precision))) erreur(`mail ${c.role} : profil absent`);
+      if (!L.texteCible(config.cta.sous_titre, c)) erreur(`cta.sous_titre : rien pour ${c.role}`);
+      const partage = L.remplir(config.partage.texte, L.valeursModele(config, c, r, precision));
       if (/\{\w+\}/.test(partage)) erreur('partage : variable non remplacée');
       verifierPost(L.postLinkedIn(config, p, r), r, p);
+      if (t < 50) verifierLead(c, items, reponses, r, precision);
       if (erreurs.length) break;
     }
   }
@@ -201,8 +273,9 @@ if (!erreurs.length) {
   if (jamais.length) erreur(`questions jamais tirées : ${jamais.join(', ')}`);
 
   // Cas extrêmes du post LinkedIn : tout juste, tout faux
-  for (const p of profils) {
-    const tirage = L.tirerQuestions(banque.questions, config.axes, p, parAxe, statuts, rnd);
+  for (const c of cibles) {
+    const p = c.profil;
+    const tirage = L.tirerQuestions(banque.questions, config.axes, c, parAxe, statuts, rnd, ciblees);
     const items = tirage.map(q => ({ id: q.id, ordre: [0, 1, 2, 3] }));
     for (const reponse of [0, 1]) {
       const r = L.calculerResultat(items, items.map(() => reponse), questionsParId, config.axes, config);
@@ -281,7 +354,8 @@ lignesHtml.forEach((ligne, i) => {
 if (!/<div class="toast" id="toast" role="status" aria-live="polite"/.test(html)) erreur('index.html : la région live #toast doit exister dès le chargement');
 
 // --- Appels externes : seul GoatCounter est autorisé, script tiers verrouillé par SRI ---
-const ORIGINES_AUTORISEES = ['https://gc.zgo.at', 'https://manica.goatcounter.com'];
+// Google : réception des contacts (Apps Script) et agenda de réservation intégré, chargé à l'ouverture seulement.
+const ORIGINES_AUTORISEES = ['https://gc.zgo.at', 'https://manica.goatcounter.com', 'https://script.google.com', 'https://script.googleusercontent.com', 'https://calendar.google.com'];
 for (const [balise] of html.matchAll(/<(?:script|link|img|iframe|source)\b[^>]*>/g)) {
   const [, url] = balise.match(/\b(?:src|href)="((?:https?:)?\/\/[^"]+)"/) || [];
   if (!url) continue;
@@ -294,16 +368,28 @@ const csp = (html.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/
 for (const origine of csp.match(/https:\/\/[^\s;]+/g) || []) {
   if (!ORIGINES_AUTORISEES.includes(origine)) erreur(`CSP : origine non prévue ${origine}`);
 }
-if (!/connect-src 'self' https:\/\/manica\.goatcounter\.com/.test(csp)) erreur('CSP : connect-src doit autoriser manica.goatcounter.com');
+if (!/connect-src 'self' https:\/\/manica\.goatcounter\.com https:\/\/script\.google\.com https:\/\/script\.googleusercontent\.com;/.test(csp)) erreur('CSP : connect-src doit autoriser manica.goatcounter.com et Apps Script (script.google.com, script.googleusercontent.com)');
+if (!/frame-src https:\/\/calendar\.google\.com;/.test(csp)) erreur('CSP : frame-src doit autoriser calendar.google.com (agenda intégré)');
+
+// --- Promesses : le diagnostic demande un e-mail, aucun texte ne doit promettre le contraire ---
+for (const f of ['index.html', 'config.json', 'manifest.webmanifest', 'tools/og-image.html', 'README.md', '404.html']) {
+  const texte = lire(f);
+  for (const promesse of [/sans inscription/i, /pas de (?:mail|e-mail) demand/i, /aucune réponse ne quitte/i, /zéro donnée/i]) {
+    if (promesse.test(texte)) erreur(`${f} : « ${texte.match(promesse)[0]} » n'est plus vrai (le diagnostic détaillé demande nom et e-mail)`);
+  }
+}
 
 // --- Bilan ---
 const aValider = banque.questions.filter(q => q.statut === 'a_valider').length;
 console.log(`${banque.questions.length} questions (${aValider} à valider), ${axesIds.length} axes, profils : ${profils.join(', ')}`);
-for (const p of profils) {
-  const detail = axesIds.map(a => `${a} ${banque.questions.filter(q => q.axe === a && (q.profil === 'tous' || q.profil === p)).length}`).join(', ');
-  console.log(`  ${p} : ${detail}`);
+for (const c of cibles) {
+  const detail = axesIds.map(a => {
+    const pool = banque.questions.filter(q => q.axe === a && L.questionAccessible(q, c));
+    return `${a} ${pool.length} (${pool.filter(q => L.questionCiblee(q, c)).length} ciblées)`;
+  }).join(', ');
+  console.log(`  ${c.role} : ${detail}`);
 }
-console.log(`Posts LinkedIn vérifiés : ${postsVerifies}`);
+console.log(`Posts LinkedIn vérifiés : ${postsVerifies}, données de contact vérifiées : ${leadsVerifies}`);
 console.log(`Bonne réponse = choix le plus long : ${Math.round(partPlusLongue * 100)} %, le plus court : ${Math.round(partPlusCourte * 100)} %`);
 avertissements.forEach(a => console.log(`⚠ ${a}`));
 if (erreurs.length) {

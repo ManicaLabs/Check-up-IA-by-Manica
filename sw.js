@@ -1,7 +1,7 @@
 // Service worker du Check-up IA : rend l'app disponible hors ligne.
 // Réseau d'abord (contenu toujours frais en ligne), cache en secours.
 // Incrémenter VERSION à chaque déploiement qui modifie la liste PRECACHE.
-const VERSION = 'v1.3.0';
+const VERSION = 'v2.0.0';
 const CACHE = `checkup-ia-${VERSION}`;
 const PRECACHE = [
   './',

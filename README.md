@@ -1,14 +1,15 @@
 # Check-up IA by Manica
 
-Test gratuit en ligne : 10 questions sur 5 axes (tirées dans une banque de 47), un score sur 100, des recommandations, et une prise de contact avec Manica.
-Zéro backend, zéro donnée collectée : tout est calculé dans le navigateur.
+Test gratuit en ligne : 10 questions sur 5 axes adaptées au métier (tirées dans une banque de 85), un score sur 100 affiché tout de suite, puis un diagnostic détaillé contre nom + e-mail, et un échange de 30 min réservable dans la page.
+Score calculé dans le navigateur ; le diagnostic détaillé se débloque avec nom + e-mail (contacts reçus dans une Google Sheet, voir docs/LEADS.md).
 
 **App** : https://manicalabs.github.io/Check-up-IA-by-Manica/
 
 ## Modifier le contenu
 
 - Questions : `questions.json` (passer `statut` à `valide` après relecture)
-- Lien de rendez-vous, email, niveaux, recommandations, textes : `config.json`
+- Profils, lien de rendez-vous, adresse de réception des leads, niveaux, recommandations, FAQ, textes : `config.json`
+- Réception des contacts (Google Sheet) : `docs/LEADS.md`
 
 Puis valider avant de pousser :
 

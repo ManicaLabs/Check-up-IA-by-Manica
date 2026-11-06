@@ -4,6 +4,8 @@
 // Prérequis : (cd tools && npm install) pour puppeteer-core, et Chrome installé (CHROME=/chemin/vers/chrome sinon).
 // Les captures d'écran sont écrites dans tools/.e2e-captures/ (ignoré par git).
 // Aucun comptage réel : les requêtes vers manica.goatcounter.com sont interceptées et bloquées.
+// Aucun lead réel : l'envoi vers Apps Script (script.google.com) est intercepté et simulé ; en local, une URL de test
+// est injectée dans config.json. L'agenda Google intégré est remplacé par une page factice.
 import puppeteer from 'puppeteer-core';
 import { createServer } from 'node:http';
 import { mkdirSync, readdirSync, readFileSync, rmSync, existsSync, statSync } from 'node:fs';
@@ -15,7 +17,9 @@ const OUT = join(RACINE, 'tools', '.e2e-captures') + '/';
 const DL = join(OUT, 'telechargements') + '/';
 const PREFIXE = '/Check-up-IA-by-Manica/';
 const URL_APP = 'https://manicalabs.github.io/Check-up-IA-by-Manica/';
-const EXTERNES_AUTORISES = ['https://gc.zgo.at', 'https://manica.goatcounter.com'];
+const EXTERNES_AUTORISES = ['https://gc.zgo.at', 'https://manica.goatcounter.com', 'https://script.google.com', 'https://calendar.google.com'];
+const URL_LEADS_TEST = 'https://script.google.com/macros/s/TEST-E2E/exec';
+const CONFIG = JSON.parse(readFileSync(join(RACINE, 'config.json'), 'utf8'));
 const CHROME = process.env.CHROME || '/usr/bin/google-chrome';
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(DL, { recursive: true });
@@ -50,7 +54,7 @@ log(`Cible : ${BASE}`);
 
 const browser = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ['--no-sandbox', '--disable-gpu'] });
 
-async function nouvellePage({ mobile = true, systeme = 'light', stockageBloque = false } = {}) {
+async function nouvellePage({ mobile = true, systeme = 'light', stockageBloque = false, leadsEnPanne = false, avecServiceWorker = false } = {}) {
   const ctx = await browser.createBrowserContext();
   await ctx.overridePermissions(ORIGINE, ['clipboard-read', 'clipboard-write', 'clipboard-sanitized-write']);
   const page = await ctx.newPage();
@@ -64,12 +68,35 @@ async function nouvellePage({ mobile = true, systeme = 'light', stockageBloque =
   }
   const evenements = [];
   const pagesVues = [];
+  const leads = [];
+  const etat = { leadsEnPanne };
   await page.exposeFunction('__gcEvenement', p => evenements.push(p));
+  // Les requêtes faites par le service worker échappent à l'interception : on le contourne, sauf pour le test hors ligne.
+  if (!avecServiceWorker) await page.setBypassServiceWorker(true);
   await page.setRequestInterception(true);
   page.on('request', r => {
     const url = r.url();
     if (url.startsWith('data:') || url.startsWith('blob:')) return r.continue();
     const o = new URL(url).origin;
+    if (LOCAL && url.startsWith(`${BASE}config.json`)) {
+      const c = JSON.parse(readFileSync(join(RACINE, 'config.json'), 'utf8'));
+      c.leads.url = URL_LEADS_TEST;
+      return r.respond({ status: 200, contentType: 'application/json', headers: { 'Cache-Control': 'no-cache' }, body: JSON.stringify(c) });
+    }
+    if (o === 'https://script.google.com') {
+      externes.add(o);
+      if (etat.leadsEnPanne) return r.abort('internetdisconnected');
+      if (r.method() !== 'POST') return r.respond({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: '{"ok":true}' });
+      // Le corps n'est pas toujours joint à l'événement : on le demande au besoin.
+      return Promise.resolve(r.postData() ?? r.fetchPostData()).then(corps => {
+        try { leads.push(JSON.parse(corps)); } catch (e) { problemes.push(`lead illisible : ${corps}`); }
+        return r.respond({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: '{"ok":true}' });
+      });
+    }
+    if (o === 'https://calendar.google.com') {
+      externes.add(o);
+      return r.respond({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Agenda</title><p>Agenda de test</p>' });
+    }
     if (o !== ORIGINE) {
       externes.add(o);
       if (!EXTERNES_AUTORISES.includes(o)) problemes.push(`requête externe non autorisée : ${url}`);
@@ -88,7 +115,7 @@ async function nouvellePage({ mobile = true, systeme = 'light', stockageBloque =
     if (['error', 'warning'].includes(m.type()) && !/ERR_FAILED|ERR_INTERNET_DISCONNECTED/.test(t)) problemes.push(`console ${m.type()} : ${t}`);
   });
   page.on('pageerror', e => problemes.push(`erreur JS : ${e.message}`));
-  return { ctx, page, evenements, pagesVues };
+  return { ctx, page, evenements, pagesVues, leads, etat };
 }
 
 // Espion GoatCounter + pas de navigation réelle vers les services externes (à refaire après chaque rechargement).
@@ -99,7 +126,7 @@ async function espionner(page) {
     window.__ouverts = [];
     window.open = u => { window.__ouverts.push(u); return null; };
     document.addEventListener('click', e => {
-      if (e.target.closest('#cta-rdv, #cta-mail, #cta-adresse, #partage-facebook, #partage-mail, #di-ouvrir')) e.preventDefault();
+      if (e.target.closest('#cta-mail, #dr-onglet, #partage-facebook, #partage-mail, #di-ouvrir')) e.preventDefault();
     }, true);
   });
 }
@@ -149,52 +176,131 @@ async function attendreFichier(nom) {
   return { l: png.readUInt32BE(16), h: png.readUInt32BE(20) };
 }
 
+const lireSession = page => page.evaluate(() => JSON.parse(localStorage.getItem('checkup-ia:v2')));
+
+// Un clic sur un choix = question suivante (ou résultat après la dernière).
 async function repondre(page, position) {
-  const choix = await page.$$('#q-choix input');
-  await choix[position].click();
-  await page.click('#q-bouton');
-  await page.waitForSelector('#q-feedback:not([hidden])');
+  const avant = await page.$eval('#q-compteur', e => e.textContent);
+  await page.click(`#q-choix .choice[data-position="${position}"]`);
+  await page.waitForFunction(a => !document.getElementById('ecran-resultat').hidden
+    || (document.getElementById('q-compteur').textContent !== a && !document.querySelector('#q-corps.is-leaving, #q-corps.is-entering')), { timeout: 5000 }, avant);
+  await pause(60);
 }
 
 async function repondreATout(page) {
-  while (await page.$('#ecran-quiz:not([hidden])')) { await repondre(page, 0); await page.click('#q-bouton'); }
+  while (!(await page.$eval('#ecran-quiz', e => e.hidden))) await repondre(page, 0);
   await page.waitForSelector('#ecran-resultat:not([hidden])');
 }
 
-// --- Bloc RDV : interlocuteur, indication du score, adresse copiable ---
-async function testerBlocRdv(page, prefixe, score) {
-  const e = await page.evaluate(() => {
-    const img = document.getElementById('cta-photo');
-    return {
-      photo: img.complete && img.naturalWidth > 0, alt: img.getAttribute('alt'),
-      nom: document.getElementById('cta-nom').textContent, role: document.getElementById('cta-role').textContent,
-      indice: document.getElementById('cta-indice').textContent,
-      adresse: document.getElementById('cta-adresse').textContent,
-      rdv: [document.getElementById('cta-rdv').href, document.getElementById('cta-rdv').target],
-      mail: decodeURIComponent(document.getElementById('cta-mail').href)
-    };
-  });
-  if (!e.photo || e.alt !== '') problemes.push(`${prefixe} : photo du bloc RDV absente ou alt inattendu`);
-  if (e.nom !== 'Cédric Delalande' || !e.role.includes('Manica Labs')) problemes.push(`${prefixe} : interlocuteur ${e.nom} / ${e.role}`);
-  if (!e.indice.includes(`${score}/100`)) problemes.push(`${prefixe} : indication de score absente (${e.indice})`);
-  if (e.adresse !== 'hello@manica.fr') problemes.push(`${prefixe} : adresse e-mail non affichée (${e.adresse})`);
-  if (e.rdv[0] !== 'https://calendar.app.google/dQyJBwpYKtc184NdA' || e.rdv[1] !== '_blank') problemes.push(`${prefixe} : lien RDV ${e.rdv}`);
-  if (!e.mail.startsWith('mailto:hello@manica.fr?subject=') || /\{\w+\}/.test(e.mail) || !e.mail.includes(`mon score : ${score}/100`)) problemes.push(`${prefixe} : mailto incorrect`);
+async function demarrer(page, role, precision = '') {
+  if (role === 'autre') {
+    await page.click('.role[data-role="autre"]');
+    await page.waitForSelector('#zone-autre:not([hidden])');
+    if (precision) await page.type('#autre-metier', precision);
+    await page.click('#btn-autre');
+  } else {
+    await page.click(`.role[data-role="${role}"]`);
+  }
+  await page.waitForSelector('#ecran-quiz:not([hidden])');
+}
+
+async function remplirFormulaire(page, nom = 'Ada Lovelace', email = 'ada@exemple.fr') {
+  await page.click('#lead-nom', { clickCount: 3 });
+  await page.keyboard.press('Backspace');
+  await page.type('#lead-nom', nom);
+  await page.click('#lead-email', { clickCount: 3 });
+  await page.keyboard.press('Backspace');
+  await page.type('#lead-email', email);
+  await page.click('#lead-envoyer');
+  await page.waitForSelector('#r-diagnostic:not([hidden])');
+}
+
+// --- Formulaire : erreurs, envoi, contenu transmis ---
+async function testerFormulaire(page, prefixe, { leads, score, role, total, mobile }) {
+  const avant = await page.evaluate(() => ({
+    gate: !document.getElementById('r-gate').hidden, diag: !document.getElementById('r-diagnostic').hidden,
+    hautGate: document.getElementById('gate-titre').getBoundingClientRect().top, h: innerHeight,
+    tailleNom: parseFloat(getComputedStyle(document.getElementById('lead-nom')).fontSize),
+    optin: document.getElementById('lead-optin').checked, libelleEmail: document.getElementById('lead-email-libelle').textContent
+  }));
+  if (!avant.gate || avant.diag) problemes.push(`${prefixe} : le diagnostic doit être masqué derrière le formulaire`);
+  if (mobile && avant.hautGate > avant.h) problemes.push(`${prefixe} : titre du formulaire sous la ligne de flottaison (${Math.round(avant.hautGate)} px)`);
+  if (avant.tailleNom < 16) problemes.push(`${prefixe} : champ nom en ${avant.tailleNom} px (zoom iOS)`);
+  if (avant.optin) problemes.push(`${prefixe} : case « lives et contenus » cochée par défaut (RGPD)`);
+  if (avant.libelleEmail !== (role === 'perso' ? 'E-mail' : 'E-mail professionnel')) problemes.push(`${prefixe} : libellé e-mail ${avant.libelleEmail}`);
+  // Envoi vide puis e-mail invalide : erreurs visibles, rien n'est envoyé
+  await page.click('#lead-envoyer');
+  if (await page.$eval('#err-nom', e => e.hidden)) problemes.push(`${prefixe} : erreur « nom » absente`);
+  await page.type('#lead-nom', 'Ada Lovelace');
+  await page.type('#lead-email', 'ada@exemple');
+  await page.click('#lead-envoyer');
+  if (await page.$eval('#err-email', e => e.hidden)) problemes.push(`${prefixe} : erreur « e-mail » absente`);
+  if (leads.length || !(await page.$eval('#r-diagnostic', e => e.hidden))) problemes.push(`${prefixe} : formulaire invalide accepté`);
+  await page.click('#lead-optin');
+  await remplirFormulaire(page);
+  await page.waitForFunction(() => !document.getElementById('cta-transmis').hidden, { timeout: 5000 }).catch(() => problemes.push(`${prefixe} : « résultats transmis » non affiché`));
+  const d = leads.at(-1);
+  if (!d) { problemes.push(`${prefixe} : aucun lead envoyé`); return; }
+  if (d.nom !== 'Ada Lovelace' || d.email !== 'ada@exemple.fr' || d.optin !== true || d.role !== role || d.score !== Number(score) || d.reponses.length !== total || d.reponses.some(r => !r.question || !r.reponse || !r.explication || (!r.juste && !r.bonne)) || d.priorites.length !== 3 || !d.id) problemes.push(`${prefixe} : lead incomplet ${JSON.stringify(d).slice(0, 300)}`);
+  if (leads.length !== 1) problemes.push(`${prefixe} : ${leads.length} envois pour un seul formulaire`);
+  const titre = await page.$eval('#diag-titre', e => e.textContent);
+  if (titre !== 'Votre diagnostic, Ada') problemes.push(`${prefixe} : titre du diagnostic « ${titre} »`);
+}
+
+// --- Diagnostic : axes en couleur, corrigé, bloc RDV, agenda intégré, bulle ---
+async function testerDiagnostic(page, prefixe, { score, total }) {
+  const e = await page.evaluate(() => ({
+    axes: [...document.querySelectorAll('#r-axes .axis')].map(li => [li.dataset.ton, li.dataset.pct, li.querySelector('.axis-tag').textContent]),
+    recos: document.querySelectorAll('#r-recos li').length,
+    corrige: document.querySelectorAll('#r-corrige details').length,
+    ko: document.querySelectorAll('#r-corrige .rev.is-ko').length,
+    reassurance: [...document.querySelectorAll('#cta-reassurance li')].map(l => l.textContent),
+    rdv: document.getElementById('cta-rdv').textContent,
+    boutons: document.querySelectorAll('.cta-actions .btn').length,
+    photo: document.getElementById('cta-photo').complete && document.getElementById('cta-photo').naturalWidth > 0,
+    nom: document.getElementById('cta-nom').textContent,
+    mail: decodeURIComponent(document.getElementById('cta-mail').href),
+    adresseCopiable: Boolean(document.getElementById('cta-copier-adresse'))
+  }));
+  if (e.axes.length !== 5) problemes.push(`${prefixe} : axes ≠ 5`);
+  for (const [ton, pct] of e.axes) if (ton !== (pct >= 60 ? 'ok' : pct >= 30 ? 'mid' : 'ko')) problemes.push(`${prefixe} : couleur d'axe ${ton} pour ${pct} %`);
+  if (e.recos !== 3) problemes.push(`${prefixe} : priorités ≠ 3`);
+  if (e.corrige !== total) problemes.push(`${prefixe} : corrigé de ${e.corrige} questions`);
+  if (e.ko !== total - Math.round(Number(score) * total / 100)) problemes.push(`${prefixe} : corrigé incohérent avec le score (${e.ko} à revoir)`);
+  if (e.reassurance.join('|') !== CONFIG.cta.reassurance.join('|')) problemes.push(`${prefixe} : réassurance ${e.reassurance}`);
+  if (e.boutons !== 1) problemes.push(`${prefixe} : ${e.boutons} boutons principaux dans le bloc RDV (1 attendu)`);
+  if (!e.photo || e.nom !== 'Cédric Delalande') problemes.push(`${prefixe} : photo ou nom du bloc RDV`);
+  if (!e.mail.startsWith('mailto:hello@manica.fr?subject=') || !e.mail.includes(`mon score : ${score}/100`) || /\{\w+\}/.test(e.mail)) problemes.push(`${prefixe} : mailto ${e.mail.slice(0, 120)}`);
+  if (e.adresseCopiable) problemes.push(`${prefixe} : la copie d'adresse devait disparaître`);
+  // Corrigé : une question ouverte montre la réponse et l'explication
+  await page.click('#r-corrige details summary');
+  const ouvert = await page.$eval('#r-corrige details', d => d.open && d.querySelector('.rev-expl').textContent.length > 20);
+  if (!ouvert) problemes.push(`${prefixe} : corrigé non dépliable`);
+  await page.screenshot({ path: `${OUT}${prefixe}-4-diagnostic.png`, fullPage: true });
+  // Bulle visible tant que le bloc RDV n'est pas à l'écran
+  await page.evaluate(() => scrollTo(0, 0));
+  await pause(400);
+  if (!(await page.$eval('#bulle-rdv', b => b.classList.contains('is-visible')))) problemes.push(`${prefixe} : bulle RDV absente en haut du diagnostic`);
+  await page.screenshot({ path: `${OUT}${prefixe}-5-bulle.png` });
+  await page.click('#bulle-rdv');
+  await page.waitForSelector('#dialogue-rdv[open]');
+  const cal = await page.evaluate(() => ({ src: document.getElementById('dr-cadre').src, note: document.getElementById('dr-note').textContent, h: document.getElementById('dr-cadre').getBoundingClientRect().height }));
+  if (cal.src !== CONFIG.contact.lien_rdv_integre) problemes.push(`${prefixe} : agenda intégré ${cal.src}`);
+  if (cal.h < 300) problemes.push(`${prefixe} : agenda trop petit (${cal.h} px)`);
+  if (!cal.note.includes('rien à recopier')) problemes.push(`${prefixe} : note de l'agenda ${cal.note}`);
+  await pause(300);
+  await page.screenshot({ path: `${OUT}${prefixe}-6-agenda.png` });
+  await page.click('#dr-onglet');
+  await page.keyboard.press('Escape');
+  await pause(200);
+  await page.evaluate(() => document.getElementById('cta-bloc').scrollIntoView({ block: 'center' }));
+  await pause(500);
+  if (await page.$eval('#bulle-rdv', b => b.classList.contains('is-visible'))) problemes.push(`${prefixe} : bulle visible alors que le bloc RDV est à l'écran`);
+  await page.screenshot({ path: `${OUT}${prefixe}-7-bloc-rdv.png` });
   await page.click('#cta-rdv');
+  await page.waitForSelector('#dialogue-rdv[open]');
+  await page.click('#dialogue-rdv [data-fermer]');
   await page.click('#cta-mail');
-  // Copie de l'adresse (webmail)
-  await page.click('#cta-copier-adresse');
-  await attendreToast(page);
-  const t = await toastDe(page, '#toast');
-  const pp = await page.evaluate(() => navigator.clipboard.readText());
-  const bouton = await page.$eval('#cta-copier-adresse', b => b.textContent);
-  if (pp !== 'hello@manica.fr' || !t.texte.includes('Adresse copiée') || !t.lu.includes('hello@manica.fr') || bouton !== 'Copiée !') problemes.push(`${prefixe} : copie de l'adresse incorrecte ${JSON.stringify({ pp, t, bouton })}`);
-  await page.evaluate(() => document.querySelector('.cta-panel').scrollIntoView({ block: 'center' }));
-  await pause(300);
-  await page.screenshot({ path: `${OUT}${prefixe}-5-bloc-rdv.png` });
-  await page.waitForFunction(() => document.getElementById('cta-copier-adresse').textContent === 'Copier l’adresse', { timeout: 3000 });
-  await page.waitForFunction(() => !document.getElementById('toast').classList.contains('is-visible'), { timeout: 4000 });
-  await pause(300);
 }
 
 // --- Partage : fenêtres LinkedIn et Instagram, Facebook, e-mail, copie ---
@@ -269,13 +375,13 @@ async function testerPartage(page, ctx, prefixe, score) {
   await attendreToast(page);
   const tg = await toastDe(page, '#toast');
   const pp2 = await page.evaluate(() => navigator.clipboard.readText());
-  const etat = await page.evaluate(() => ({ fait: document.getElementById('partage-copier').classList.contains('is-done'), panneau: !document.getElementById('partage-panneau').hidden, texte: document.getElementById('partage-texte').textContent }));
-  if (!tg.visible || tg.role !== 'status' || tg.live !== 'polite' || !tg.lu.includes(pp2) || !etat.fait || !etat.panneau || etat.texte !== pp2 || !pp2.endsWith(URL_APP)) problemes.push(`${prefixe} : copie depuis l'icône incorrecte`);
+  const fait = await page.$eval('#partage-copier', b => b.classList.contains('is-done'));
+  if (!tg.visible || tg.role !== 'status' || tg.live !== 'polite' || !tg.lu.includes(pp2) || !fait || !pp2.endsWith(URL_APP)) problemes.push(`${prefixe} : copie depuis l'icône incorrecte`);
   await page.screenshot({ path: `${OUT}${prefixe}-8-copie.png` });
 }
 
-async function parcours(prefixe, { systeme = 'light', forcer = null, profil = 'entreprise', mobile = true } = {}) {
-  const { ctx, page, evenements, pagesVues } = await nouvellePage({ systeme, mobile });
+async function parcours(prefixe, { systeme = 'light', forcer = null, role = 'dirigeant', precision = '', mobile = true } = {}) {
+  const { ctx, page, evenements, pagesVues, leads } = await nouvellePage({ systeme, mobile });
   await page.goto(BASE, { waitUntil: 'networkidle0' });
   await espionner(page);
   if (!pagesVues.length) problemes.push(`${prefixe} : aucune page vue comptée au chargement`);
@@ -290,98 +396,161 @@ async function parcours(prefixe, { systeme = 'light', forcer = null, profil = 'e
   await page.evaluate(() => document.fonts.ready);
   await pause(1900);
   await page.screenshot({ path: `${OUT}${prefixe}-1-accueil.png` });
+  await page.screenshot({ path: `${OUT}${prefixe}-1b-accueil-complet.png`, fullPage: true });
   await pasDeScrollHorizontal(page, `${prefixe} accueil`);
   await verifierLogos(page, `${prefixe} accueil`, 'baseline');
-  if (await page.$('.hero-by')) problemes.push(`${prefixe} : « by Manica » encore sous le titre`);
+  const accueil = await page.evaluate(() => ({ faq: document.querySelectorAll('#faq details').length, apropos: !document.getElementById('apropos').hidden, texte: document.body.innerText }));
+  if (accueil.faq !== CONFIG.faq.length || !accueil.apropos) problemes.push(`${prefixe} : bloc « Qui est derrière » ou FAQ absent de l'accueil`);
+  if (/sans inscription|pas de mail demandé/i.test(accueil.texte)) problemes.push(`${prefixe} : promesse « sans inscription » encore affichée`);
+  if (mobile) {
+    const bas = await page.$eval('.role[data-role="autre"]', b => b.getBoundingClientRect().bottom);
+    if (bas > 844 * 1.35) problemes.push(`${prefixe} : profils trop bas sur mobile (${Math.round(bas)} px)`);
+  }
 
-  await page.click('#btn-commencer');
-  if (await page.$eval('#hint-profil', e => e.hidden)) problemes.push(`${prefixe} : aide « choisissez un profil » absente`);
-  await page.click(`input[name="profil"][value="${profil}"]`);
-  await page.click('#btn-commencer');
-  await page.waitForSelector('#ecran-quiz:not([hidden])');
+  await demarrer(page, role, precision);
   await verifierLogos(page, `${prefixe} quiz`, 'compact');
-  await page.click('#q-bouton');
-  if (await page.$eval('#hint-choix', e => e.hidden)) problemes.push(`${prefixe} : aide « choisissez une réponse » absente`);
+  if ((await page.$$('#q-choix .choice')).length !== 4) problemes.push(`${prefixe} : 4 choix attendus`);
+  if (await page.$('#q-bouton, #q-feedback')) problemes.push(`${prefixe} : bouton « Valider » ou correction encore présents`);
+  if (mobile) {
+    const bas = await page.$eval('#q-choix .choice:last-child', b => b.getBoundingClientRect().bottom);
+    if (bas > 844) problemes.push(`${prefixe} : dernier choix sous la ligne de flottaison (${Math.round(bas)} px)`);
+  }
 
-  const total = await page.evaluate(() => JSON.parse(localStorage.getItem('checkup-ia:v1')).items.length);
+  let s = await lireSession(page);
+  const total = s.items.length;
   if (total !== 10) problemes.push(`${prefixe} : ${total} questions au lieu de 10`);
+  if (s.cible.role !== role || s.precision !== precision) problemes.push(`${prefixe} : cible ${JSON.stringify(s.cible)} / ${s.precision}`);
+  const banque = JSON.parse(readFileSync(join(RACINE, 'questions.json'), 'utf8')).questions;
+  const parId = new Map(banque.map(q => [q.id, q]));
+  const nbCiblees = s.items.filter(it => { const q = parId.get(it.id); return Array.isArray(q.roles) ? q.roles.includes(role) : (role === 'perso' && q.profil === 'perso'); }).length;
+  if (role !== 'autre' && nbCiblees < 5) problemes.push(`${prefixe} : ${nbCiblees} questions écrites pour ce profil (5 attendues)`);
+  if (s.items.some(it => { const q = parId.get(it.id); return Array.isArray(q.roles) && !q.roles.includes(role); })) problemes.push(`${prefixe} : question d'un autre métier tirée`);
+
   let bonnes = 0;
+  let clics = 0;
   for (let i = 0; i < total; i++) {
-    const s = await page.evaluate(() => JSON.parse(localStorage.getItem('checkup-ia:v1')));
+    s = await lireSession(page);
     const ordre = s.items[i].ordre;
     const position = i % 2 === 0 ? ordre.indexOf(0) : ordre.findIndex(x => x !== 0);
     if (ordre[position] === 0) bonnes++;
-    await repondre(page, position);
-    if (i === 1) await page.screenshot({ path: `${OUT}${prefixe}-2-correction.png`, fullPage: true });
     const compteur = await page.$eval('#q-compteur', e => e.textContent);
     if (compteur !== `Question ${i + 1} / ${total}`) problemes.push(`${prefixe} : compteur ${compteur}`);
+    if (i === 1) await page.screenshot({ path: `${OUT}${prefixe}-2-question.png` });
+    if (i === 2) {
+      // Retour : la question précédente revient avec la réponse marquée, un clic la remplace
+      await page.click('#q-retour');
+      const r = await page.evaluate(() => ({ c: document.getElementById('q-compteur').textContent, marque: document.querySelector('#q-choix .choice.is-picked')?.dataset.position }));
+      const avant = (await lireSession(page)).reponses[1];
+      if (r.c !== `Question 2 / ${total}` || Number(r.marque) !== avant) problemes.push(`${prefixe} : retour arrière ${JSON.stringify(r)}`);
+      await repondre(page, avant);
+      clics++;
+    }
+    await repondre(page, position);
+    clics++;
     if (i === 4) {
       await page.reload({ waitUntil: 'networkidle0' });
       await espionner(page);
       if ((await etatTheme(page)).theme !== t.theme) problemes.push(`${prefixe} : thème perdu au rechargement`);
       await page.waitForSelector('#bloc-reprise:not([hidden])');
       const txt = await page.$eval('#texte-reprise', e => e.textContent);
-      if (!txt.includes(`question 5 sur ${total}`)) problemes.push(`${prefixe} : reprise « ${txt} »`);
+      if (!txt.includes(`question 6 sur ${total}`)) problemes.push(`${prefixe} : reprise « ${txt} »`);
       await page.click('#btn-reprendre');
-      await page.waitForSelector('#q-feedback:not([hidden])');
+      await page.waitForSelector('#ecran-quiz:not([hidden])');
     }
-    await page.click('#q-bouton');
   }
+  if (clics !== total + 1) problemes.push(`${prefixe} : ${clics} clics pour ${total} questions (+1 retour)`);
   await page.waitForSelector('#ecran-resultat:not([hidden])');
-  await pause(1300);
+  await pause(1100);
   await verifierLogos(page, `${prefixe} résultat`, 'compact');
-  await page.screenshot({ path: `${OUT}${prefixe}-3-resultat.png`, fullPage: true });
+  await page.screenshot({ path: `${OUT}${prefixe}-3-resultat.png` });
   await pasDeScrollHorizontal(page, `${prefixe} résultat`);
 
   const score = await page.$eval('#r-score', e => e.textContent);
   if (Number(score) !== Math.round(100 * bonnes / total)) problemes.push(`${prefixe} : score ${score}, attendu ${Math.round(100 * bonnes / total)}`);
-  if (await page.$$eval('#r-recos li', l => l.length) !== 3) problemes.push(`${prefixe} : priorités ≠ 3`);
-  if (await page.$$eval('#r-axes li', l => l.length) !== 5) problemes.push(`${prefixe} : axes ≠ 5`);
-  const partageVisible = await page.evaluate(() => document.querySelector('.share').getBoundingClientRect().bottom <= innerHeight);
-  if (!partageVisible) problemes.push(`${prefixe} : icônes de partage hors de l'écran à l'arrivée sur le résultat`);
+  if (await page.$eval('#bulle-rdv', b => !b.hidden)) problemes.push(`${prefixe} : bulle RDV visible avant le formulaire`);
 
-  await testerBlocRdv(page, prefixe, score);
+  await testerFormulaire(page, prefixe, { leads, score, role, total, mobile });
+  await pause(900);
+  await testerDiagnostic(page, prefixe, { score, total });
   await testerPartage(page, ctx, prefixe, score);
-  const attendus = ['test_demarre', 'test_termine', 'clic_rdv', 'clic_mail', 'copie_adresse', 'partage_linkedin', 'partage_copie', 'partage_instagram', 'partage_facebook', 'partage_mail'];
+  const attendus = ['test_demarre', `profil_${role}`, 'question_02', 'test_termine', 'formulaire_vu', 'lead_envoye', 'rdv_ouvert', 'rdv_ouvert_bulle', 'clic_rdv', 'clic_mail', 'partage_linkedin', 'partage_copie', 'partage_instagram', 'partage_facebook', 'partage_mail'];
   const manquants = attendus.filter(e => !evenements.includes(e));
   if (manquants.length) problemes.push(`${prefixe} : événements non envoyés ${manquants}`);
-  log(`${prefixe} : score ${score}/100, ${evenements.length} événements`);
+  log(`${prefixe} (${role}${precision ? ` : ${precision}` : ''}) : score ${score}/100, ${nbCiblees} questions ciblées, ${evenements.length} événements, lead transmis`);
 
+  // Rechargement : le diagnostic reste débloqué, sans nouvel envoi
   await page.reload({ waitUntil: 'networkidle0' });
   await page.waitForSelector('#bloc-reprise:not([hidden])');
   await page.click('#btn-reprendre');
   await page.waitForSelector('#ecran-resultat:not([hidden])');
-  if (await page.$eval('#r-score', e => e.textContent) !== score) problemes.push(`${prefixe} : score changé après rechargement`);
+  const apres = await page.evaluate(() => ({ score: document.getElementById('r-score').textContent, diag: !document.getElementById('r-diagnostic').hidden, gate: !document.getElementById('r-gate').hidden }));
+  if (apres.score !== score || !apres.diag || apres.gate) problemes.push(`${prefixe} : après rechargement ${JSON.stringify(apres)}`);
+  if (leads.length !== 1) problemes.push(`${prefixe} : ${leads.length} leads après rechargement`);
   await page.click('#btn-refaire');
   await page.waitForSelector('#ecran-accueil:not([hidden])');
-  if (await page.evaluate(() => localStorage.getItem('checkup-ia:v1'))) problemes.push(`${prefixe} : session non effacée après « Refaire »`);
+  if (await page.evaluate(() => localStorage.getItem('checkup-ia:v2'))) problemes.push(`${prefixe} : session non effacée après « Refaire »`);
+  // Le test suivant pré-remplit le formulaire
+  await demarrer(page, role, precision);
+  await repondreATout(page);
+  if ((await page.$eval('#lead-email', e => e.value)) !== 'ada@exemple.fr') problemes.push(`${prefixe} : e-mail non pré-rempli au test suivant`);
   await ctx.close();
 }
 
-await parcours('clair', { systeme: 'light', profil: 'entreprise' });
-await parcours('sombre-systeme', { systeme: 'dark', profil: 'perso' });
-await parcours('sombre-force', { systeme: 'light', forcer: 'dark', profil: 'entreprise' });
-await parcours('clair-force', { systeme: 'dark', forcer: 'light', profil: 'perso' });
-await parcours('bureau-sombre', { systeme: 'dark', profil: 'perso', mobile: false });
+await parcours('dirigeant-clair', { systeme: 'light', role: 'dirigeant' });
+await parcours('perso-sombre', { systeme: 'dark', role: 'perso' });
+await parcours('dsi-sombre-force', { systeme: 'light', forcer: 'dark', role: 'dsi' });
+await parcours('marketing-clair-force', { systeme: 'dark', forcer: 'light', role: 'marketing' });
+await parcours('autre-bureau', { systeme: 'dark', role: 'autre', precision: 'juriste', mobile: false });
+
+// Envoi du lead en échec : le diagnostic s'affiche quand même, le contact est renvoyé à la visite suivante
+{
+  const { ctx, page, leads, etat, evenements } = await nouvellePage({ systeme: 'light', leadsEnPanne: true });
+  await page.goto(BASE, { waitUntil: 'networkidle0' });
+  await espionner(page);
+  await demarrer(page, 'perso');
+  await repondreATout(page);
+  await remplirFormulaire(page, 'Grace Hopper', 'grace@exemple.fr');
+  await page.waitForFunction(() => localStorage.getItem('checkup-ia:lead-en-attente'), { timeout: 8000 }).catch(() => problemes.push('lead en échec : non gardé pour plus tard'));
+  if (!(await page.$eval('#cta-transmis', e => e.hidden))) problemes.push('lead en échec : « résultats transmis » affiché à tort');
+  if (!evenements.includes('lead_echec')) problemes.push('lead en échec : événement lead_echec absent');
+  etat.leadsEnPanne = false;
+  await page.reload({ waitUntil: 'networkidle0' });
+  await page.waitForFunction(() => !localStorage.getItem('checkup-ia:lead-en-attente'), { timeout: 8000 }).catch(() => problemes.push('lead en échec : non renvoyé à la visite suivante'));
+  if (leads.length !== 1 || leads[0].email !== 'grace@exemple.fr') problemes.push(`lead en échec : renvoi ${leads.length}`);
+  log('lead en échec : diagnostic affiché, contact renvoyé ensuite ✓');
+  await ctx.close();
+}
+
+// Robot (champ piège rempli) : diagnostic affiché, rien n'est envoyé
+{
+  const { ctx, page, leads } = await nouvellePage({ systeme: 'light' });
+  await page.goto(BASE, { waitUntil: 'networkidle0' });
+  await demarrer(page, 'dsi');
+  await repondreATout(page);
+  await page.evaluate(() => { document.getElementById('lead-site').value = 'spam'; });
+  await remplirFormulaire(page);
+  await pause(800);
+  if (leads.length) problemes.push('robot : lead envoyé malgré le champ piège');
+  log('robot : rien envoyé ✓');
+  await ctx.close();
+}
 
 // Copie refusée : message honnête, rien de marqué comme copié
 {
   const { ctx, page } = await nouvellePage({ systeme: 'dark' });
   await page.goto(BASE, { waitUntil: 'networkidle0' });
   await page.evaluate(() => { navigator.clipboard.writeText = () => Promise.reject(new DOMException('refus', 'NotAllowedError')); });
-  await page.click('input[name="profil"][value="perso"]');
-  await page.click('#btn-commencer');
+  await demarrer(page, 'perso');
   await repondreATout(page);
+  await remplirFormulaire(page);
+  // Icône au centre de l'écran : la bulle RDV, fixe en bas, ne doit pas recevoir le clic.
+  await page.$eval('#partage-copier', b => b.scrollIntoView({ block: 'center' }));
+  await pause(400);
   await page.click('#partage-copier');
   await attendreToast(page);
   const t = await toastDe(page, '#toast');
   const fait = await page.$eval('#partage-copier', b => b.classList.contains('is-done'));
-  const libelle = await page.$eval('#partage-libelle', p => p.textContent);
-  if (!t.texte.includes('sélectionnez le texte affiché') || fait || !libelle.includes('Copie impossible')) problemes.push(`copie refusée : ${JSON.stringify({ t, fait, libelle })}`);
-  await page.waitForFunction(() => !document.getElementById('toast').classList.contains('is-visible'), { timeout: 4000 });
-  await page.click('#cta-copier-adresse');
-  await attendreToast(page);
-  if ((await page.$eval('#cta-copier-adresse', b => b.textContent)).includes('Copiée')) problemes.push('copie refusée : adresse marquée « Copiée » à tort');
+  if (!t.texte.includes('Copie impossible') || fait) problemes.push(`copie refusée : ${JSON.stringify({ t, fait })}`);
   log('copie refusée : message honnête ✓');
   await ctx.close();
 }
@@ -392,11 +561,10 @@ await parcours('bureau-sombre', { systeme: 'dark', profil: 'perso', mobile: fals
   await page.goto(BASE, { waitUntil: 'networkidle0' });
   await page.click('#btn-theme');
   if ((await etatTheme(page)).theme !== 'dark') problemes.push('stockage bloqué : bascule inopérante');
-  await page.click('input[name="profil"][value="perso"]');
-  await page.click('#btn-commencer');
-  await page.waitForSelector('#ecran-quiz:not([hidden])', { timeout: 5000 });
-  await repondre(page, 0);
-  log('stockage bloqué : bascule et quiz OK ✓');
+  await demarrer(page, 'perso');
+  await repondreATout(page);
+  await remplirFormulaire(page);
+  log('stockage bloqué : bascule, quiz et diagnostic OK ✓');
   await ctx.close();
 }
 
@@ -405,7 +573,7 @@ await parcours('bureau-sombre', { systeme: 'dark', profil: 'perso', mobile: fals
   const { ctx, page } = await nouvellePage({ systeme: 'dark' });
   await page.goto(`${BASE}mentions-legales.html`, { waitUntil: 'networkidle0' });
   const ml = await page.evaluate(() => ({ theme: document.documentElement.dataset.theme, texte: document.body.innerText, bouton: document.getElementById('btn-opt-out')?.textContent }));
-  for (const attendu of ['MANICA LABS', '999 397 490', 'FR82999397490', '11 avenue Paul Verlaine', 'Cédric Delalande', 'GitHub, Inc.', 'GoatCounter', 'CNIL']) if (!ml.texte.includes(attendu)) problemes.push(`mentions légales : « ${attendu} » absent`);
+  for (const attendu of ['MANICA LABS', '999 397 490', 'FR82999397490', '11 avenue Paul Verlaine', 'Cédric Delalande', 'GitHub, Inc.', 'GoatCounter', 'CNIL', 'diagnostic détaillé', 'Google Workspace', '3 ans']) if (!ml.texte.includes(attendu)) problemes.push(`mentions légales : « ${attendu} » absent`);
   if (ml.theme !== 'dark') problemes.push('mentions légales : thème sombre non appliqué');
   await verifierLogos(page, 'mentions légales', 'compact');
   await pasDeScrollHorizontal(page, 'mentions légales');
@@ -424,7 +592,7 @@ await parcours('bureau-sombre', { systeme: 'dark', profil: 'perso', mobile: fals
 
 // Hors ligne : service worker, GoatCounter absent sans erreur
 {
-  const { ctx, page } = await nouvellePage({ systeme: 'dark' });
+  const { ctx, page } = await nouvellePage({ systeme: 'dark', avecServiceWorker: true });
   await page.goto(BASE, { waitUntil: 'networkidle0' });
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload({ waitUntil: 'networkidle0' });
@@ -432,9 +600,7 @@ await parcours('bureau-sombre', { systeme: 'dark', profil: 'perso', mobile: fals
   await page.setOfflineMode(true);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await pause(800);
-  await page.click('input[name="profil"][value="perso"]');
-  await page.click('#btn-commencer');
-  await page.waitForSelector('#ecran-quiz:not([hidden])', { timeout: 8000 });
+  await demarrer(page, 'marketing');
   await repondre(page, 0);
   log(`hors ligne : quiz OK (cache ${caches}) ✓`);
   await ctx.close();

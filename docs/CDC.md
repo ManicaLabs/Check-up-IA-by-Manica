@@ -2,28 +2,27 @@
 
 > Handoff doc pour Claude Code. Source de vérité pour le code = le repo Git.
 > À mettre à jour à chaque déploiement, pas seulement en fin de projet.
-> Dernière mise à jour : 24/09/2026 — v1.5 (10 questions, partage guidé, bloc RDV incarné, mentions légales, couche mobile).
+> Dernière mise à jour : 06/11/2026 — v2.0 (tunnel de conversion : profils métier, quiz en 1 clic par question, score libre puis diagnostic contre nom + e-mail, leads dans une Google Sheet, agenda intégré, 85 questions).
 
 ---
 
 ## 1. Contexte & but
 
-**Ce que fait l'app** : un test gratuit en ligne, « Check-up IA by Manica » — 10 questions sur 5 axes (tirées dans une banque de 47, depuis la v1.4 ; 20 auparavant), qui donne un score sur 100 et un niveau, puis oriente vers une prise de contact avec Manica (RDV ou mail).
+**Ce que fait l'app** : un test gratuit en ligne, « Check-up IA by Manica » — 10 questions sur 5 axes adaptées au métier du visiteur (tirées dans une banque de 85 depuis la v2.0), qui donne un score sur 100 et un niveau, puis un diagnostic détaillé contre nom + e-mail, et oriente vers un échange de 30 min réservé dans la page. Depuis la v2.0, c'est un élément du tunnel de conversion de Manica (refonte issue du coaching Funnel Building du 30/09/2026, voir `docs/conseils_checkup_ia.md`).
 
-**Pour qui** : particuliers curieux d'IA (« Pour moi ») et dirigeants / responsables évaluant la maturité IA de leur entreprise (« Pour mon entreprise »). Le profil adapte l'axe 5 (questions et libellé), les recommandations, le sous-titre du CTA et la mention de positionnement.
+**Pour qui** : « Pour moi » (particuliers) ou, pour l'entreprise, **Dirigeant·e, DSI / IT, Marketing / Com, Autre métier** (précision facultative en un mot). Chaque rôle (`config.roles`) est rattaché à un profil `perso` ou `entreprise`, qui adapte l'axe 5 (questions et libellé), les recommandations et la mention de positionnement ; le rôle oriente le tirage (questions écrites pour ce métier) et le sous-titre du bloc RDV.
 
-**Objectif business** : générer des leads qualifiés pour Manica (accompagnement IA). Indicateur clé : taux de clic sur les CTA de fin de test.
+**Objectif business** : générer des leads qualifiés pour Manica (accompagnement IA). Indicateurs clés : taux de leads (`lead_envoye` / `test_termine`) et taux d'ouverture de l'agenda (`rdv_ouvert*` / `lead_envoye`).
 
 **Positionnement** : accompagnement dans la durée, pas formation ponctuelle (« IA utile et accompagnée »). Le mot « formation » n'apparaît que comme contraste (« pas une formation d'une journée ») et dans une question de l'axe 5 entreprise (`ent-e06`).
 
 **Ton** : direct, concret, sans blabla, anti-hype. Vouvoiement.
 
-**Contraintes fortes (v1)** :
-- Zéro backend, zéro donnée personnelle collectée, calcul 100 % navigateur.
-- Seule sortie de donnée = clic volontaire (RDV Google Agenda ou mail pré-rempli).
+**Contraintes fortes** :
+- Pas de serveur à nous : score calculé dans le navigateur. **Depuis la v2.0, des données personnelles sont collectées** quand le visiteur demande son diagnostic (nom, e-mail, profil, résultats) : envoi à une application web Google Apps Script → Google Sheet (`docs/LEADS.md`). Aucune autre sortie de donnée. Aucun texte ne doit plus promettre « sans inscription » ou « zéro donnée » (`validate.mjs` le vérifie).
 - Mobile-first (trafic LinkedIn / réseaux sociaux).
 - Pas de framework ni de build : `index.html` statique + JSON, servi par GitHub Pages.
-- **Aucune requête tierce non maîtrisée** : police auto-hébergée, pas de CDN. Seule exception, GoatCounter (mesure d'audience sans cookie) : script figé `count.v5.js` verrouillé par empreinte SRI, et CSP qui n'autorise que `gc.zgo.at` (script) et `manica.goatcounter.com` (comptage). Argument « Sécurité Radicale » vérifiable dans l'onglet Réseau.
+- **Aucune requête tierce non maîtrisée** : police auto-hébergée, pas de CDN. Exceptions explicites dans la CSP : GoatCounter (`gc.zgo.at` script figé SRI, `manica.goatcounter.com` comptage), Apps Script (`script.google.com`, `script.googleusercontent.com`, en `connect-src`, seulement à l'envoi du formulaire) et l'agenda Google (`calendar.google.com` en `frame-src`, chargé seulement à l'ouverture de la fenêtre de réservation).
 
 ---
 
@@ -59,6 +58,9 @@
 | `img/cedric-delalande.jpg` | Photo du bloc RDV (256×256, 8 Ko) |
 | `.gitignore` | Exclut `tools/node_modules/`, `tools/package-lock.json`, `tools/.e2e-captures/` |
 | `tools/build-assets.py` | Génère logos web et icônes depuis les logos sources (Pillow) |
+| `tools/apps-script/Code.gs` | Réception des leads : application web Apps Script liée à une Google Sheet (installation : `docs/LEADS.md`) |
+| `docs/LEADS.md` | Installation et fonctionnement de la réception des contacts |
+| `docs/conseils_checkup_ia.md` | Conseils du coaching Funnel Building (30/09/2026) à l'origine de la v2.0 — **local seulement, non versionné** (notes privées, dépôt public) |
 | `tools/og-image.html` | Source de l'image OG |
 | `docs/CDC.md` | Ce document |
 | `.nojekyll` | Désactive Jekyll sur GitHub Pages |
@@ -86,18 +88,29 @@ LinkedIn met l'aperçu en cache : après changement de `og-image.png`, forcer le
 - Logo **avec baseline** sur l'accueil (280 px de large sur mobile, 320 px au-delà de 640 px) ; logo **sans baseline** compact (34 px de haut) sur quiz, résultat et erreur. Bascule pilotée par `body[data-ecran]`, posé par `afficher()`.
 - Pied de page : logo sans baseline (28 px), mention de confidentialité, mention de mesure d'audience, bouton d'installation.
 
-### Écrans
-1. **Accueil** : titre « Check-up IA » / « by Manica », tracé ECG (animé une fois au chargement), accroche, choix du profil (2 cartes radio de taille égale, aucune présélection), bouton « Commencer le test », mention rassurante. Si une session existe : « Reprendre le test » ou « Revoir mon dernier résultat ».
-2. **Quiz** : barre de progression, axe + « Question X / 10 », énoncé, 4 choix (radios natifs stylés), « Valider ma réponse » → correction (bordure + icône + texte « Bonne réponse » / « Votre réponse »), explication, « Question suivante » (ou « Voir mon résultat »). Pas de retour arrière.
-3. **Résultat** : score /100 en très grand (compteur animé), niveau + message, échelle des 4 niveaux avec repère, **« Partager mon score »** (icônes, visibles sans défiler sur mobile depuis la v1.3.1), barres par axe (avec %), 3 priorités (axes les plus faibles), bloc CTA (fond bleu nuit : **photo, nom et fonction de Cédric** (`config.cta.interlocuteur`), titre, bouton ambre « Réserver un échange », bouton « Nous écrire », **« Indiquez votre score (xx/100) en réservant »** (`config.cta.indice_rdv`, Google Agenda ne recevant pas le contexte), **adresse `hello@manica.fr` en clair + « Copier l'adresse »** (un lien mailto ne fait rien sans logiciel de messagerie, cas des webmails), mention de positionnement), « Refaire le test ». « Commencer le test » affiche « Chargement… » si les questions ne sont pas encore chargées.
-4. **Erreur** : si `config.json` / `questions.json` ne se chargent pas.
+### Écrans (v2.0)
+1. **Accueil** : titre, tracé ECG, promesse (« 10 questions adaptées à votre métier, 3 minutes. Votre score tout de suite, votre diagnostic détaillé ensuite. »), puis **« Vous passez le test… »** : carte pleine largeur « Pour moi », puis « Pour mon entreprise, je suis… » et 4 cartes (Dirigeant·e, DSI / IT, Marketing / Com, Autre métier). **Un clic sur une carte lance le test** ; « Autre métier » ouvre un champ facultatif « Votre métier » + « Commencer le test ». Les boutons portent `data-role` = id de `config.roles` (vérifié par `validate.mjs`). Dessous : « Ce que vous obtenez » (3 points), reprise éventuelle, puis le bloc commun « Qui est derrière le test ? » + FAQ.
+2. **Quiz** : barre de progression, « Précédente » (dès la question 2) + « Question X / 10 », axe, énoncé, 4 choix en boutons (lettres A–D). **Un clic = réponse enregistrée + question suivante** (réponse marquée 200 ms, glissement 160 ms, sans animation si `prefers-reduced-motion`). Aucune correction pendant le test : tout est dans le corrigé final. « Précédente » réaffiche la question avec la réponse marquée ; un clic la remplace. Aide « Touchez votre réponse… » sur la 1re question seulement.
+3. **Résultat, partie libre** : score /100 (taille réduite en v2.0), niveau, message, échelle. Puis le **formulaire** (`#r-gate`) : « Votre diagnostic détaillé est prêt », accroche « X bonnes réponses sur 10. Découvrez lesquelles… », 3 bénéfices, champs **Prénom et nom** + **E-mail** (« E-mail professionnel » pour les profils entreprise), case **« Prévenez-moi des prochains lives et contenus IA »** (décochée), bouton « Voir mon diagnostic », mention de confidentialité. Champ piège invisible `site` (robots). Erreurs affichées sous les champs.
+4. **Résultat, diagnostic débloqué** (`#r-diagnostic`, affiché **immédiatement** au clic, l'envoi se fait en arrière-plan) : « Votre diagnostic, Prénom » ; **Détail par axe avec code couleur** (vert « Acquis » ≥ 60 %, bleu nuit « En cours », terre cuite « À renforcer » < 30 % ; toujours avec le libellé, jamais la couleur seule) ; 3 priorités ; **bloc RDV** (photo, nom, titre, sous-titre selon le rôle, **un seul bouton ambre « Réserver mon échange offert »**, micro-réassurances « 30 min · sans engagement · offert », « Cédric aura vos résultats sous les yeux : rien à recopier » une fois le lead confirmé, lien discret « Plutôt par écrit ? Nous écrire » (mailto pré-rempli), positionnement) ; **corrigé question par question** (accordéons : ✓/✗, votre réponse, bonne réponse, explication) ; partage (icônes réduites à 46 px) ; « Refaire le test ».
+5. **Fenêtre de réservation** (`#dialogue-rdv`) : agenda Google intégré en `<iframe>` (`config.contact.lien_rdv_integre`, version `?gv=true`), chargé à la première ouverture seulement ; lien de secours « Ouvrez-le dans un nouvel onglet » (`lien_rdv`).
+6. **Bulle RDV** (`#bulle-rdv`) : photo + « Besoin de conseils sur l'IA ? / Réserver 30 min », fixe en bas à droite, visible sur le diagnostic tant que le bloc RDV n'est pas à l'écran (IntersectionObserver), ouvre la même fenêtre.
+7. **Qui est derrière + FAQ** (`#apropos`, hors des écrans) : visible sur l'accueil et le résultat. Textes dans `config.a_propos` (titre, texte, preuve, lien LinkedIn facultatif) et `config.faq` (accordéons).
+8. **Erreur** : si `config.json` / `questions.json` ne se chargent pas.
+
+Retirés en v2.0 : bouton « Valider ma réponse » et correction après chaque question, adresse e-mail en clair + « Copier l'adresse », indication « Indiquez votre score en réservant », panneau du texte copié (le toast suffit), second bouton « Nous écrire ».
 
 ### Stockage local
-- Clé `checkup-ia:theme` : `light` ou `dark`, uniquement après un clic sur la bascule. Absente = on suit la préférence système.
-- Clé `localStorage` : `checkup-ia:v1`, lecture/écriture sous `try/catch` (le test marche sans).
-- Forme : `{ profil, items: [{ id, ordre: [4 entiers] }], reponses: [position choisie…], index }`. `ordre[k] = 0` → le choix affiché en position k est la bonne réponse.
-- Une session dont un id n'existe plus dans `questions.json` est ignorée (évite les incohérences après édition de la banque).
-- Rien ne sort de l'appareil.
+- `checkup-ia:theme` : `light` ou `dark`, uniquement après un clic sur la bascule.
+- `checkup-ia:v2` (session) : `{ cible: { role, profil }, precision, items: [{ id, ordre }], reponses, index, debloque, contact: { nom }, leadEnvoye }`. `ordre[k] = 0` → le choix affiché en position k est la bonne réponse. La clé v1 est ignorée.
+- `checkup-ia:contact` : `{ nom, email }`, pour pré-remplir le formulaire au test suivant.
+- `checkup-ia:lead-en-attente` : contact dont l'envoi a échoué, renvoyé au chargement suivant.
+- Lecture/écriture toujours sous `try/catch` (le test et le diagnostic marchent sans stockage).
+
+### Leads (v2.0)
+- `donneesLead()` (logique pure, testée) construit l'envoi : id unique, date, nom, e-mail, optin, rôle + libellé + précision, score, niveau, bonnes réponses, axes, 3 priorités (titre + texte), corrigé complet (axe, énoncé, réponse donnée, bonne réponse, explication — pour l'e-mail récapitulatif et le suivi), `utm_*` et site d'origine, page.
+- `envoyerLead()` : POST `text/plain` vers `config.leads.url` (requête simple, sans pré-vérification CORS), délai 15 s ; si la réponse n'est pas lisible, nouvel essai `no-cors`. Le script Apps Script ignore un id déjà reçu.
+- Détail, installation et RGPD : `docs/LEADS.md`.
 
 ### PWA
 - `sw.js` : précache du shell (liste `PRECACHE`), stratégie réseau d'abord avec `cache: 'no-cache'` (revalidation ETag), repli cache si hors ligne ou réseau > 4 s. Les navigations ignorent les paramètres d'URL (`?utm_…` de LinkedIn).
@@ -123,7 +136,7 @@ LinkedIn met l'aperçu en cache : après changement de `og-image.png`, forcer le
 ### Mesure d'audience (GoatCounter)
 - Script `https://gc.zgo.at/count.v5.js`, `async`, avec `integrity` SRI et `crossorigin="anonymous"`, juste avant `</body>`.
 - Réglage `data-goatcounter-settings='{"no_onload": true}'` : la **page vue est comptée par l'app** (événement `load`, une fois la page visible, même logique que count.js), dans `compter()` sous try/catch. Raison : count.js lit `localStorage` sans protection ; avec un stockage bloqué (Safari/Firefox, cookies désactivés), son comptage automatique levait une `SecurityError` non interceptée (reproduit, puis corrigé en v1.1.1). Conséquence assumée : ces visiteurs ne sont pas comptés, sans erreur.
-- Événements via `suivre(evenement)` → `goatcounter.count({ path, title, event: true })` : `test_demarre`, `test_termine`, `clic_rdv`, `clic_mail`, `partage_linkedin`, et depuis la v1.2 `partage_facebook`, `partage_instagram`, `partage_mail`, `partage_copie`. Seuls le nom et un titre lisible partent, jamais les réponses ni le score.
+- Événements via `suivre(evenement)` → `goatcounter.count({ path, title, event: true })`. v2.0 : `test_demarre`, `profil_<role>`, `question_02`, `question_03`, `question_06`, `question_09` (progression), `test_termine`, `formulaire_vu`, `lead_envoye`, `lead_echec`, `rdv_ouvert` (bloc RDV), `rdv_ouvert_bulle`, `clic_rdv` (agenda en nouvel onglet), `clic_mail`, `partage_*`. Seuls le nom et un titre lisible partent, jamais les réponses, le score ni les coordonnées.
 - `suivre()` ne fait rien si le script n'est pas chargé (hors ligne, bloqueur de pub) et avale toute exception : la mesure ne peut pas casser le test.
 - Le service worker ignore les requêtes d'autres origines : rien de GoatCounter n'est mis en cache par l'app.
 - GoatCounter ne compte pas `localhost` (comportement du script) : les tests locaux ne polluent pas les statistiques.
@@ -168,14 +181,16 @@ Schéma d'une question :
   "statut": "a_valider | valide"
 }
 ```
-- 47 questions : 8 par axe pour les axes 1–4 (`profil: tous`), axe 5 = 7 perso + 8 entreprise. Chaque pool a ≥ 2 faciles et ≥ 2 avancées.
+- 85 questions depuis la v2.0 : les 47 d'origine (8 par axe pour les axes 1–4 en `profil: tous`, axe 5 = 7 perso + 8 entreprise) + **38 ciblées** (validées par Cédric le 06/11/2026, `statut: valide` ; `statuts_publies` revient à `["valide"]`) : `dir-01…10` (`roles: ["dirigeant"]`), `dsi-01…10`, `mkt-01…10` (2 par axe chacun, profil `entreprise`), `perso-01…08` (2 par axe sur les axes 1–4, profil `perso`). Champ facultatif `roles` = ids de `config.roles`.
+- Faits juridiques susceptibles de bouger, à revérifier lors des relectures périodiques : `dir-05` (recrutement « à haut risque »), `dir-08` (reconnaissance des émotions au travail, interdite depuis février 2025), `dir-09` (article 4 « maîtrise de l'IA » ; le paquet « Digital Omnibus » de novembre 2025 proposait de l'alléger), `mkt-09` (transparence des hypertrucages, article 50), `mkt-06` (droit d'auteur sur un visuel généré), `mkt-08` (avatar d'une salariée), `dsi-07` (Cloud Act / SecNumCloud). Proximités assumées : `dir-02`/`fond-08`, `dsi-06`/`don-07`, `dsi-09`/`ent-e02`, `perso-02`/`lim-08`.
 - Apostrophes droites dans le JSON : l'app convertit à l'affichage (apostrophe courbe, espaces fines insécables avant `? ! : ; » %` et après `«`).
 - Thèmes transverses demandés : gouvernance (`ent-e03`, `ent-e07`, `ent-e01`, `ent-p01`), agents et exécution locale (`fond-07`, `don-03`, `don-07`, `don-08`, `ent-e08`), open source / poids ouverts (`don-04`, `ent-e08`), shadow AI (`ent-p02`, `ent-e02`), formation vs accompagnement (`ent-e06`).
 - **Noms d'outils** : Ollama et LM Studio cités dans l'explication de `don-03` ; OpenClaw et Hermes Agent (Nous Research) cités dans l'explication de `don-08` — vérifiés le 24/09/2026 (agents open source auto-hébergés, apparus fin 2025 / début 2026). Jamais dans les énoncés ni les réponses, pour que la question reste juste si un outil disparaît : seule l'explication serait à retoucher.
 - Longueur des choix équilibrée pour ne pas trahir la bonne réponse (la plus longue dans ~23 % des questions, la plus courte dans ~19 %). `validate.mjs` alerte au-delà de 40 %.
 
 ### Tirage
-- Pool = questions de l'axe, profil `tous` ou profil choisi, statut dans `config.quiz.statuts_publies`.
+- Pool = questions de l'axe, profil `tous` ou profil du rôle, statut dans `config.quiz.statuts_publies`, et, si la question porte un champ `roles`, seulement pour ces rôles (`questionAccessible`).
+- **Orientation métier (v2.0)** : par axe, d'abord `quiz.questions_ciblees_par_axe` (1) question « ciblée » quand il y en a (`questionCiblee` : `roles` contient le rôle, ou question `profil: perso` pour « Pour moi »), puis complément à difficulté différente. Résultat : 5 questions sur 10 écrites pour le métier (Dirigeant·e, DSI, Marketing, Pour moi) ; « Autre métier » tire dans le tronc commun + entreprise.
 - Par axe : `questions_par_axe` (2) questions de **difficultés différentes** — les niveaux (facile, moyen, avancé) sont pris dans un ordre aléatoire, une question par niveau tant que possible, puis complété au hasard. Avec 2 par axe, la paire de niveaux est donc aléatoire : **toutes les questions restent tirables**, y compris les « moyen » (l'ancienne règle « 1 facile + 1 avancée par axe » les aurait exclues). Avec 3 ou plus, chaque axe a les 3 niveaux.
 - Les 10 questions sont ensuite mélangées puis triées par difficulté (faciles → moyennes → avancées) : le test monte en puissance, les axes restent entremêlés.
 - Mesuré sur 10 000 tirages par profil : chaque question apparaît dans 16 à 34 % des tests (les « moyen », 4 par axe, un peu moins souvent que les faciles et avancées, 2 par axe) ; en moyenne 3,3 questions de chaque niveau par test ; 0,3 % des tests sans question facile.
@@ -242,6 +257,8 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail` + `copie_adresse`
 
 ## 8. État d'avancement
 
+- ✅ v2.0 (06/11/2026, déployée sur GitHub Pages) : refonte « tunnel de conversion » d'après le coaching Funnel Building du 30/09/2026 — profils métier en un clic, quiz en 1 clic par question (10 clics au lieu de 19), corrigé à la fin, score libre puis diagnostic contre nom + e-mail (leads → Google Sheet via Apps Script, e-mail de notification et récapitulatif), code couleur par axe, bloc RDV à un seul bouton + réassurance, agenda Google intégré dans une fenêtre, bulle RDV avec photo, « Qui est derrière » + FAQ en accordéon sur l'accueil et le résultat, partage réduit, 38 questions ciblées (à valider), événements GoatCounter du tunnel, mentions légales réécrites (données collectées, Google Workspace, 3 ans). `validate.mjs` et `e2e.mjs` réécrits en conséquence (5 parcours par rôle, échec d'envoi, robot, copie refusée, stockage bloqué, hors ligne). Même jour : Apps Script déployé par Cédric (Google Sheet « leads », onglet `Leads`, URL dans `config.leads.url`, `doGet` vérifié), 38 questions passées à `valide`, `statuts_publies: ["valide"]` (plus de bandeau bêta), `a_propos.linkedin` renseigné, preuve reformulée sans durée chiffrée (« plusieurs années », pour ne pas vieillir). Après le premier test réel : l'envoi contient le corrigé complet ; Apps Script envoie des e-mails HTML (notification + récapitulatif) avec le diagnostic en PDF joint, et la colonne « Réponses » de la feuille détaille chaque question. Agenda Google : pas de pré-remplissage possible par l'adresse (nom et e-mail pré-remplis seulement si le visiteur est connecté à Google) ; alléger le formulaire de réservation côté Google Agenda. Premier lead réel testé de bout en bout par Cédric (ligne dans la feuille, notification et récapitulatif HTML avec PDF). **Reste à faire** : tester l'agenda intégré sur téléphone.
+
 - ✅ v1.0 (24/09/2026) : app complète, PWA installable et hors ligne, 47 questions `a_valider`, config, icônes, image OG, validation automatisée, déployée sur GitHub Pages.
 - ✅ v1.5 (25/09/2026) : passe d'audit (skills `redesign-existing-projects` et `mobile-native`) appliquée — mentions légales et confidentialité (données officielles Manica Labs, refus de la mesure d'audience), photo et fonction de Cédric dans le bloc RDV, indication du score à la réservation, adresse e-mail copiable, page 404, couche mobile (survol, tap, appui long, zoom iOS, défilement des fenêtres), titres sans mot isolé, état de chargement sur « Commencer », « by Manica » retiré de l'accueil, test de bout en bout remis dans le repo (`tools/e2e.mjs`). Non appliqué volontairement : déplacer le bloc RDV (attendre la mesure en cours, §7), changer d'outil de réservation (décision de Cédric).
 - ✅ v1.4 (24/09/2026) : test raccourci à **10 questions** (2 par axe, difficultés différentes), banque de 47 conservée pour la rotation ; score en part de bonnes réponses ; priorités départagées par la lacune ; textes « 10 questions, 3 minutes » partout (accueil, meta, manifeste, image OG régénérée, partages, post LinkedIn). `validate.mjs` vérifie désormais que tout texte annonçant « N questions » ou « N axes » correspond au tirage réel.
@@ -266,7 +283,10 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail` + `copie_adresse`
 
 ## 9. Backlog (hors v1)
 
-- Capture de lead intégrée avec consentement RGPD (backend ou service de formulaire auto-hébergé).
+- ~~Capture de lead intégrée avec consentement RGPD~~ : fait en v2.0 (Apps Script + Google Sheet).
+- Recommandations par métier (aujourd'hui par profil perso / entreprise seulement).
+- Landing pages par persona (pub DSI / dirigeant / marketing) : paramètre d'adresse `?profil=dsi` qui présélectionne le rôle, et promesse alignée sur la pub.
+- Newsletter / séquence e-mail pour les leads ayant coché « lives et contenus ».
 - Rapport PDF téléchargeable.
 - Mode équipe (lien dirigeant → synthèse anonymisée).
 - Questions à niveau adaptatif.
@@ -312,6 +332,7 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail` + `copie_adresse`
 1. Lire ce CDC, puis `index.html`, `config.json`, `questions.json`.
 2. Vérifier l'accès push (`gh auth status`, `git ls-remote origin`). Sinon, demander un token classique scope `repo`.
 3. Points encore ouverts côté Cédric :
+   - prévenir le coach Funnel Building de la mise à jour (demandé en coaching) ;
    - validation ou correction de la palette ;
    - logo vectoriel (SVG) si disponible, pour une netteté parfaite à toute taille ;
    - outil de réservation : garder Google Agenda (score indiqué à la main) ou passer à Cal.com / Calendly (pré-remplissage profil + score) ;
@@ -320,4 +341,4 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail` + `copie_adresse`
    - domaine personnalisé ou non ;
 4. Après chaque déploiement : mettre à jour §8 de ce document.
 
-Ce projet reste un bon candidat de POC en direct pour Le Café Tech Manica : « zéro backend, zéro donnée, tout calculé dans le navigateur » se vérifie en direct dans l'onglet Réseau des outils de développement.
+Ce projet reste un bon candidat de POC en direct pour Le Café Tech Manica : score calculé dans le navigateur, et une seule requête sortante (vers Apps Script) quand le visiteur demande son diagnostic, vérifiable dans l'onglet Réseau des outils de développement.

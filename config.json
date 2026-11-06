@@ -1,17 +1,19 @@
 {
-  "_aide": "Paramètres modifiables sans toucher au code. Variables des modèles : {score}, {niveau}, {profil}, {detail_axes} (mail, partage) ; post LinkedIn : {accroche}, {points}, {enseignement}, {url}, {hashtags} ; lignes du post : {axe}, {pct}. Lancer node tools/validate.mjs après chaque modification.",
-  "version": 1,
+"_aide": "Paramètres modifiables sans toucher au code. Variables des modèles : {score}, {niveau}, {profil}, {detail_axes} (mail, partage) ; post LinkedIn : {accroche}, {points}, {enseignement}, {url}, {hashtags} ; lignes du post : {axe}, {pct}. roles : profils proposés à l'accueil (id identique aux boutons data-role d'index.html), chacun rattaché à un profil (perso ou entreprise) qui choisit l'axe 5 et les recommandations. leads.url : adresse de l'application web Google Apps Script qui reçoit les contacts (voir docs/LEADS.md). Lancer node tools/validate.mjs après chaque modification.",
+"version": 2,
   "url_app": "https://manicalabs.github.io/Check-up-IA-by-Manica/",
   "contact": {
     "email": "hello@manica.fr",
-    "lien_rdv": "https://calendar.app.google/dQyJBwpYKtc184NdA"
+    "lien_rdv": "https://calendar.app.google/dQyJBwpYKtc184NdA",
+    "lien_rdv_integre": "https://calendar.google.com/calendar/appointments/schedules/AcZssZ36jQJ_5kkr646wQ0YBGY-cr-EZoGB8FzW8rkDNWMUHv4Wevsuj2sWU0kQiw_i8GZKO2TRRTtlu?gv=true"
   },
   "quiz": {
     "questions_par_axe": 2,
     "statuts_publies": [
-      "valide"
+    "valide"
     ],
-    "mention_beta": "Version bêta : les questions sont en cours de relecture."
+    "mention_beta": "Version bêta : les questions sont en cours de relecture.",
+    "questions_ciblees_par_axe": 1
   },
   "profils": {
     "perso": {
@@ -21,6 +23,34 @@
       "libelle": "Pour mon entreprise"
     }
   },
+"roles": [
+    {
+        "id": "perso",
+        "profil": "perso",
+        "libelle": "Pour moi"
+    },
+    {
+        "id": "dirigeant",
+        "profil": "entreprise",
+        "libelle": "Dirigeant·e"
+    },
+    {
+        "id": "dsi",
+        "profil": "entreprise",
+        "libelle": "DSI / IT"
+    },
+    {
+        "id": "marketing",
+        "profil": "entreprise",
+        "libelle": "Marketing / Com"
+    },
+    {
+        "id": "autre",
+        "profil": "entreprise",
+        "libelle": "Autre métier",
+        "precision": true
+    }
+],
   "axes": [
     {
       "id": "fondamentaux",
@@ -123,13 +153,16 @@
     }
   },
   "cta": {
-    "titre": "Et maintenant ? On en parle 30 minutes, sans engagement.",
+    "titre": "Et maintenant ? On en parle 30 minutes.",
     "sous_titre": {
       "perso": "Un échange pour faire le point sur vos usages et repérer ce qui vous ferait vraiment gagner du temps.",
+    "dirigeant": "Un échange pour situer votre entreprise, repérer les cas d'usage qui rapportent vraiment et cadrer les risques.",
+    "dsi": "Un échange pour faire le point sur la sécurité, l'intégration et la gouvernance de l'IA dans votre système d'information.",
+    "marketing": "Un échange pour voir comment l'IA peut servir vos contenus et vos campagnes, sans abîmer votre marque.",
       "entreprise": "Un échange pour faire le point sur la maturité IA de votre organisation et définir les prochaines étapes."
     },
-    "bouton_rdv": "Réserver un échange",
-    "bouton_mail": "Nous écrire",
+    "bouton_rdv": "Réserver mon échange offert",
+    "bouton_mail": "Plutôt par écrit ? Nous écrire",
     "positionnement": {
       "perso": "Manica accompagne dans la durée celles et ceux qui veulent mettre en place une IA utile — pas une formation d'une journée.",
       "entreprise": "Manica accompagne les équipes dans la durée pour mettre en place une IA utile — pas une formation d'une journée."
@@ -139,7 +172,16 @@
       "role": "Directeur général de Manica Labs",
       "photo": "img/cedric-delalande.jpg"
     },
-    "indice_rdv": "Indiquez votre score ({score}/100) en réservant : l'échange partira de vos résultats."
+    "reassurance": [
+        "30 min",
+        "sans engagement",
+        "offert"
+    ],
+    "resultats_transmis": "Cédric aura vos résultats sous les yeux : rien à recopier.",
+    "bulle": {
+        "question": "Besoin de conseils sur l'IA ?",
+        "action": "Réserver 30 min"
+    }
   },
   "mail": {
     "objet": "Check-up IA — mon score : {score}/100",
@@ -148,9 +190,9 @@
   "partage": {
     "titre": "Partager mon score",
     "mail_objet": "Check-up IA : j'ai obtenu {score}/100, et vous ?",
-    "texte": "J'ai fait le Check-up IA by Manica : {score}/100, niveau {niveau}. 10 questions, 3 minutes, sans inscription. Et vous, où en êtes-vous avec l'IA ?",
+    "texte": "J'ai fait le Check-up IA by Manica : {score}/100, niveau {niveau}. 10 questions, 3 minutes, gratuit. Et vous, où en êtes-vous avec l'IA ?",
     "linkedin": {
-      "modele": "{accroche}\n\nLe Check-up IA by Manica : 10 questions sur 5 axes, 3 minutes, sans inscription.\n\n{points}\n\nCe que j'en retiens : {enseignement}\n\nEt vous, où en êtes-vous vraiment avec l'IA ?\n👉 {url}\n\n{hashtags}",
+    "modele": "{accroche}\n\nLe Check-up IA by Manica : 10 questions sur 5 axes, 3 minutes, gratuit.\n\n{points}\n\nCe que j'en retiens : {enseignement}\n\nEt vous, où en êtes-vous vraiment avec l'IA ?\n👉 {url}\n\n{hashtags}",
       "ligne_fort": "Mon point fort : {axe} ({pct} %)",
       "ligne_chantier": "Mon prochain chantier : {axe}",
       "hashtags": "#IA #IntelligenceArtificielle #Productivité",
@@ -177,5 +219,37 @@
         }
       }
     }
-  }
+},
+"leads": {
+    "url": "https://script.google.com/macros/s/AKfycbwhg1oHXcVct08LOA9hFqq1MYtu9pMUg-zNNbLGVDAbRQJr1PIsodD4fdRE82V-xzY/exec",
+    "recap_par_mail": true
+},
+"a_propos": {
+    "titre": "Qui est derrière le test ?",
+    "texte": "Manica Labs accompagne les entreprises et les professionnels qui veulent mettre en place une IA utile, dans la durée. Pas une formation d'une journée : un accompagnement qui part de vos usages réels.",
+    "preuve": "Plusieurs années à expérimenter l'IA au quotidien et à la décortiquer en direct dans les lives « Le Café Tech Manica ».",
+    "linkedin": "https://www.linkedin.com/in/cedric-delalande-57bb7860/"
+},
+"faq": [
+    {
+        "q": "C'est vraiment gratuit ?",
+        "r": "Oui. Le test, le score et le diagnostic détaillé sont gratuits et sans engagement."
+    },
+    {
+        "q": "Pourquoi me demander mon nom et mon e-mail ?",
+        "r": "Pour vous remettre votre diagnostic détaillé et pouvoir en reparler avec vous si vous le souhaitez. Votre score, lui, s'affiche sans rien demander. Vos coordonnées ne sont jamais revendues."
+    },
+    {
+        "q": "Que deviennent mes réponses ?",
+        "r": "Votre score est calculé dans votre navigateur. Si vous demandez votre diagnostic, vos coordonnées, votre profil et vos résultats sont transmis à Manica, et à personne d'autre."
+    },
+    {
+        "q": "Comment se passe l'échange de 30 minutes ?",
+        "r": "Vous choisissez un créneau dans l'agenda de Cédric. L'échange part de vos résultats : où vous en êtes, ce qui vous ferait gagner du temps, par où commencer. Offert et sans engagement."
+    },
+    {
+        "q": "Qui est Manica ?",
+        "r": "Manica Labs, basée à Grenoble, est dirigée par Cédric Delalande. Elle accompagne dans la durée les équipes qui veulent une IA utile, maîtrisée et adaptée à leur métier."
+    }
+]
 }
