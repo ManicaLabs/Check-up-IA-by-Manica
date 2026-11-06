@@ -273,6 +273,9 @@ async function testerDiagnostic(page, prefixe, { score, total }) {
   if (!e.mail.startsWith('mailto:hello@manica.fr?subject=') || !e.mail.includes(`mon score : ${score}/100`) || /\{\w+\}/.test(e.mail)) problemes.push(`${prefixe} : mailto ${e.mail.slice(0, 120)}`);
   if (e.adresseCopiable) problemes.push(`${prefixe} : la copie d'adresse devait disparaître`);
   // Corrigé : une question ouverte montre la réponse et l'explication
+  // Défilement doux + apparitions au défilement : on amène la question au centre, sans animation, avant de cliquer.
+  await page.$eval('#r-corrige details summary', el => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await pause(300);
   await page.click('#r-corrige details summary');
   const ouvert = await page.$eval('#r-corrige details', d => d.open && d.querySelector('.rev-expl').textContent.length > 20);
   if (!ouvert) problemes.push(`${prefixe} : corrigé non dépliable`);
