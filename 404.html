@@ -9,7 +9,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; form-action 'none'">
 <meta name="robots" content="noindex">
 <title>Page introuvable — Check-up IA by Manica</title>
-<meta name="theme-color" content="#F7F5F1">
+<meta name="theme-color" content="#F4F5F5">
 <script>
   (() => {
     let choix = null;
@@ -17,7 +17,7 @@
     const theme = choix === 'dark' || choix === 'light' ? choix
       : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     document.documentElement.dataset.theme = theme;
-    document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#0B1326' : '#F7F5F1';
+    document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#15191C' : '#F4F5F5';
   })();
 </script>
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">

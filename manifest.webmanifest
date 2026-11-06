@@ -9,8 +9,8 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F7F5F1",
-  "theme_color": "#F7F5F1",
+  "background_color": "#F4F5F5",
+  "theme_color": "#F4F5F5",
   "categories": [
     "education",
     "business",

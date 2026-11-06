@@ -392,13 +392,13 @@ async function parcours(prefixe, { systeme = 'light', forcer = null, role = 'dir
     t = await etatTheme(page);
     if (t.theme !== forcer) problemes.push(`${prefixe} : la bascule n'a pas appliqué ${forcer}`);
   }
-  if (t.presse !== String(t.theme === 'dark') || t.meta !== (t.theme === 'dark' ? '#0B1326' : '#F7F5F1')) problemes.push(`${prefixe} : aria-pressed ou theme-color incohérent`);
+  if (t.presse !== String(t.theme === 'dark') || t.meta !== (t.theme === 'dark' ? '#15191C' : '#F4F5F5')) problemes.push(`${prefixe} : aria-pressed ou theme-color incohérent`);
   await page.evaluate(() => document.fonts.ready);
   await pause(1900);
   await page.screenshot({ path: `${OUT}${prefixe}-1-accueil.png` });
   await page.screenshot({ path: `${OUT}${prefixe}-1b-accueil-complet.png`, fullPage: true });
   await pasDeScrollHorizontal(page, `${prefixe} accueil`);
-  await verifierLogos(page, `${prefixe} accueil`, 'baseline');
+  await verifierLogos(page, `${prefixe} accueil`, 'compact');
   const accueil = await page.evaluate(() => ({ faq: document.querySelectorAll('#faq details').length, apropos: !document.getElementById('apropos').hidden, texte: document.body.innerText }));
   if (accueil.faq !== CONFIG.faq.length || !accueil.apropos) problemes.push(`${prefixe} : bloc « Qui est derrière » ou FAQ absent de l'accueil`);
   if (/sans inscription|pas de mail demandé/i.test(accueil.texte)) problemes.push(`${prefixe} : promesse « sans inscription » encore affichée`);
