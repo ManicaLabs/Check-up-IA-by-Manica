@@ -323,7 +323,9 @@ for (const f of ['mentions-legales.html', '404.html']) {
   }
   if (/\sstyle="/.test(page)) erreur(`${f} : style en ligne bloqué par la CSP (style-src 'self')`);
 }
-if (!/<base href="\/Check-up-IA-by-Manica\/">/.test(lire('404.html'))) avertissements.push('404.html : base href à adapter si le site change d\'adresse');
+const baseAttendue = new URL(config.url_app).pathname;
+if (!lire('404.html').includes(`<base href="${baseAttendue}">`)) erreur(`404.html : <base href="${baseAttendue}"> attendu (chemin de url_app)`);
+if (existsSync(join(racine, 'CNAME')) && lire('CNAME').trim() !== new URL(config.url_app).host) erreur('CNAME : doit contenir le domaine de url_app');
 
 // --- Mobile : survols réservés aux souris, champs de saisie à 16 px minimum (pas de zoom iOS) ---
 const css = ((html.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '').replace(/\/\*[\s\S]*?\*\//g, '');

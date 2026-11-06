@@ -28,7 +28,7 @@
 
 ## 2. Liens, accès & déploiement
 
-- **App (prod)** : https://manicalabs.github.io/Check-up-IA-by-Manica/
+- **App (prod)** : https://checkup-ia.manica.fr/ (domaine personnalisé depuis le 06/11/2026 : fichier `CNAME` à la racine, DNS `checkup-ia CNAME manicalabs.github.io.` chez l'hébergeur de manica.fr ; l'ancienne adresse https://manicalabs.github.io/Check-up-IA-by-Manica/ redirige automatiquement)
 - **Repo** : https://github.com/ManicaLabs/Check-up-IA-by-Manica (public) — GitHub Pages servi depuis `main`, racine.
 - **Déploiement** = `git push origin main` (build auto ~1 min ; suivre `gh api repos/ManicaLabs/Check-up-IA-by-Manica/pages/builds/latest` jusqu'à `built`).
 - **Auth** : sur le poste de Cédric, `gh` est authentifié (compte `cdelalande38`, admin du repo) et la clé SSH est enregistrée — le push se fait en SSH, **aucun token à fournir en session**. Si une session tourne ailleurs (sandbox), revenir au token classique scope `repo`, fourni en session, jamais commité ni affiché, révoqué après usage.
@@ -297,9 +297,9 @@ Indicateur clé : taux de clic CTA = (`clic_rdv` + `clic_mail` + `copie_adresse`
 
 ## 10. Pièges connus & conventions
 
-- **Test de bout en bout** : `(cd tools && npm install)` une fois, puis `node tools/e2e.mjs` (local, serveur intégré) ou `BASE=https://manicalabs.github.io/Check-up-IA-by-Manica/ node tools/e2e.mjs` (prod). Captures dans `tools/.e2e-captures/`. Il vivait dans un dossier temporaire jusqu'à la v1.4 et a été perdu une fois : il reste dans le repo.
+- **Test de bout en bout** : `(cd tools && npm install)` une fois, puis `node tools/e2e.mjs` (local, serveur intégré) ou `BASE=https://checkup-ia.manica.fr/ node tools/e2e.mjs` (prod). Captures dans `tools/.e2e-captures/`. Il vivait dans un dossier temporaire jusqu'à la v1.4 et a été perdu une fois : il reste dans le repo.
 - **Mentions légales** : à tenir à jour si l'entreprise change (siège, capital, dirigeant). Sources du 25/09/2026 : annuaire des entreprises (API recherche-entreprises.api.gouv.fr), Pappers, Societe.com. Relecture juridique conseillée.
-- **404.html** : `<base href="/Check-up-IA-by-Manica/">` ; à passer à `/` si un domaine personnalisé est mis en place.
+- **404.html** : `<base href="/">` (domaine personnalisé) ; `validate.mjs` vérifie qu'il suit le chemin de `url_app`, et que `CNAME` contient son domaine.
 - **Avant tout push** : `node tools/validate.mjs` doit afficher `✓ Validation OK` (il extrait le `<script>` inline et lance `node --check`, valide les JSON, simule les tirages avec la vraie logique d'`index.html` entre les marqueurs `// === LOGIQUE PURE` et `// === FIN LOGIQUE PURE ===`).
 - **Garder la logique pure sans DOM** entre ces marqueurs, sinon `validate.mjs` ne peut plus l'évaluer.
 - **Valider des questions** : passer `statut` à `valide`. Pour ne publier que les questions relues, mettre `"statuts_publies": ["valide"]` dans `config.json` — `validate.mjs` vérifie alors que chaque pool garde ≥ `questions_par_axe` questions sur au moins autant de niveaux de difficulté (2 aujourd'hui), et signale un niveau absent.

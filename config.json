@@ -1,7 +1,7 @@
 {
 "_aide": "Paramètres modifiables sans toucher au code. Variables des modèles : {score}, {niveau}, {profil}, {detail_axes} (mail, partage) ; post LinkedIn : {accroche}, {points}, {enseignement}, {url}, {hashtags} ; lignes du post : {axe}, {pct}. roles : profils proposés à l'accueil (id identique aux boutons data-role d'index.html), chacun rattaché à un profil (perso ou entreprise) qui choisit l'axe 5 et les recommandations. leads.url : adresse de l'application web Google Apps Script qui reçoit les contacts (voir docs/LEADS.md). Lancer node tools/validate.mjs après chaque modification.",
 "version": 2,
-  "url_app": "https://manicalabs.github.io/Check-up-IA-by-Manica/",
+  "url_app": "https://checkup-ia.manica.fr/",
   "contact": {
     "email": "hello@manica.fr",
     "lien_rdv": "https://calendar.app.google/dQyJBwpYKtc184NdA",

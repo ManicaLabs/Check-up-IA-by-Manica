@@ -3,7 +3,7 @@
 Test gratuit en ligne : 10 questions sur 5 axes adaptées au métier (tirées dans une banque de 85), un score sur 100 affiché tout de suite, puis un diagnostic détaillé contre nom + e-mail, et un échange de 30 min réservable dans la page.
 Score calculé dans le navigateur ; le diagnostic détaillé se débloque avec nom + e-mail (contacts reçus dans une Google Sheet, voir docs/LEADS.md).
 
-**App** : https://manicalabs.github.io/Check-up-IA-by-Manica/
+**App** : https://checkup-ia.manica.fr/
 
 ## Modifier le contenu
 

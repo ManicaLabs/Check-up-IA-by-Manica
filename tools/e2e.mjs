@@ -1,6 +1,6 @@
 // Test de bout en bout dans un vrai Chrome (headless).
 //   Local (serveur intégré qui imite GitHub Pages, page 404 comprise) : node tools/e2e.mjs
-//   Prod :  BASE=https://manicalabs.github.io/Check-up-IA-by-Manica/ node tools/e2e.mjs
+//   Prod :  BASE=https://checkup-ia.manica.fr/ node tools/e2e.mjs
 // Prérequis : (cd tools && npm install) pour puppeteer-core, et Chrome installé (CHROME=/chemin/vers/chrome sinon).
 // Les captures d'écran sont écrites dans tools/.e2e-captures/ (ignoré par git).
 // Aucun comptage réel : les requêtes vers manica.goatcounter.com sont interceptées et bloquées.
@@ -15,8 +15,8 @@ import { fileURLToPath } from 'node:url';
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(RACINE, 'tools', '.e2e-captures') + '/';
 const DL = join(OUT, 'telechargements') + '/';
-const PREFIXE = '/Check-up-IA-by-Manica/';
-const URL_APP = 'https://manicalabs.github.io/Check-up-IA-by-Manica/';
+const PREFIXE = '/';
+const URL_APP = 'https://checkup-ia.manica.fr/';
 const EXTERNES_AUTORISES = ['https://gc.zgo.at', 'https://manica.goatcounter.com', 'https://script.google.com', 'https://calendar.google.com'];
 const URL_LEADS_TEST = 'https://script.google.com/macros/s/TEST-E2E/exec';
 const CONFIG = JSON.parse(readFileSync(join(RACINE, 'config.json'), 'utf8'));
