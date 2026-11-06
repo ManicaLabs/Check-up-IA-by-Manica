@@ -2952,8 +2952,9 @@ textarea.post:focus-visible { outline: 2px solid var(--focus); outline-offset: 2
   // Image du score (story 1080×1920 ou publication 1080×1350), dessinée dans le navigateur : rien n'est envoyé.
   async function dessinerImage(resultat, profil, format) {
     const F = FORMATS_IMAGE[format];
-    await document.fonts.load('600 100px Geist');
+    await Promise.all([document.fonts.load('600 100px Geist'), document.fonts.load('500 40px "Geist Mono"')]);
     const logo = await chargerImage('img/logo-manica-baseline-clair-900.png');
+    const texture = await chargerImage('img/fond-circuits.webp').catch(() => null); // décor : facultatif
     const L = 1080;
     const marge = 96;
     const utile = L - 2 * marge;
@@ -2962,6 +2963,8 @@ textarea.post:focus-visible { outline: 2px solid var(--focus); outline-offset: 2
     canvas.height = F.hauteur;
     const ctx = canvas.getContext('2d');
     const police = (graisse, taille) => `${graisse} ${taille}px Geist, system-ui, sans-serif`;
+    const mono = taille => `500 ${taille}px "Geist Mono", ui-monospace, monospace`;
+    const COULEUR_TON = { ok: '#5DBE89', mid: '#F3F5F5', ko: '#E07F6A' };
     const barre = (x, y, largeur, hauteur, couleur) => {
       ctx.fillStyle = couleur;
       ctx.beginPath();
@@ -2970,12 +2973,24 @@ textarea.post:focus-visible { outline: 2px solid var(--focus); outline-offset: 2
       ctx.fill();
     };
 
+    // Fond graphite à circuits et lueur ambrée, comme les sections sombres du site.
     ctx.fillStyle = '#15191C';
+    ctx.fillRect(0, 0, L, F.hauteur);
+    if (texture) {
+      const echelle = Math.max(L / texture.width, F.hauteur / texture.height);
+      const tw = texture.width * echelle;
+      const th = texture.height * echelle;
+      ctx.drawImage(texture, (L - tw) / 2, (F.hauteur - th) / 2, tw, th);
+    }
+    const lueur = ctx.createRadialGradient(L, 0, 0, L, 0, L * 0.95);
+    lueur.addColorStop(0, 'rgba(232, 135, 74, .26)');
+    lueur.addColorStop(1, 'rgba(232, 135, 74, 0)');
+    ctx.fillStyle = lueur;
     ctx.fillRect(0, 0, L, F.hauteur);
     ctx.drawImage(logo, marge, F.logo, F.logoLargeur, F.logoLargeur * logo.height / logo.width);
 
     ctx.fillStyle = '#A3ACB2';
-    ctx.font = police(600, 56);
+    ctx.font = mono(48);
     ctx.fillText('Mon check-up IA', marge, F.libelle);
 
     const score = String(resultat.score);
@@ -2984,7 +2999,7 @@ textarea.post:focus-visible { outline: 2px solid var(--focus); outline-offset: 2
     ctx.fillText(score, marge - 12, F.score);
     const largeurScore = ctx.measureText(score).width;
     ctx.fillStyle = '#A3ACB2';
-    ctx.font = police(600, 88);
+    ctx.font = mono(80);
     ctx.fillText('/100', marge - 12 + largeurScore + 18, F.score);
 
     ctx.fillStyle = '#F3F5F5';
@@ -2999,10 +3014,11 @@ textarea.post:focus-visible { outline: 2px solid var(--focus); outline-offset: 2
       ctx.textAlign = 'left';
       ctx.fillText(typo(libelleAxe(axe, profil)), marge, y);
       ctx.textAlign = 'right';
+      ctx.font = mono(40);
       ctx.fillText(typo(`${d.pct} %`), L - marge, y);
       ctx.textAlign = 'left';
-      barre(marge, y + 22, utile, 18, '#2C3236');
-      if (d.pct > 0) barre(marge, y + 22, utile * d.pct / 100, 18, '#F3F5F5');
+      barre(marge, y + 22, utile, 18, '#2A3035');
+      if (d.pct > 0) barre(marge, y + 22, utile * d.pct / 100, 18, COULEUR_TON[tonAxe(d.pct).ton]);
       y += F.pas;
     }
 
@@ -3015,6 +3031,10 @@ textarea.post:focus-visible { outline: 2px solid var(--focus); outline-offset: 2
     [[640, 0], [654, 8], [678, -30], [704, 26], [720, 0]].forEach(([px, dy]) => ctx.lineTo(px, F.ecg + dy));
     ctx.lineTo(L, F.ecg);
     ctx.stroke();
+    ctx.fillStyle = '#E8874A';
+    ctx.beginPath();
+    ctx.arc(L - marge, F.ecg, 11, 0, 2 * Math.PI);
+    ctx.fill();
 
     ctx.fillStyle = '#A3ACB2';
     ctx.font = police(500, 38);
