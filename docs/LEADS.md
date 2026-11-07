@@ -28,6 +28,26 @@ Le code est dans [`tools/apps-script/Code.gs`](../tools/apps-script/Code.gs).
 - **Feuille** : une ligne par contact ; la colonne « Réponses » liste chaque question (✓/✗, axe, énoncé, réponse donnée, bonne réponse).
 - Pour voir les e-mails sans passer par le site : fonction `testerEmails` dans l'éditeur → **Exécuter** (envoie un exemple des deux e-mails à `NOTIFIER`, sans écrire dans la feuille).
 
+## Suivi du tunnel : où les visiteurs décrochent
+
+L'onglet **Tunnel** de la feuille se met à jour toutes les heures. Il donne, sur 7, 30 et 90 jours, le nombre de visiteurs à chaque étape et le **taux de passage** depuis l'étape précédente (100 % − passage = fuite) :
+
+visites de l'accueil → test commencé → questions 2, 4, 7, 10 → test terminé (score) → formulaire vu → diagnostic demandé (lead) → agenda ouvert (clic rendez-vous) → **rendez-vous réservé**.
+
+- Le **rendez-vous réservé** ne peut pas être vu par le site (l'agenda Google intégré ne prévient pas la page). Le script le retrouve dans votre agenda : un évènement créé après le test, avec le lead pour invité (même e-mail). Il remplit alors les colonnes « RDV réservé le » et « Créneau du RDV » de la ligne du lead, et compte l'évènement `rdv_reserve` dans GoatCounter. Un lead qui réserve avec une autre adresse n'est pas compté.
+- L'agenda lu est l'**agenda principal du compte Google qui exécute le script** : celui qui porte le planning de rendez-vous.
+- Les autres étapes viennent de GoatCounter, via son API.
+
+### Mise en place (une fois, environ 5 minutes)
+
+1. **Jeton GoatCounter** : sur https://manica.goatcounter.com, menu de votre nom (en haut) → **API** → nouveau jeton, avec les permissions **Record pageviews** (compter) et **Read statistics** (lire). Copiez le jeton.
+2. Dans l'éditeur Apps Script : **⚙ Paramètres du projet → Propriétés du script → Ajouter** : nom `GOATCOUNTER_TOKEN`, valeur = le jeton. Le jeton reste dans Google, jamais dans le dépôt (public).
+3. Remplacez le code par la nouvelle version de `tools/apps-script/Code.gs`, enregistrez.
+4. Choisissez `installer` → **Exécuter**. Google demande de nouvelles autorisations (agenda, services externes, déclencheurs) : acceptez. Le déclencheur horaire `suivreTunnel` est créé, et l'onglet « Tunnel » apparaît.
+5. **Déployer → Gérer les déploiements → ✏️ → Nouvelle version → Déployer** (l'URL ne change pas).
+
+Pour forcer une mise à jour : fonction `suivreTunnel` → **Exécuter**.
+
 ## Modifier le script plus tard
 
 Après toute modification de `Code.gs` dans l'éditeur : **Déployer → Gérer les déploiements → ✏️ → Version : Nouvelle version → Déployer**. L'URL reste la même, rien à changer dans `config.json`.

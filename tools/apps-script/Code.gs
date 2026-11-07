@@ -12,6 +12,12 @@
  *   3. si ENVOYER_RECAP et que le test l'annonce (recap = true), le visiteur reçoit son diagnostic complet
  *      par e-mail, avec le même PDF.
  * Un même id n'est jamais enregistré deux fois (le test peut renvoyer un contact après une coupure réseau).
+ *
+ * Suivi du tunnel (déclencheur horaire créé par installer()) : suivreTunnel()
+ *   - repère dans votre agenda Google les rendez-vous réservés par un lead (même e-mail, réservé après le test),
+ *     remplit les colonnes « RDV réservé le » et « Créneau du RDV », et compte l'événement rdv_reserve dans GoatCounter ;
+ *   - met à jour l'onglet « Tunnel » : chaque étape (visites → test → diagnostic → agenda → RDV) et le taux de passage.
+ *   Jeton GoatCounter (facultatif mais nécessaire pour les chiffres du site) : propriété du script GOATCOUNTER_TOKEN.
  */
 
 const NOTIFIER = 'hello@manica.fr';        // destinataire des notifications ('' pour aucune)
@@ -20,11 +26,20 @@ const JOINDRE_PDF = true;                  // diagnostic en PDF joint aux deux e
 const EXPEDITEUR_NOM = 'Cédric Delalande — Manica';
 const REPONDRE_A = 'hello@manica.fr';
 const ONGLET = 'Leads';
+const ONGLET_TUNNEL = 'Tunnel';
+const GOATCOUNTER = 'https://manica.goatcounter.com';
+const FUSEAU = 'Europe/Paris';
 
 const COLONNES = [
   'Date', 'Nom', 'E-mail', 'Profil', 'Métier précisé', 'Score', 'Niveau', 'Bonnes réponses',
-  'Axes', 'Priorités', 'Réponses', 'Accepte lives et contenus', 'Source', 'Page', 'Id'
+  'Axes', 'Priorités', 'Réponses', 'Accepte lives et contenus', 'Source', 'Page', 'Id',
+  'RDV réservé le', 'Créneau du RDV'
 ];
+const COL_DATE = 1;
+const COL_EMAIL = 3;
+const COL_ID = 15;
+const COL_RDV = 16;
+const COL_CRENEAU = 17;
 
 // Couleurs de la charte (index.html).
 const C = { navy: '#101B33', slate: '#2C3E5C', amber: '#E8874A', paper: '#F7F5F1', muted: '#4A566D', line: '#D9D4CA',
@@ -59,7 +74,9 @@ function doPost(e) {
           d.optin ? 'oui' : 'non',
           source_(d),
           texte_(d.page),
-          id
+          id,
+          '',
+          ''
         ].map(protegerFormule_));
         nouveau = true;
       }
@@ -96,6 +113,10 @@ function onglet_() {
     feuille.appendRow(COLONNES);
     feuille.setFrozenRows(1);
     feuille.getRange(1, 1, 1, COLONNES.length).setFontWeight('bold');
+  } else if (feuille.getLastColumn() < COLONNES.length) {
+    // Feuille créée par une version précédente : on ajoute les nouvelles colonnes d'en-tête.
+    const debut = feuille.getLastColumn() + 1;
+    feuille.getRange(1, debut, 1, COLONNES.length - debut + 1).setValues([COLONNES.slice(debut - 1)]).setFontWeight('bold');
   }
   return feuille;
 }
@@ -104,7 +125,7 @@ function dejaRecu_(feuille, id) {
   const derniere = feuille.getLastRow();
   if (derniere < 2) return false;
   const debut = Math.max(2, derniere - 199);
-  const ids = feuille.getRange(debut, COLONNES.length, derniere - debut + 1, 1).getValues();
+  const ids = feuille.getRange(debut, COL_ID, derniere - debut + 1, 1).getValues();
   return ids.some(([v]) => v === id);
 }
 
@@ -327,10 +348,170 @@ function h2Simple_(t) {
   return `<h2 style="font-size:18px;color:${C.navy};margin:28px 0 10px;border-bottom:2px solid ${C.amber};padding-bottom:4px">${html_(t)}</h2>`;
 }
 
-// À lancer une fois depuis l'éditeur (bouton Exécuter) pour accorder les autorisations et créer l'onglet.
+// À lancer une fois depuis l'éditeur (bouton Exécuter) : autorisations, onglets, déclencheur horaire du suivi.
 function installer() {
   onglet_();
-  console.log('Onglet prêt : ' + SpreadsheetApp.getActiveSpreadsheet().getUrl());
+  if (!ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === 'suivreTunnel')) {
+    ScriptApp.newTrigger('suivreTunnel').timeBased().everyHours(1).create();
+  }
+  suivreTunnel();
+  console.log('Prêt : ' + SpreadsheetApp.getActiveSpreadsheet().getUrl());
+}
+
+// --- Suivi du tunnel : rendez-vous réservés et onglet « Tunnel » ---
+
+function suivreTunnel() {
+  const verrou = LockService.getScriptLock();
+  if (!verrou.tryLock(30000)) return;
+  try {
+    rapprocherRendezVous_();
+    majTunnel_();
+  } finally {
+    verrou.releaseLock();
+  }
+}
+
+// Un lead « a réservé » quand un évènement de votre agenda, créé après son test, l'a pour invité (même e-mail).
+// L'agenda Google intégré au site ne prévient pas la page d'une réservation : c'est le seul moyen fiable.
+function rapprocherRendezVous_() {
+  const feuille = onglet_();
+  const derniere = feuille.getLastRow();
+  if (derniere < 2) return;
+  const lignes = feuille.getRange(2, 1, derniere - 1, COL_CRENEAU).getValues();
+  const enAttente = new Map();   // e-mail → [{ ligne, date }]
+  let plusAncien = null;
+  const limite = new Date(Date.now() - 60 * 864e5);   // on cherche les RDV des leads des 60 derniers jours
+  lignes.forEach((l, i) => {
+    const date = l[COL_DATE - 1];
+    const email = String(l[COL_EMAIL - 1] || '').trim().toLowerCase();
+    if (!email || l[COL_RDV - 1] || !(date instanceof Date) || date < limite) return;
+    if (!enAttente.has(email)) enAttente.set(email, []);
+    enAttente.get(email).push({ ligne: i + 2, date });
+    if (!plusAncien || date < plusAncien) plusAncien = date;
+  });
+  if (!enAttente.size) return;
+
+  const evenements = CalendarApp.getDefaultCalendar().getEvents(plusAncien, new Date(Date.now() + 120 * 864e5));
+  const trouves = [];
+  for (const ev of evenements) {
+    const cree = ev.getDateCreated();
+    for (const invite of ev.getGuestList()) {
+      const leads = enAttente.get(invite.getEmail().toLowerCase());
+      if (!leads) continue;
+      for (const lead of leads) {
+        if (lead.fait || cree < new Date(lead.date.getTime() - 3600e3)) continue;
+        lead.fait = true;
+        feuille.getRange(lead.ligne, COL_RDV, 1, 2).setValues([[
+          cree,
+          Utilities.formatDate(ev.getStartTime(), FUSEAU, 'dd/MM/yyyy HH:mm')
+        ]]);
+        trouves.push(cree);
+      }
+    }
+  }
+  if (trouves.length) {
+    goatcounter_('post', '/api/v0/count', {
+      no_sessions: true,
+      filter: [],
+      hits: trouves.map(d => ({ path: 'rdv_reserve', title: 'Rendez-vous réservé (lead du test)', event: true, created_at: d.toISOString() }))
+    });
+  }
+}
+
+// Onglet « Tunnel » : nombre de visiteurs par étape sur 7, 30 et 90 jours, et taux de passage d'une étape à l'autre.
+function majTunnel_() {
+  const classeur = SpreadsheetApp.getActiveSpreadsheet();
+  const feuille = classeur.getSheetByName(ONGLET_TUNNEL) || classeur.insertSheet(ONGLET_TUNNEL);
+  const leads = onglet_();
+  const derniere = leads.getLastRow();
+  const lignes = derniere < 2 ? [] : leads.getRange(2, 1, derniere - 1, COL_CRENEAU).getValues();
+
+  const ETAPES = [
+    ['Visites de l\'accueil', ['/', '/index.html']],
+    ['Test commencé', ['test_demarre']],
+    ['Question 2 atteinte', ['question_02']],
+    ['Question 4 atteinte', ['question_04']],
+    ['Question 7 atteinte', ['question_07']],
+    ['Question 10 atteinte', ['question_10']],
+    ['Test terminé (score affiché)', ['test_termine']],
+    ['Formulaire du diagnostic vu', ['formulaire_vu']],
+    ['Diagnostic demandé (lead)', ['lead_envoye']],
+    ['Agenda ouvert (clic rendez-vous)', ['rdv_ouvert', 'rdv_ouvert_bulle']],
+    ['Rendez-vous réservé', null]   // compté dans la feuille Leads
+  ];
+  const PERIODES = [7, 30, 90];
+  const maintenant = new Date();
+  const colonnes = PERIODES.map(jours => {
+    const debut = new Date(maintenant.getTime() - jours * 864e5);
+    const stats = statsGoatcounter_(debut, maintenant);
+    return ETAPES.map(([, chemins]) => {
+      if (!chemins) return lignes.filter(l => l[COL_RDV - 1] instanceof Date && l[COL_RDV - 1] >= debut).length;
+      if (!stats) return '';
+      return chemins.reduce((t, c) => t + (stats[c] || 0), 0);
+    });
+  });
+
+  const tableau = [['Étape', ...PERIODES.flatMap(j => [`${j} jours`, 'passage'])]];
+  ETAPES.forEach(([libelle], i) => {
+    const ligne = [libelle];
+    colonnes.forEach(valeurs => {
+      const v = valeurs[i];
+      const avant = i > 0 ? valeurs[i - 1] : '';
+      ligne.push(v, i > 0 && typeof v === 'number' && typeof avant === 'number' && avant > 0 ? v / avant : '');
+    });
+    tableau.push(ligne);
+  });
+
+  feuille.clear();
+  feuille.getRange(1, 1).setValue(`Tunnel du Check-up IA — mis à jour le ${Utilities.formatDate(maintenant, FUSEAU, 'dd/MM/yyyy HH:mm')}`).setFontWeight('bold');
+  feuille.getRange(3, 1, tableau.length, tableau[0].length).setValues(tableau);
+  feuille.getRange(3, 1, 1, tableau[0].length).setFontWeight('bold');
+  [3, 5, 7].forEach(c => feuille.getRange(4, c, tableau.length - 1, 1).setNumberFormat('0%'));
+  const notes = [
+    'Passage = part des visiteurs de l\'étape précédente qui arrivent à cette étape (100 % − passage = fuite).',
+    'Chiffres GoatCounter : visiteurs uniques par étape, sans cookie ; les robots et les visites bloquées par un bloqueur de pub ne sont pas comptés.',
+    'Rendez-vous réservé : évènements de votre agenda qui ont un lead pour invité (même e-mail), créés après son test. Un lead qui réserve avec une autre adresse n\'est pas compté.'
+  ];
+  if (!jetonGoatcounter_()) notes.unshift('⚠ Jeton GoatCounter absent : seules les lignes issues de la feuille sont remplies (voir docs/LEADS.md).');
+  feuille.getRange(tableau.length + 4, 1, notes.length, 1).setValues(notes.map(n => [n])).setFontColor('#5A636A');
+  feuille.setColumnWidth(1, 260);
+  feuille.setFrozenRows(3);
+}
+
+function jetonGoatcounter_() {
+  return PropertiesService.getScriptProperties().getProperty('GOATCOUNTER_TOKEN') || '';
+}
+
+function goatcounter_(methode, chemin, corps) {
+  const jeton = jetonGoatcounter_();
+  if (!jeton) return null;
+  try {
+    const r = UrlFetchApp.fetch(GOATCOUNTER + chemin, {
+      method: methode,
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + jeton },
+      payload: corps ? JSON.stringify(corps) : undefined,
+      muteHttpExceptions: true
+    });
+    const code = r.getResponseCode();
+    if (code >= 300) { console.error(`GoatCounter ${chemin} : ${code} ${r.getContentText().slice(0, 200)}`); return null; }
+    const texte = r.getContentText();
+    return texte ? JSON.parse(texte) : {};
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+}
+
+// Visiteurs par chemin (pages et évènements) entre deux dates, arrondies à l'heure comme l'API le demande.
+function statsGoatcounter_(debut, fin) {
+  const heure = d => { const x = new Date(d); x.setMinutes(0, 0, 0); return x.toISOString(); };
+  const r = goatcounter_('get', `/api/v0/stats/hits?start=${encodeURIComponent(heure(debut))}&end=${encodeURIComponent(heure(fin))}&limit=100`);
+  if (!r || !Array.isArray(r.hits)) return null;
+  const parChemin = {};
+  for (const h of r.hits) parChemin[h.path] = (parChemin[h.path] || 0) + (Number(h.count) || 0);
+  Utilities.sleep(300);   // limite de l'API : 4 requêtes par seconde
+  return parChemin;
 }
 
 // À lancer depuis l'éditeur pour recevoir un exemple des deux e-mails (sur NOTIFIER), sans toucher à la feuille.
