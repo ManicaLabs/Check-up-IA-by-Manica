@@ -22,7 +22,9 @@ const REPONDRE_A = 'hello@manica.fr';
 const ONGLET = 'Leads';
 
 // Demandes du formulaire de contact de manica.fr (envoyées par le serveur du site, public/api/contact.php).
-// Elles vont dans un onglet séparé, sans notification ni récapitulatif : le site envoie déjà le courriel.
+// Elles vont dans un onglet séparé. Si le site le demande (notifier = true), le script envoie aussi le courriel de
+// notification à NOTIFIER depuis Google Workspace (signé DKIM, réponse directe à la personne) ; le serveur du site
+// n'envoie alors plus rien lui-même et ne garde son propre envoi (OVH) qu'en secours.
 // CLE_CONTACT_SITE doit être identique à « leads_cle » dans www/api/_lib/config.php ; vide = demandes du site refusées.
 // Ce dépôt est public : renseigner la clé SEULEMENT dans l'éditeur Apps Script, jamais dans ce fichier versionné.
 const ONGLET_CONTACTS = 'Contacts site';
@@ -113,16 +115,32 @@ function contactSite_(d) {
     if (id && derniere >= 2) {
       const debut = Math.max(2, derniere - 199);
       const ids = feuille.getRange(debut, COLONNES_CONTACTS.length, derniere - debut + 1, 1).getValues();
-      if (ids.some(([v]) => v === id)) return repondre({ ok: true, doublon: true });
+      if (ids.some(([v]) => v === id)) return repondre({ ok: true, doublon: true, notifie: true });
+    }
+    let notifie = false;
+    if (d.notifier && NOTIFIER) {
+      try {
+        MailApp.sendEmail({
+          to: NOTIFIER,
+          replyTo: email,
+          name: 'Site manica.fr',
+          subject: texte_(d.courriel_sujet, 200) || `Demande site manica.fr : ${nom}`,
+          body: texte_(d.courriel_corps, 8000)
+        });
+        notifie = true;
+      } catch (err) {
+        console.error(err);
+      }
     }
     feuille.appendRow([
       new Date(), nom, email, texte_(d.entreprise, 160), texte_(d.sujet), texte_(d.structure), texte_(d.echeance),
-      texte_(d.connu_par), texte_(d.message, 4000), texte_(d.page), texte_(d.parametres, 300), texte_(d.courriel, 20), id
+      texte_(d.connu_par), texte_(d.message, 4000), texte_(d.page), texte_(d.parametres, 300),
+      d.notifier ? (notifie ? 'envoyé par Google' : 'échec Google, secours OVH') : texte_(d.courriel, 20), id
     ].map(protegerFormule_));
+    return repondre({ ok: true, notifie: notifie });
   } finally {
     verrou.releaseLock();
   }
-  return repondre({ ok: true });
 }
 
 // Ouvrir l'URL dans un navigateur affiche ce message : utile pour vérifier le déploiement.
