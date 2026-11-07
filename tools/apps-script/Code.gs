@@ -21,6 +21,17 @@ const EXPEDITEUR_NOM = 'Cédric Delalande — Manica';
 const REPONDRE_A = 'hello@manica.fr';
 const ONGLET = 'Leads';
 
+// Demandes du formulaire de contact de manica.fr (envoyées par le serveur du site, public/api/contact.php).
+// Elles vont dans un onglet séparé, sans notification ni récapitulatif : le site envoie déjà le courriel.
+// CLE_CONTACT_SITE doit être identique à « leads_cle » dans www/api/_lib/config.php ; vide = demandes du site refusées.
+// Ce dépôt est public : renseigner la clé SEULEMENT dans l'éditeur Apps Script, jamais dans ce fichier versionné.
+const ONGLET_CONTACTS = 'Contacts site';
+const CLE_CONTACT_SITE = '';
+const COLONNES_CONTACTS = [
+  'Date', 'Nom', 'E-mail', 'Entreprise', 'Sujet', 'Structure', 'Échéance', 'Comment nous a connus', 'Message',
+  'Page d\'origine', 'Paramètres', 'Courriel', 'Id'
+];
+
 const COLONNES = [
   'Date', 'Nom', 'E-mail', 'Profil', 'Métier précisé', 'Score', 'Niveau', 'Bonnes réponses',
   'Axes', 'Priorités', 'Réponses', 'Accepte lives et contenus', 'Source', 'Page', 'Id'
@@ -33,6 +44,7 @@ const C = { navy: '#101B33', slate: '#2C3E5C', amber: '#E8874A', paper: '#F7F5F1
 function doPost(e) {
   try {
     const d = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (d.type === 'contact-site') return contactSite_(d);
     const email = String(d.email || '').trim().slice(0, 120);
     const nom = String(d.nom || '').trim().slice(0, 80);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || nom.length < 2) return repondre({ ok: false, erreur: 'champs' });
@@ -77,6 +89,40 @@ function doPost(e) {
     console.error(err);
     return repondre({ ok: false, erreur: 'serveur' });
   }
+}
+
+// Demande du formulaire de contact de manica.fr : une ligne dans l'onglet « Contacts site », rien d'autre.
+function contactSite_(d) {
+  if (!CLE_CONTACT_SITE || String(d.cle || '') !== CLE_CONTACT_SITE) return repondre({ ok: false, erreur: 'cle' });
+  const email = String(d.email || '').trim().slice(0, 160);
+  const nom = String(d.nom || '').trim().slice(0, 120);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || nom.length < 1) return repondre({ ok: false, erreur: 'champs' });
+  const verrou = LockService.getScriptLock();
+  verrou.waitLock(10000);
+  try {
+    const classeur = SpreadsheetApp.getActiveSpreadsheet();
+    let feuille = classeur.getSheetByName(ONGLET_CONTACTS);
+    if (!feuille) {
+      feuille = classeur.insertSheet(ONGLET_CONTACTS);
+      feuille.appendRow(COLONNES_CONTACTS);
+      feuille.setFrozenRows(1);
+      feuille.getRange(1, 1, 1, COLONNES_CONTACTS.length).setFontWeight('bold');
+    }
+    const id = String(d.id || '').slice(0, 60);
+    const derniere = feuille.getLastRow();
+    if (id && derniere >= 2) {
+      const debut = Math.max(2, derniere - 199);
+      const ids = feuille.getRange(debut, COLONNES_CONTACTS.length, derniere - debut + 1, 1).getValues();
+      if (ids.some(([v]) => v === id)) return repondre({ ok: true, doublon: true });
+    }
+    feuille.appendRow([
+      new Date(), nom, email, texte_(d.entreprise, 160), texte_(d.sujet), texte_(d.structure), texte_(d.echeance),
+      texte_(d.connu_par), texte_(d.message, 4000), texte_(d.page), texte_(d.parametres, 300), texte_(d.courriel, 20), id
+    ].map(protegerFormule_));
+  } finally {
+    verrou.releaseLock();
+  }
+  return repondre({ ok: true });
 }
 
 // Ouvrir l'URL dans un navigateur affiche ce message : utile pour vérifier le déploiement.
