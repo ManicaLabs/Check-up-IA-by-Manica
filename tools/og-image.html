@@ -3,116 +3,99 @@
 <head>
 <meta charset="utf-8">
 <!-- Source de og-image.png (1200×630). Régénérer : voir docs/CDC.md, section « Assets ».
-     Direction « Graphite & Ambre » du site manica.fr : section sombre à circuits, ambre réservé à l'action. -->
+     Design system « Forêt et ambre » : fond clair, héros asymétrique (texte à gauche, visuel à droite
+     dans la forme organique c-sunken), ambre réservé à l'action (« Faire le test »), Figtree. -->
 <style>
 @font-face {
-  font-family: "Geist";
-  src: url("../fonts/geist-latin.woff2") format("woff2");
-  font-weight: 100 900;
-}
-@font-face {
-  font-family: "Geist Mono";
-  src: url("../fonts/geist-mono-latin.woff2") format("woff2");
-  font-weight: 100 900;
+  font-family: "Figtree";
+  src: url("../fonts/figtree-latin.woff2") format("woff2");
+  font-weight: 300 900;
 }
 html, body { margin: 0; }
 body {
   width: 1200px;
   height: 630px;
   overflow: hidden;
-  background-color: #15191C;
+  background-color: #f4f3ee;
   background-image:
-    radial-gradient(46rem 26rem at 100% 0%, rgb(232 135 74 / .22), transparent 62%),
-    radial-gradient(30rem 20rem at 0% 100%, rgb(142 152 158 / .10), transparent 60%),
-    url("../img/fond-circuits.webp");
-  background-size: auto, auto, cover;
-  background-position: 0 0, 0 0, center;
-  color: #F3F5F5;
-  font-family: "Geist", sans-serif;
+    radial-gradient(44rem 26rem at 100% 0%, rgb(232 135 74 / .20), transparent 62%),
+    radial-gradient(34rem 22rem at 0% 100%, rgb(31 74 62 / .10), transparent 60%);
+  color: #2f433c;
+  font-family: "Figtree", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 .card {
-  position: relative;
   box-sizing: border-box;
   width: 1200px;
   height: 630px;
-  padding: 48px 72px 52px;
+  padding: 46px 48px 48px 68px;
   display: grid;
-  grid-template-columns: 1fr 360px;
-  column-gap: 56px;
+  grid-template-columns: 1fr 420px;
+  column-gap: 36px;
 }
-/* Filets pointillés et repères « + » du plan, comme le site */
-.card::before, .card::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background-image: linear-gradient(to bottom, #2C3236 50%, transparent 50%);
-  background-size: 1px 8px;
-}
-.card::before { left: 40px; }
-.card::after { right: 40px; }
 .gauche { display: flex; flex-direction: column; min-width: 0; }
-/* Logo sombre sur transparent, inversé pour ressortir sur le graphite */
-.logo { display: block; width: 210px; height: auto; filter: invert(1); }
-.surtitre {
-  margin: 34px 0 0;
-  font-family: "Geist Mono", monospace;
-  font-size: 22px;
-  font-weight: 500;
-  color: #A3ACB2;
-}
+.logo { display: block; width: 180px; height: auto; }
+.surtitre { margin: 26px 0 0; font-size: 23px; font-weight: 600; color: #56665f; }
 .title {
-  margin: 14px 0 0;
-  font-size: 114px;
-  font-weight: 600;
-  letter-spacing: -0.05em;
-  line-height: .92;
+  margin: 10px 0 0;
+  font-size: 102px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: .95;
+  color: #16302a;
   white-space: nowrap;
 }
-.pulse { display: block; width: 620px; height: 54px; margin: 18px 0 0; overflow: visible; }
+.pulse { display: block; width: 100%; height: auto; margin: 14px 0 0; overflow: visible; }
 .lead {
-  margin: 20px 0 0;
-  font-size: 38px;
-  font-weight: 600;
+  margin: 16px 0 0;
+  font-size: 32px;
+  font-weight: 700;
   line-height: 1.16;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.015em;
+  color: #16302a;
 }
-.lead span { display: block; margin-top: 10px; font-size: 26px; font-weight: 400; color: #D9DEE0; letter-spacing: -0.01em; }
+.lead span { display: block; margin-top: 8px; font-size: 24px; font-weight: 400; color: #2f433c; letter-spacing: 0; }
 .bas { margin-top: auto; display: flex; align-items: center; gap: 26px; }
 .pill {
-  padding: 18px 30px;
-  border: 1px solid #9C4A14;
-  border-radius: 12px;
-  background: #E8874A;
-  color: #15191C;
+  padding: 17px 30px;
+  border-radius: 14px;
+  background: #e8874a;
+  color: #16302a;
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 700;
 }
-.url { font-family: "Geist Mono", monospace; font-size: 22px; color: #A3ACB2; }
+.url { font-size: 24px; font-weight: 600; color: #56665f; }
 
-/* Mini carte de résultat (illustration, score fictif) */
-.droite { align-self: center; }
-.res {
-  padding: 30px 30px 28px;
-  border: 1px solid #2C3236;
-  border-radius: 18px;
-  background: #1D2226;
-  box-shadow: 0 40px 80px -30px rgb(0 0 0 / .6);
+/* Forme organique : deux coins opposés à 160 px, les deux autres à 36 px ; mini carte de résultat (score fictif). */
+.droite {
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+  border-radius: 160px 36px 160px 36px;
+  background-color: #e4ece5;
+  background-image: radial-gradient(28rem 18rem at 100% 0%, rgb(232 135 74 / .22), transparent 62%);
 }
-.res-tete { display: flex; align-items: center; gap: 22px; }
-.res-tete svg { flex: none; width: 116px; height: 116px; }
-.res-label { font-family: "Geist Mono", monospace; font-size: 16px; color: #A3ACB2; }
-.res-niveau { margin-top: 6px; font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
-.axes { margin-top: 26px; display: grid; gap: 15px; }
-.axe { display: grid; grid-template-columns: 112px 1fr; gap: 14px; align-items: center; font-size: 16px; color: #D9DEE0; }
-.piste { height: 9px; border-radius: 5px; background: #2A3035; overflow: hidden; }
-.piste i { display: block; height: 100%; border-radius: 5px; }
-.ok { background: #5DBE89; }
-.mid { background: #F3F5F5; }
-.ko { background: #E07F6A; }
-.res-pied { margin-top: 22px; padding-top: 16px; border-top: 1px solid #2C3236; font-family: "Geist Mono", monospace; font-size: 15px; color: #A3ACB2; }
+.res {
+  width: 340px;
+  box-sizing: border-box;
+  padding: 26px 28px 24px;
+  border: 1px solid #d5ddd4;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 30px 60px -28px rgb(22 48 42 / .35);
+}
+.res-tete { display: flex; align-items: center; gap: 20px; }
+.res-tete svg { flex: none; width: 108px; height: 108px; }
+.res-label { font-size: 17px; font-weight: 600; color: #56665f; }
+.res-niveau { margin-top: 4px; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; color: #16302a; }
+.axes { margin-top: 24px; display: grid; gap: 14px; }
+.axe { display: grid; grid-template-columns: 108px 1fr; gap: 14px; align-items: center; font-size: 16px; font-weight: 600; color: #16302a; }
+.piste { height: 9px; border-radius: 999px; background: #e4ece5; overflow: hidden; }
+.piste i { display: block; height: 100%; border-radius: 999px; }
+.ok { background: #1f6f43; }
+.mid { background: #16302a; }
+.ko { background: #8a4b08; }
+.res-pied { margin-top: 20px; padding-top: 14px; border-top: 1px solid #d5ddd4; font-size: 16px; font-weight: 600; color: #56665f; }
 </style>
 </head>
 <body>
@@ -122,8 +105,8 @@ body {
     <p class="surtitre">Gratuit · 10 questions · 3 minutes</p>
     <h1 class="title">Check-up IA</h1>
     <svg class="pulse" viewBox="0 0 640 54" aria-hidden="true">
-      <path d="M0 34 H236 C243 34 246 24 254 24 C262 24 265 34 272 34 H290 L298 40 L313 4 L330 50 L340 34 H364 C373 34 377 19 390 19 C403 19 407 34 416 34 H626" fill="none" stroke="#F3F5F5" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="630" cy="34" r="7" fill="#E8874A"/>
+      <path d="M0 34 H236 C243 34 246 24 254 24 C262 24 265 34 272 34 H290 L298 40 L313 4 L330 50 L340 34 H364 C373 34 377 19 390 19 C403 19 407 34 416 34 H622" fill="none" stroke="#16302a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="630" cy="34" r="7" fill="#e8874a"/>
     </svg>
     <p class="lead">Où en êtes-vous vraiment avec l’IA&#8239;?<span>10 questions adaptées à votre métier, un score sur 100.</span></p>
     <div class="bas">
@@ -135,12 +118,12 @@ body {
     <div class="res">
       <div class="res-tete">
         <svg viewBox="0 0 116 116">
-          <circle cx="58" cy="58" r="48" fill="none" stroke="#2A3035" stroke-width="11"/>
-          <circle cx="58" cy="58" r="48" fill="none" stroke="#E8874A" stroke-width="11" stroke-linecap="round" pathLength="100" stroke-dasharray="68 100" transform="rotate(-90 58 58)"/>
-          <text x="58" y="68" text-anchor="middle" font-family="Geist" font-size="34" font-weight="600" fill="#F3F5F5">68</text>
+          <circle cx="58" cy="58" r="48" fill="none" stroke="#e4ece5" stroke-width="11"/>
+          <circle cx="58" cy="58" r="48" fill="none" stroke="#e8874a" stroke-width="11" stroke-linecap="round" pathLength="100" stroke-dasharray="68 100" transform="rotate(-90 58 58)"/>
+          <text x="58" y="69" text-anchor="middle" font-family="Figtree" font-size="34" font-weight="700" fill="#16302a">68</text>
         </svg>
         <div>
-          <div class="res-label">score sur 100</div>
+          <div class="res-label">Score sur 100</div>
           <div class="res-niveau">Pratiquant</div>
         </div>
       </div>
@@ -151,7 +134,7 @@ body {
         <div class="axe">Données<span class="piste"><i class="ok" style="width:75%"></i></span></div>
         <div class="axe">Entreprise<span class="piste"><i class="mid" style="width:46%"></i></span></div>
       </div>
-      <div class="res-pied">+ 3 priorités · le corrigé</div>
+      <div class="res-pied">+ 3 priorités et le corrigé</div>
     </div>
   </div>
 </div>

@@ -145,7 +145,7 @@ async function verifierLogos(page, ou, attendu) {
   for (const i of infos) {
     if (i.alt !== 'Manica') problemes.push(`${ou} : logo sans alt="Manica" (${i.classe})`);
     if (i.visible && !i.charge) problemes.push(`${ou} : logo non chargé (${i.classe})`);
-    if (i.visible && theme === 'dark' && !i.filtre.includes('invert(1)')) problemes.push(`${ou} : logo non inversé en sombre`);
+    if (i.visible && theme === 'dark' && !i.filtre.includes('invert(')) problemes.push(`${ou} : logo non éclairci en sombre`);
     if (i.visible && theme === 'light' && i.filtre !== 'none') problemes.push(`${ou} : filtre inattendu en clair`);
   }
   const entete = infos.filter(i => i.visible && !i.classe.includes('logo-foot')).map(i => (i.classe.includes('logo-full') ? 'baseline' : 'compact'));
@@ -395,7 +395,7 @@ async function parcours(prefixe, { systeme = 'light', forcer = null, role = 'dir
     t = await etatTheme(page);
     if (t.theme !== forcer) problemes.push(`${prefixe} : la bascule n'a pas appliqué ${forcer}`);
   }
-  if (t.presse !== String(t.theme === 'dark') || t.meta !== (t.theme === 'dark' ? '#15191C' : '#F4F5F5')) problemes.push(`${prefixe} : aria-pressed ou theme-color incohérent`);
+  if (t.presse !== String(t.theme === 'dark') || t.meta !== (t.theme === 'dark' ? '#0f1c18' : '#f4f3ee')) problemes.push(`${prefixe} : aria-pressed ou theme-color incohérent`);
   await page.evaluate(() => document.fonts.ready);
   await pause(1900);
   await page.screenshot({ path: `${OUT}${prefixe}-1-accueil.png` });
@@ -504,6 +504,48 @@ await parcours('perso-sombre', { systeme: 'dark', role: 'perso' });
 await parcours('dsi-sombre-force', { systeme: 'light', forcer: 'dark', role: 'dsi' });
 await parcours('marketing-clair-force', { systeme: 'dark', forcer: 'light', role: 'marketing' });
 await parcours('autre-bureau', { systeme: 'dark', role: 'autre', precision: 'juriste', mobile: false });
+
+// Retour à l'accueil : « Changer de profil » (question 1, puis en bas de chaque question), retour et suivant du navigateur, logo
+{
+  const { ctx, page } = await nouvellePage({ systeme: 'light' });
+  await page.goto(BASE, { waitUntil: 'networkidle0' });
+  await demarrer(page, 'dsi');
+  const q1 = await page.$eval('#q-retour', b => ({ texte: b.textContent.trim(), visible: !b.hidden && b.offsetParent !== null }));
+  if (q1.texte !== 'Changer de profil' || !q1.visible) problemes.push(`retour accueil : bouton de la question 1 ${JSON.stringify(q1)}`);
+  await page.click('#q-retour');
+  await page.waitForSelector('#ecran-accueil:not([hidden])');
+  if (await page.evaluate(() => localStorage.getItem('checkup-ia:v2'))) problemes.push('retour accueil : profil choisi par erreur gardé en session');
+  if (!(await page.$eval('#bloc-reprise', e => e.hidden))) problemes.push('retour accueil : reprise proposée sans aucune réponse');
+  // Autre profil, deux réponses, puis le geste « retour » du navigateur : accueil, test reprenable
+  await demarrer(page, 'marketing');
+  await repondre(page, 0);
+  await repondre(page, 0);
+  const ligne = await page.$eval('#q-profil', e => ({ visible: !e.hidden, texte: e.textContent }));
+  if (!ligne.visible || !ligne.texte.includes('Marketing / Com')) problemes.push(`retour accueil : ligne de profil ${JSON.stringify(ligne)}`);
+  if ((await page.$eval('#q-retour', b => b.textContent.trim())) !== 'Précédente') problemes.push('retour accueil : « Précédente » absent après la question 1');
+  await page.goBack();
+  await page.waitForSelector('#ecran-accueil:not([hidden])');
+  const reprise = await page.$eval('#texte-reprise', e => e.textContent);
+  if (!reprise.includes('question 3 sur 10')) problemes.push(`retour accueil : reprise « ${reprise} » après le bouton retour`);
+  if ((await lireSession(page))?.cible.role !== 'marketing') problemes.push('retour accueil : session perdue après le bouton retour');
+  // « Suivant » du navigateur : retour dans le test, à la même question
+  await page.goForward();
+  await page.waitForSelector('#ecran-quiz:not([hidden])');
+  if ((await page.$eval('#q-compteur', e => e.textContent)) !== 'Question 3 / 10') problemes.push('retour accueil : « suivant » ne reprend pas la question 3');
+  // « Changer de profil » en bas de la question, reprise, puis le logo depuis le test
+  await page.click('#q-changer');
+  await page.waitForSelector('#ecran-accueil:not([hidden])');
+  await page.click('#btn-reprendre');
+  await page.waitForSelector('#ecran-quiz:not([hidden])');
+  await page.click('#logo-accueil');
+  await page.waitForSelector('#ecran-accueil:not([hidden])');
+  // Un nouveau profil remplace le test en cours
+  await demarrer(page, 'dirigeant');
+  const s = await lireSession(page);
+  if (s.cible.role !== 'dirigeant' || s.index !== 0) problemes.push('retour accueil : le nouveau profil ne remplace pas le test en cours');
+  log('retour à l’accueil : changer de profil, retour et suivant du navigateur, logo ✓');
+  await ctx.close();
+}
 
 // Envoi du lead en échec : le diagnostic s'affiche quand même, le contact est renvoyé à la visite suivante
 {

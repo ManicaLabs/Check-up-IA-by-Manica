@@ -9,7 +9,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageOps
 
 RACINE = Path(__file__).resolve().parent.parent
-NAVY = (16, 27, 51, 255)
+FORET = (31, 74, 62, 255)  # c-foret du design system « Forêt et ambre »
 
 
 def charger(nom):
@@ -49,7 +49,7 @@ def inverser(im):
 
 def carre(taille, rayon):
     fond = Image.new('RGBA', (taille, taille), (0, 0, 0, 0))
-    ImageDraw.Draw(fond).rounded_rectangle((0, 0, taille - 1, taille - 1), radius=rayon, fill=NAVY)
+    ImageDraw.Draw(fond).rounded_rectangle((0, 0, taille - 1, taille - 1), radius=rayon, fill=FORET)
     return fond
 
 
@@ -75,10 +75,8 @@ logo_baseline = charger('logo_manica_hd_baseline.png')
 enregistrer(redimensionner(logo_baseline, largeur=900), 'img/logo-manica-baseline-900.png')
 enregistrer(redimensionner(logo_baseline, largeur=600), 'img/logo-manica-baseline-600.png')
 enregistrer(redimensionner(logo, largeur=300), 'img/logo-manica-300.png')
-# Version claire pour l'image de partage (dessinée sur canvas, sans filtre CSS)
-enregistrer(inverser(redimensionner(logo_baseline, largeur=900)), 'img/logo-manica-baseline-clair-900.png')
 
-# Icônes : symbole en clair sur fond bleu nuit
+# Icônes : symbole en clair sur fond vert forêt
 sym = inverser(symbole(logo))
 enregistrer(icone(sym, 32, .84, 7), 'favicon-32.png')
 enregistrer(icone(sym, 192, .74, 42), 'icon-192.png')

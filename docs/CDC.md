@@ -45,11 +45,12 @@
 | `sw.js` | Service worker : hors ligne, réseau d'abord |
 | `manifest.webmanifest` | Manifeste PWA |
 | `img/logo_manica_hd.png`, `img/logo_manica_hd_baseline.png` | Logos sources fournis par Cédric (2816×1504, niveaux de gris sur transparent) — ne pas modifier |
-| `img/logo-manica-baseline-600.png`, `img/logo-manica-baseline-900.png`, `img/logo-manica-300.png` | Logos web générés (recadrés, palette 64 couleurs) |
-| `img/logo-manica-baseline-clair-900.png` | Logo avec baseline en version claire, pour l'image de partage Instagram (canvas) |
-| `favicon-32.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` | Icônes générées : symbole du logo en clair sur bleu nuit |
+| `img/logo-manica-baseline-600.png`, `img/logo-manica-baseline-900.png`, `img/logo-manica-300.png` | Logos web générés (recadrés, palette 64 couleurs) ; `logo-manica-baseline-900.png` sert aussi aux images de score (canvas, fond clair) |
+| `favicon-32.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` | Icônes générées : symbole du logo en clair sur vert forêt `#1f4a3e` (depuis la v2.2) |
 | `og-image.png` | Image de partage (1200×630) |
-| `fonts/manrope-latin.woff2`, `fonts/OFL.txt` | Police Manrope variable 400–800, sous-ensemble latin (25 Ko), licence OFL |
+| `fonts/figtree-latin.woff2`, `fonts/OFL-Figtree.txt` | Police Figtree variable 300–900, sous-ensemble latin (20 Ko), licence OFL — police unique du design system (v2.2) |
+| `fonts/geist-mono-latin.woff2`, `fonts/OFL-Geist.txt` | Geist Mono, réservée à la barre de titre de l'illustration de l'accueil (règle du design system), licence OFL |
+| `img/grain.png` | Grain très léger posé sur toute la page (35 %) |
 | `tools/validate.mjs` | Validation avant push (voir §10) |
 | `tools/e2e.mjs`, `tools/package.json` | Test de bout en bout dans Chrome (serveur local intégré qui imite GitHub Pages, ou prod via `BASE=`) ; `puppeteer-core` en dépendance de développement |
 | `mentions-legales.html` | Mentions légales et confidentialité (éditeur, hébergeur, données, GoatCounter, refus de la mesure, droits) |
@@ -84,15 +85,14 @@ LinkedIn met l'aperçu en cache : après changement de `og-image.png`, forcer le
 ### En-tête et pied de page
 - Depuis la v1.5, plus de « by Manica » sous le titre de l'accueil : le logo avec baseline juste au-dessus le dit déjà.
 - Pied de page : lien « Mentions légales et confidentialité ».
-- En-tête sur tous les écrans : logo à gauche, bouton de thème soleil/lune à droite (44×44 px).
-- Logo **avec baseline** sur l'accueil (280 px de large sur mobile, 320 px au-delà de 640 px) ; logo **sans baseline** compact (34 px de haut) sur quiz, résultat et erreur. Bascule pilotée par `body[data-ecran]`, posé par `afficher()`.
+- En-tête sur tous les écrans : logo compact (34 px de haut) à gauche, **lien vers l'accueil du test** (v2.2 ; sur l'écran d'erreur, simple rechargement) ; à droite le lien « manica.fr ↗ » (masqué pendant le quiz) et le bouton soleil/lune (44×44 px, soleil en clair, lune en sombre, comme sur manica.fr).
 - Pied de page : logo sans baseline (28 px), mention de confidentialité, mention de mesure d'audience, bouton d'installation.
 
 ### Écrans (v2.0)
 1. **Accueil** : titre, tracé ECG, promesse (« 10 questions adaptées à votre métier, 3 minutes. Votre score tout de suite, votre diagnostic détaillé ensuite. »), puis **« Vous passez le test… »** : carte pleine largeur « Pour moi », puis « Pour mon entreprise, je suis… » et 4 cartes (Dirigeant·e, DSI / IT, Marketing / Com, Autre métier). **Un clic sur une carte lance le test** ; « Autre métier » ouvre un champ facultatif « Votre métier » + « Commencer le test ». Les boutons portent `data-role` = id de `config.roles` (vérifié par `validate.mjs`). Dessous : « Ce que vous obtenez » (3 points), reprise éventuelle, puis le bloc commun « Qui est derrière le test ? » + FAQ.
-2. **Quiz** : barre de progression, « Précédente » (dès la question 2) + « Question X / 10 », axe, énoncé, 4 choix en boutons (lettres A–D). **Un clic = réponse enregistrée + question suivante** (réponse marquée 200 ms, glissement 160 ms, sans animation si `prefers-reduced-motion`). Aucune correction pendant le test : tout est dans le corrigé final. « Précédente » réaffiche la question avec la réponse marquée ; un clic la remplace. Aide « Touchez votre réponse… » sur la 1re question seulement.
+2. **Quiz** : barre de progression, **« Changer de profil » à la question 1** (retour à l'accueil, v2.2) puis « Précédente » + « Question X / 10 », axe, énoncé, 4 choix en boutons (lettres A–D), et dès la question 2 une ligne « Profil : DSI / IT · Changer de profil » sous les choix. **Un clic = réponse enregistrée + question suivante** (réponse marquée 200 ms, glissement 160 ms, sans animation si `prefers-reduced-motion`). Aucune correction pendant le test : tout est dans le corrigé final. « Précédente » réaffiche la question avec la réponse marquée ; un clic la remplace. Aide « Touchez votre réponse… » sur la 1re question seulement. **Retour à l'accueil (v2.2)** : « Changer de profil », le logo, « Refaire le test » et le **bouton retour du navigateur** (le test et le résultat ajoutent une entrée d'historique `{ checkup: true }` : le geste retour du téléphone ramène à l'accueil au lieu de quitter le site ; « suivant » rouvre le test ou le résultat). Sans aucune réponse, le profil choisi est oublié ; sinon le test reste reprenable (« Reprendre le test »), et un nouveau profil le remplace.
 3. **Résultat, partie libre** : score /100 (taille réduite en v2.0), niveau, message, échelle. Puis le **formulaire** (`#r-gate`) : « Votre diagnostic détaillé est prêt », accroche « X bonnes réponses sur 10. Découvrez lesquelles… », 3 bénéfices, champs **Prénom et nom** + **E-mail** (« E-mail professionnel » pour les profils entreprise), case **« Prévenez-moi des prochains lives et contenus IA »** (décochée), bouton « Voir mon diagnostic », mention de confidentialité. Champ piège invisible `site` (robots). Erreurs affichées sous les champs.
-4. **Résultat, diagnostic débloqué** (`#r-diagnostic`, affiché **immédiatement** au clic, l'envoi se fait en arrière-plan) : « Votre diagnostic, Prénom » ; **Détail par axe avec code couleur** (vert « Acquis » ≥ 60 %, bleu nuit « En cours », terre cuite « À renforcer » < 30 % ; toujours avec le libellé, jamais la couleur seule) ; 3 priorités ; **bloc RDV** (photo, nom, titre, sous-titre selon le rôle, **un seul bouton ambre « Réserver mon échange offert »**, micro-réassurances « 30 min · sans engagement · offert », « Cédric aura vos résultats sous les yeux : rien à recopier » une fois le lead confirmé, lien discret « Plutôt par écrit ? Nous écrire » (mailto pré-rempli), positionnement) ; **corrigé question par question** (accordéons : ✓/✗, votre réponse, bonne réponse, explication) ; partage (icônes réduites à 46 px) ; « Refaire le test ».
+4. **Résultat, diagnostic débloqué** (`#r-diagnostic`, affiché **immédiatement** au clic, l'envoi se fait en arrière-plan) : « Votre diagnostic, Prénom » ; **Détail par axe avec code couleur** (vert `c-success` « Acquis » ≥ 60 %, encre `c-ink` « En cours », ambre foncé `c-warn` « À renforcer » < 30 % ; toujours avec le libellé, jamais la couleur seule) ; 3 priorités ; **bloc RDV** (photo, nom, titre, sous-titre selon le rôle, **un seul bouton ambre « Réserver mon échange offert »**, micro-réassurances « 30 min · sans engagement · offert », « Cédric aura vos résultats sous les yeux : rien à recopier » une fois le lead confirmé, lien discret « Plutôt par écrit ? Nous écrire » (mailto pré-rempli), positionnement) ; **corrigé question par question** (accordéons : ✓/✗, votre réponse, bonne réponse, explication) ; partage (icônes réduites à 46 px) ; « Refaire le test ».
 5. **Fenêtre de réservation** (`#dialogue-rdv`) : agenda Google intégré en `<iframe>` (`config.contact.lien_rdv_integre`, version `?gv=true`), chargé à la première ouverture seulement ; lien de secours « Ouvrez-le dans un nouvel onglet » (`lien_rdv`).
 6. **Bulle RDV** (`#bulle-rdv`) : photo + « Besoin de conseils sur l'IA ? / Réserver 30 min », fixe en bas à droite, visible sur le diagnostic tant que le bloc RDV n'est pas à l'écran (IntersectionObserver), ouvre la même fenêtre.
 7. **Qui est derrière + FAQ** (`#apropos`, hors des écrans) : visible sur l'accueil et le résultat. Textes dans `config.a_propos` (titre, texte, preuve, lien LinkedIn facultatif) et `config.faq` (accordéons).
@@ -124,12 +124,12 @@ Retirés en v2.0 : bouton « Valider ma réponse » et correction après chaque 
 - Champs de saisie ≥ 16 px (sinon zoom iOS) — vérifié par `validate.mjs`.
 - Fenêtres de partage : `overscroll-behavior: contain` ; viewport `interactive-widget=resizes-content` (clavier Android).
 - `text-wrap: balance` sur les titres, `pretty` sur les paragraphes.
-- Manifeste : `theme_color` #F7F5F1 (haut de page clair ; la balise `theme-color` suit ensuite le thème).
+- Manifeste : `theme_color` et `background_color` `#f4f3ee` (c-bg clair ; la balise `theme-color` suit ensuite le thème : `#f4f3ee` / `#0f1c18`).
 - À confirmer sur un vrai téléphone : survol, flash au tap, zoom, barre d'état de l'app installée sur iPhone.
 
 ### Thème clair / sombre
 - Un petit script dans le `<head>` pose `data-theme="light|dark"` sur `<html>` **avant l'affichage** (pas de flash) : choix mémorisé, sinon `prefers-color-scheme`.
-- Tous les jetons sombres sont sous `:root[data-theme="dark"]` (une seule définition). Plus de `@media (prefers-color-scheme)` dans le CSS.
+- Jetons `--c-…` en `light-dark(clair, sombre)` (v2.2) : `data-theme` fixe `color-scheme` (`light` ou `dark`) ; sans JavaScript, `color-scheme: light dark` suit la préférence du système. Navigateurs sans `light-dark()` (Safari < 17.5) : mode clair seulement. Blocs forêt (`data-theme="foret"` sur le bloc RDV et la bulle) : jetons fixes, identiques dans les deux modes.
 - Bascule : `aria-pressed` (vrai = sombre), `title` explicite, `meta theme-color` mis à jour. Sans choix mémorisé, un changement de préférence système en cours de visite est suivi.
 - Stockage bloqué : la bascule marche pour la visite, rien ne plante (testé).
 
@@ -222,25 +222,29 @@ Schéma d'une question :
 
 ## 6. Design & identité visuelle
 
-Palette du CDC appliquée telle quelle (en attente de validation ou de codes officiels) :
+Depuis la v2.2 (09/11/2026), le Check-up IA applique le **design system « Forêt et ambre » de Manica**, validé par l'équipe le 9/11/2026 : https://claude.ai/artifact/FseATv2KDZtYWa7eP2JzDd (lire `project/README.md`, `project/tokens.json`, `project/components/bundle.css`). Toute évolution visuelle part de là.
 
-| Rôle | Clair | Sombre |
-|---|---|---|
-| Fond | `#F7F5F1` | `#0B1326` |
-| Surfaces (cartes, choix) | `#FFFDF9` | `#111C35` |
-| Titres / remplissages | `#101B33` | `#F7F5F1` |
-| Texte | `#1E1E1E` | `#E8E5DE` |
-| Texte secondaire | `#4A566D` | `#A8B3C8` |
-| Accent CTA (RDV uniquement) | `#E8874A`, texte `#101B33` | idem |
-| Bonne réponse (bordure / texte / fond) | `#2E8B57` / `#1D6940` / `#E3F0E7` | `#5DBE89` / `#85D6A8` / `#11301F` |
-| Mauvaise réponse | `#C0533E` / `#9E3D2B` / `#F7E5DF` | `#E07F6A` / `#F29C88` / `#3A1B15` |
+| Jeton | Clair | Sombre | Usage |
+|---|---|---|---|
+| `c-bg` | `#f4f3ee` | `#0f1c18` | Fond de page |
+| `c-surface` | `#ffffff` | `#162722` | Cartes, champs, choix |
+| `c-sunken` | `#e4ece5` | `#1e342c` | Héros, pastilles, pistes des barres |
+| `c-ink` / `c-text` / `c-muted` | `#16302a` / `#2f433c` / `#56665f` | `#eef2ec` / `#d3ddd6` / `#9db0a7` | Titres / texte / texte secondaire |
+| `c-line` / `c-control` | `#d5ddd4` / `#7a8c84` | `#2a433a` / `#6f8a7f` | Filets décoratifs / bordures de champs (3:1) |
+| `c-action` / `c-action-ink` | `#e8874a` / `#16302a` | `#ee9658` / `#0f1c18` | Ambre de l'action principale / texte posé dessus |
+| `c-link` | `#8c4a1a` | `#f2a877` | Liens (jamais d'ambre en texte) |
+| `c-success` / `c-warn` | `#1f6f43` / `#8a4b08` | `#84d3a5` / `#f2b66b` | Acquis, bonne réponse / à renforcer, à revoir (sur `c-success-bg`, `c-warn-bg`) |
+| Forêt (`data-theme="foret"`) | `#1f4a3e` | idem | Bloc RDV et bulle : fond vert, texte clair, liens `#f6bc92` |
 
-- Tous les couples texte/fond ≥ 4,5:1 (AA). **Le texte sur l'ambre est bleu nuit** : du blanc sur `#E8874A` ne fait que 2,6:1.
-- L'ambre n'est utilisé que sur « Réserver un échange » (et le bouton de l'image OG). « Commencer le test » est en bleu nuit.
-- Typographie : **Manrope** (géométrique, solide), auto-hébergée. Base 17 px.
-- Logo officiel (fourni le 24/09/2026) : **niveaux de gris purs**, deux tons (noir et gris de la feuille), parties blanches transparentes. En mode sombre, `filter: invert(1)` : le noir devient `#E3E2E5`, la feuille `#B3B3B3`, la hiérarchie est conservée et les découpes laissent voir le fond (contrastes 14,3:1 et 8,8:1). Pas de plaque claire nécessaire. `alt="Manica"` partout ; sources ≥ 3× la taille affichée (netteté mobile).
-- Favicon et icônes PWA : symbole seul (recadré automatiquement), en clair sur carré bleu nuit — lisible sur onglet clair comme sombre.
-- Image OG : logo avec baseline inversé sur fond bleu nuit, « Check-up IA », tracé ECG, bouton ambre « Faire le test ».
+- **Contrastes** : texte ≥ 4,5:1 dans les deux modes, vérifiés au calcul sur les jetons puis élément par élément dans le navigateur (accueil, quiz, résultat, diagnostic, fenêtre LinkedIn, clair et sombre, mobile et bureau). Seul couple sous 3:1 : `c-control` sur `c-sunken` en clair (2,95:1), donc pas de bordure de champ sur un fond `c-sunken`.
+- **Ambre** = l'action principale, un seul bouton ambre visible par écran : « Commencer le test » (Autre métier), « Voir mon diagnostic » (formulaire), « Réserver mon échange offert » (bloc RDV, qui n'apparaît qu'une fois le diagnostic débloqué), « Faire le Check-up IA » (404). Texte toujours en `c-action-ink`. Ailleurs : boutons encre (`btn-encre`) ou contour (`btn-contour`).
+- **Formes** : boutons et champs 14 px (`radius-control`), cartes 24 px (`radius-card` : profils, quiz, formulaire, score, fenêtres), blocs 36 px (`radius-bloc` : héros de l'accueil, bloc RDV), pastilles rondes (badges, lettres A–D, numéros, partage). Formulaire = carte phare (contour ambre de 3 px).
+- **Fonds** : plus de quadrillage ni de texture à circuits ; héros en panneau arrondi `c-sunken` avec lueur ambrée, grain très léger.
+- **Typographie** : Figtree seule (400 à 700), auto-hébergée, aucune police chargée en ligne ; chiffres tabulaires pour le score et les pourcentages. Geist Mono seulement dans la barre de titre de l'illustration.
+- **Mouvement** : `cubic-bezier(.23, 1, .32, 1)` pour les retours d'action, léger rebond `cubic-bezier(.34, 1.4, .64, 1)` pour les survols ; entrée en cascade (800 ms, décalage 90 ms) ; boucles limitées (le point du tracé bat 3 fois) ; tout s'arrête sous `prefers-reduced-motion`.
+- Logo officiel (fourni le 24/09/2026) : **niveaux de gris purs**, parties blanches transparentes. En mode sombre, `filter: invert(.93) hue-rotate(180deg)` (règle du design system). Jamais sur un bloc forêt sans fond clair. `alt="Manica"` partout ; sources ≥ 3× la taille affichée.
+- Favicon et icônes PWA : symbole seul, en clair sur carré vert forêt `#1f4a3e`.
+- Image OG et images de score à partager : fond clair `c-bg`, logo foncé, carte blanche arrondie, barres colorées comme à l'écran, tracé ECG avec point ambré, adresse en `c-link`. L'OG reprend le héros asymétrique (texte à gauche, mini carte de résultat dans la forme organique `c-sunken` à droite).
 - Motif : tracé ECG (accueil, image OG) — le « check-up ».
 - Mode clair/sombre : préférence système par défaut, bascule manuelle mémorisée (voir §3). Animations coupées si `prefers-reduced-motion`.
 - Accessibilité : radios natifs (navigation clavier aux flèches), focus visible, focus déplacé sur la question / le bouton, correction annoncée (`aria-live`) avec la bonne réponse lue aux lecteurs d'écran, jamais de couleur seule.
@@ -257,6 +261,7 @@ Indicateurs clés (v2, dans GoatCounter) : test terminé = `test_termine` ; clic
 
 ## 8. État d'avancement
 
+- ✅ v2.2 (09/11/2026) : **design system « Forêt et ambre »** appliqué (validé par l'équipe le 9/11, voir §6) à la place de « Graphite & Ambre ». Jetons `--c-…` clairs et sombres en `light-dark()`, vrai mode sombre qui suit le système avec bouton soleil/lune comme sur manica.fr ; Figtree auto-hébergée (Geist, Manrope et la texture à circuits retirés) ; boutons 14 px, cartes 24 px, blocs 36 px ; plus de quadrillage ni de filets pointillés : héros de l'accueil en panneau `c-sunken` arrondi, bloc RDV et bulle en bloc forêt, formulaire en carte phare ; ambre réservé à l'action principale (un bouton par écran), texte en `c-action-ink`. Icônes PWA en vert forêt, `og-image.png` et images de score (story, publication) refaites sur fond clair. **Retour à l'accueil** : « Changer de profil » à la question 1 et sous les choix ensuite, logo cliquable, bouton retour du navigateur géré (historique) ; sans réponse, le profil choisi est oublié. Contrastes vérifiés dans les deux modes (calcul des jetons + contrôle élément par élément dans Chrome) ; nouveau parcours e2e « retour à l'accueil ». Questions, calcul du score et envoi vers l'Apps Script inchangés.
 - ✅ v2.1 (06/11/2026, déployée sur GitHub Pages) : refonte visuelle alignée sur la refonte du site manica.fr (direction « Graphite & Ambre », `~/www/manica`, branche `refonte/astro`, `docs/guide-graphique.md`). Police Geist + Geist Mono (OFL, `fonts/`), jetons graphite (clair `#F4F5F5`/encre `#15191C`, sombre = sections sombres du site), ambre réservé à l'action, fond de plan quadrillé et lueur ambrée, grain (`img/grain.png`), bloc RDV à circuits (`img/fond-circuits.webp`). Mobile d'abord, puis **mise en page bureau (≥ 1024 px)** : accueil en deux colonnes (texte + choix du profil / illustration SVG animée du parcours : 10 réponses → score → diagnostic par axe → e-mail + échange offert), « Ce que vous obtenez » et « Qui est derrière + FAQ » en deux colonnes, quiz en carte centrée, résultat avec la carte du score collante à gauche et le formulaire puis le diagnostic à droite ; filets pointillés et repères « + » au-delà de 1280 px. Mouvement en CSS seul : entrée en cascade à chaque écran, remplissage des boutons au survol, cartes de profil qui se soulèvent, apparitions au défilement (`animation-timeline: view()`, sans effet si non pris en charge), scène d'illustration jouée une fois ; `prefers-reduced-motion` → état final statique. En-tête pleine largeur avec le logo compact sur tous les écrans (le logo à baseline n'est plus affiché). Image de partage (canvas) passée en graphite + Geist. `og-image.png` refaite dans le même style (graphite à circuits, lueur ambrée, mini carte de résultat au score fictif) ; images de score à partager (story, publication) avec texture à circuits, lueur ambrée, barres colorées par axe (vert / blanc / terre cuite, comme `tonAxe`) et Geist Mono.
 
 - ✅ v2.0 (06/11/2026, déployée sur GitHub Pages) : refonte « tunnel de conversion » d'après le coaching Funnel Building du 30/09/2026 — profils métier en un clic, quiz en 1 clic par question (10 clics au lieu de 19), corrigé à la fin, score libre puis diagnostic contre nom + e-mail (leads → Google Sheet via Apps Script, e-mail de notification et récapitulatif), code couleur par axe, bloc RDV à un seul bouton + réassurance, agenda Google intégré dans une fenêtre, bulle RDV avec photo, « Qui est derrière » + FAQ en accordéon sur l'accueil et le résultat, partage réduit, 38 questions ciblées (à valider), événements GoatCounter du tunnel, mentions légales réécrites (données collectées, Google Workspace, 3 ans). `validate.mjs` et `e2e.mjs` réécrits en conséquence (5 parcours par rôle, échec d'envoi, robot, copie refusée, stockage bloqué, hors ligne). Même jour : Apps Script déployé par Cédric (Google Sheet « leads », onglet `Leads`, URL dans `config.leads.url`, `doGet` vérifié), 38 questions passées à `valide`, `statuts_publies: ["valide"]` (plus de bandeau bêta), `a_propos.linkedin` renseigné, preuve reformulée sans durée chiffrée (« plusieurs années », pour ne pas vieillir). Après le premier test réel : l'envoi contient le corrigé complet ; Apps Script envoie des e-mails HTML (notification + récapitulatif) avec le diagnostic en PDF joint, et la colonne « Réponses » de la feuille détaille chaque question. Agenda Google : pas de pré-remplissage possible par l'adresse (nom et e-mail pré-remplis seulement si le visiteur est connecté à Google) ; alléger le formulaire de réservation côté Google Agenda. Premier lead réel testé de bout en bout par Cédric (ligne dans la feuille, notification et récapitulatif HTML avec PDF). **Reste à faire** : tester l'agenda intégré sur téléphone.
@@ -307,7 +312,7 @@ Indicateurs clés (v2, dans GoatCounter) : test terminé = `test_termine` ; clic
 - **Valider des questions** : passer `statut` à `valide`. Pour ne publier que les questions relues, mettre `"statuts_publies": ["valide"]` dans `config.json` — `validate.mjs` vérifie alors que chaque pool garde ≥ `questions_par_axe` questions sur au moins autant de niveaux de difficulté (2 aujourd'hui), et signale un niveau absent.
 - **localStorage** : toujours sous `try/catch`.
 - **CSS `:has()`** : `.choice:has(input:checked)` est plus spécifique que `.choice.is-wrong` ; l'état « sélectionné » est donc limité à `.choices:not(.is-locked)`. Garder ce schéma si on retouche les états.
-- **Texte sur l'ambre** : toujours bleu nuit (contraste).
+- **Texte sur l'ambre** : toujours `c-action-ink` (vert très foncé, contraste).
 - **CSP** stricte dans `index.html` : toute ressource tierce sera bloquée tant que la CSP n'est pas ouverte explicitement. `validate.mjs` refuse toute origine externe hors GoatCounter et tout script externe sans SRI.
 - **GoatCounter SRI** : l'empreinte correspond à `count.v5.js` (figé). Pour changer de version : télécharger le fichier, recalculer `openssl dgst -sha384 -binary count.vX.js | openssl base64 -A`, mettre à jour `src` et `integrity`. Une empreinte fausse bloque le script en silence (plus de stats, l'app marche).
 - **Tests sur la prod** : intercepter/bloquer `manica.goatcounter.com` pour ne pas fausser les statistiques.
