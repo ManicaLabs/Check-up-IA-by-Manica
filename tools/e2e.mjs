@@ -270,7 +270,7 @@ async function testerDiagnostic(page, prefixe, { score, total }) {
   if (e.reassurance.join('|') !== CONFIG.cta.reassurance.join('|')) problemes.push(`${prefixe} : réassurance ${e.reassurance}`);
   if (e.boutons !== 1) problemes.push(`${prefixe} : ${e.boutons} boutons principaux dans le bloc RDV (1 attendu)`);
   if (!e.photo || e.nom !== 'Cédric Delalande') problemes.push(`${prefixe} : photo ou nom du bloc RDV`);
-  if (!e.mail.startsWith('mailto:hello@manica.fr?subject=') || !e.mail.includes(`mon score : ${score}/100`) || /\{\w+\}/.test(e.mail)) problemes.push(`${prefixe} : mailto ${e.mail.slice(0, 120)}`);
+  if (!e.mail.startsWith('mailto:hello@manica.fr?subject=') || !e.mail.includes(`mon score de ${score}/100`) || /\{\w+\}/.test(e.mail)) problemes.push(`${prefixe} : mailto ${e.mail.slice(0, 120)}`);
   if (e.adresseCopiable) problemes.push(`${prefixe} : la copie d'adresse devait disparaître`);
   // Corrigé : une question ouverte montre la réponse et l'explication
   // Défilement doux + apparitions au défilement : on amène la question au centre, sans animation, avant de cliquer.

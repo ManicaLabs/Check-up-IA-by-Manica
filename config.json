@@ -108,7 +108,7 @@
       },
       "entreprise": {
         "titre": "Donner un socle commun aux équipes",
-        "texte": "Des équipes qui savent ce qu'est — et n'est pas — un modèle de langage font de meilleurs choix d'usage. Premier pas : un temps court de mise à niveau, avec un vocabulaire partagé (hallucination, contexte, agent, RAG)."
+        "texte": "Des équipes qui savent ce qu'est (et ce que n'est pas) un modèle de langage font de meilleurs choix d'usage. Premier pas : un temps court de mise à niveau, avec un vocabulaire partagé (hallucination, contexte, agent, RAG)."
       }
     },
     "usages": {
@@ -124,7 +124,7 @@
     "limites": {
       "perso": {
         "titre": "Installer le réflexe de vérification",
-        "texte": "Un modèle peut se tromper avec aplomb. Premier pas : pour tout chiffre, citation ou source, remontez à l'original avant de réutiliser — surtout quand la réponse vous arrange."
+        "texte": "Un modèle peut se tromper avec aplomb. Premier pas : pour tout chiffre, citation ou source, remontez à l'original avant de réutiliser, surtout quand la réponse vous arrange."
       },
       "entreprise": {
         "titre": "Encadrer la fiabilité",
@@ -164,8 +164,8 @@
     "bouton_rdv": "Réserver mon échange offert",
     "bouton_mail": "Plutôt par écrit ? Nous écrire",
     "positionnement": {
-      "perso": "Manica accompagne dans la durée celles et ceux qui veulent mettre en place une IA utile — pas une formation d'une journée.",
-      "entreprise": "Manica accompagne les équipes dans la durée pour mettre en place une IA utile — pas une formation d'une journée."
+      "perso": "Manica accompagne dans la durée celles et ceux qui veulent mettre en place une IA utile, pas une formation d'une journée.",
+      "entreprise": "Manica accompagne les équipes dans la durée pour mettre en place une IA utile, pas une formation d'une journée."
     },
     "interlocuteur": {
       "nom": "Cédric Delalande",
@@ -184,7 +184,7 @@
     }
   },
   "mail": {
-    "objet": "Check-up IA — mon score : {score}/100",
+    "objet": "Check-up IA : mon score de {score}/100",
     "corps": "Bonjour,\n\nJe viens de faire le Check-up IA by Manica.\n\nProfil : {profil}\nScore global : {score}/100 (niveau {niveau})\n\nDétail par axe :\n{detail_axes}\n\nCe que j'aimerais améliorer : \n"
   },
   "partage": {
