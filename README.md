@@ -8,7 +8,7 @@ Score calculé dans le navigateur ; le diagnostic détaillé se débloque avec n
 ## Modifier le contenu
 
 - Questions : `questions.json` (passer `statut` à `valide` après relecture)
-- Profils, lien de rendez-vous, adresse de réception des leads, niveaux, recommandations, FAQ, textes : `config.json`
+- Profils, lien de rendez-vous, adresse de réception des leads, niveaux, recommandations, FAQ, textes : `config.json` (après une modification de la FAQ ou du bloc « Qui est derrière » : `node tools/seo.mjs`, qui réécrit aussi `llms.txt`, `sitemap.xml` et le JSON-LD)
 - Réception des contacts (Google Sheet) : `docs/LEADS.md`
 
 Puis valider avant de pousser :

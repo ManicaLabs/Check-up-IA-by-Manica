@@ -232,6 +232,14 @@
 },
 "faq": [
     {
+        "q": "Que mesure le Check-up IA ?",
+        "r": "Votre maîtrise de l'IA générative sur 5 axes : fondamentaux, usages concrets, limites et fiabilité, données et sécurité, IA en entreprise. Les 10 questions viennent d'une banque relue, et une partie est écrite pour votre métier : dirigeant, DSI, marketing, autre métier ou usage personnel."
+    },
+    {
+        "q": "Comment est calculé le score ?",
+        "r": "Le score sur 100 est la part de bonnes réponses, calculée dans votre navigateur par des règles simples, sans modèle d'IA. Il vous situe sur quatre niveaux : Découverte, Curieux, Pratiquant et Avancé. Le diagnostic détaillé ajoute votre résultat par axe et vos 3 priorités."
+    },
+    {
         "q": "C'est vraiment gratuit ?",
         "r": "Oui. Le test, le score et le diagnostic détaillé sont gratuits et sans engagement."
     },
@@ -249,7 +257,7 @@
     },
     {
         "q": "Qui est Manica ?",
-        "r": "Manica Labs, basée à Grenoble, est dirigée par Cédric Delalande. Elle accompagne dans la durée les équipes qui veulent une IA utile, maîtrisée et adaptée à leur métier."
+        "r": "Manica est le nom commercial de MANICA LABS, une entreprise de Grenoble dirigée par Cédric Delalande. Elle accompagne dans la durée les PME, les ETI et les professionnels qui veulent une IA utile, maîtrisée et adaptée à leur métier. Sans lien avec les sociétés homonymes d'architecture ou de logistique."
     }
 ]
 }

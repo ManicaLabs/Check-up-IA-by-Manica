@@ -1,0 +1,31 @@
+# Check-up IA by Manica
+
+> Test gratuit en ligne pour évaluer sa maîtrise de l’intelligence artificielle générative, à titre personnel ou pour son entreprise : 10 questions adaptées au métier, un score sur 100 tout de suite, puis un diagnostic détaillé par e-mail. En français. Édité par Manica (MANICA LABS, Grenoble).
+
+Adresse : https://checkup-ia.manica.fr/. Gratuit et sans engagement. Code source public : https://github.com/ManicaLabs/Check-up-IA-by-Manica.
+
+## Comment fonctionne le test
+- Profils : Pour moi, Dirigeant·e, DSI / IT, Marketing / Com, Autre métier. Le profil choisi oriente une partie des questions.
+- 10 questions tirées d’une banque de 85 questions relues, réparties sur 5 axes : Fondamentaux, Usages concrets, Limites & fiabilité, Données & sécurité, IA en entreprise.
+- Une réponse d’un clic par question, sans correction pendant le test : le corrigé complet est donné à la fin.
+- Score sur 100 : la part de bonnes réponses, calculée dans le navigateur par des règles simples, sans modèle d’IA. Niveaux : Découverte (0 à 39), Curieux (40 à 64), Pratiquant (65 à 84), Avancé (85 à 100).
+- Diagnostic détaillé, débloqué avec un nom et une adresse e-mail : profil sur les axes, 3 priorités avec un premier pas pour chacune, corrigé question par question avec explications ; envoyé aussi par e-mail.
+- Données : rien n’est transmis tant que la personne ne demande pas son diagnostic ; dans ce cas, son nom, son e-mail, son profil et ses résultats vont à Manica, qui ne les revend pas. Mesure d’audience anonyme et sans cookie (GoatCounter).
+
+## Questions fréquentes
+- Que mesure le Check-up IA ? Votre maîtrise de l’IA générative sur 5 axes : fondamentaux, usages concrets, limites et fiabilité, données et sécurité, IA en entreprise. Les 10 questions viennent d’une banque relue, et une partie est écrite pour votre métier : dirigeant, DSI, marketing, autre métier ou usage personnel.
+- Comment est calculé le score ? Le score sur 100 est la part de bonnes réponses, calculée dans votre navigateur par des règles simples, sans modèle d’IA. Il vous situe sur quatre niveaux : Découverte, Curieux, Pratiquant et Avancé. Le diagnostic détaillé ajoute votre résultat par axe et vos 3 priorités.
+- C’est vraiment gratuit ? Oui. Le test, le score et le diagnostic détaillé sont gratuits et sans engagement.
+- Pourquoi me demander mon nom et mon e-mail ? Pour vous remettre votre diagnostic détaillé et pouvoir en reparler avec vous si vous le souhaitez. Votre score, lui, s’affiche sans rien demander. Vos coordonnées ne sont jamais revendues.
+- Que deviennent mes réponses ? Votre score est calculé dans votre navigateur. Si vous demandez votre diagnostic, vos coordonnées, votre profil et vos résultats sont transmis à Manica, et à personne d’autre.
+- Comment se passe l’échange de 30 minutes ? Vous choisissez un créneau dans l’agenda de Cédric. L’échange part de vos résultats : où vous en êtes, ce qui vous ferait gagner du temps, par où commencer. Offert et sans engagement.
+- Qui est Manica ? Manica est le nom commercial de MANICA LABS, une entreprise de Grenoble dirigée par Cédric Delalande. Elle accompagne dans la durée les PME, les ETI et les professionnels qui veulent une IA utile, maîtrisée et adaptée à leur métier. Sans lien avec les sociétés homonymes d’architecture ou de logistique.
+
+## Éditeur
+- [Manica](https://manica.fr/): Entreprise française d’accompagnement en intelligence artificielle et de développement logiciel pour les PME et ETI, basée à Grenoble (Isère). Sans lien avec les sociétés homonymes d’architecture ou de logistique.
+- [Le Check-up IA sur manica.fr](https://manica.fr/projets/check-up-ia/): présentation du projet, de sa méthode et de ses limites.
+- [Bilan IA](https://manica.fr/offres/bilan-ia/): l’étape suivante proposée par Manica, l’audit des usages réels de l’IA dans une entreprise.
+- [Cédric Delalande](https://manica.fr/a-propos/cedric-delalande/): Directeur général de Manica Labs.
+
+## Optional
+- [Mentions légales et confidentialité](https://checkup-ia.manica.fr/mentions-legales.html): éditeur, hébergement, données collectées, mesure d’audience.

@@ -30,7 +30,7 @@ scripts.forEach((code, i) => {
     erreur(`index.html : erreur de syntaxe JS dans le bloc <script> n° ${i + 1}\n${e.stderr}`);
   }
 });
-for (const f of ['sw.js', 'tools/validate.mjs', 'tools/e2e.mjs']) {
+for (const f of ['sw.js', 'tools/validate.mjs', 'tools/e2e.mjs', 'tools/seo.mjs']) {
   try {
     execFileSync(process.execPath, ['--check', join(racine, f)], { stdio: 'pipe' });
   } catch (e) {
@@ -319,6 +319,8 @@ for (const f of ['mentions-legales.html', '404.html']) {
     if (!existsSync(join(racine, u))) erreur(`${f} : fichier référencé introuvable ${u}`);
   }
   for (const [balise] of page.matchAll(/<(?:script|link|img|iframe|source)\b[^>]*>/g)) {
+    // Une canonical ne charge rien : seule l'adresse propre du site est admise (url_app).
+    if (/\brel="canonical"/.test(balise) && balise.includes(`href="${config.url_app}`)) continue;
     if (/\b(?:src|href)="(?:https?:)?\/\//.test(balise)) erreur(`${f} : ressource externe interdite ${balise}`);
   }
   if (/\sstyle="/.test(page)) erreur(`${f} : style en ligne bloqué par la CSP (style-src 'self')`);
@@ -374,11 +376,49 @@ if (!/connect-src 'self' https:\/\/manica\.goatcounter\.com https:\/\/script\.go
 if (!/frame-src https:\/\/calendar\.google\.com;/.test(csp)) erreur('CSP : frame-src doit autoriser calendar.google.com (agenda intégré)');
 
 // --- Promesses : le diagnostic demande un e-mail, aucun texte ne doit promettre le contraire ---
-for (const f of ['index.html', 'config.json', 'manifest.webmanifest', 'tools/og-image.html', 'README.md', '404.html']) {
+for (const f of ['index.html', 'config.json', 'manifest.webmanifest', 'tools/og-image.html', 'README.md', '404.html', 'llms.txt']) {
   const texte = lire(f);
   for (const promesse of [/sans inscription/i, /pas de (?:mail|e-mail) demand/i, /aucune réponse ne quitte/i, /zéro donnée/i]) {
     if (promesse.test(texte)) erreur(`${f} : « ${texte.match(promesse)[0]} » n'est plus vrai (le diagnostic détaillé demande nom et e-mail)`);
   }
+}
+
+// --- SEO et GEO : FAQ, « Qui est derrière », JSON-LD, llms.txt et sitemap.xml générés par tools/seo.mjs ---
+{
+  const { generer } = await import('./seo.mjs');
+  const attendus = generer(racine);
+  for (const f of ['index.html', 'llms.txt']) {
+    if (!existsSync(join(racine, f)) || lire(f) !== attendus[f]) erreur(`${f} : FAQ, « Qui est derrière », JSON-LD ou llms.txt désynchronisés de config.json : lancer node tools/seo.mjs`);
+  }
+  const blocs = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(m => m[1]);
+  if (blocs.length !== 1) erreur(`index.html : ${blocs.length} bloc(s) JSON-LD, 1 attendu`);
+  for (const json of blocs) {
+    try {
+      const graphe = JSON.parse(json)['@graph'];
+      const ids = graphe.map(n => n['@id']).filter(Boolean);
+      if (new Set(ids).size !== ids.length) erreur('JSON-LD : @id en double');
+      const faq = graphe.find(n => n['@type'] === 'FAQPage');
+      if (!faq || faq.mainEntity.length !== config.faq.length) erreur('JSON-LD : FAQPage absente ou différente de la FAQ affichée');
+      if (!graphe.some(n => n['@type'] === 'WebApplication' && n.url === config.url_app)) erreur('JSON-LD : WebApplication absente ou mauvaise URL');
+    } catch (e) {
+      erreur(`index.html : JSON-LD invalide (${e.message})`);
+    }
+  }
+  const locs = texte => [...texte.matchAll(/<url><loc>([^<]+)<\/loc><lastmod>([^<]+)<\/lastmod><\/url>/g)].map(m => ({ loc: m[1], lastmod: m[2] }));
+  const plan = existsSync(join(racine, 'sitemap.xml')) ? locs(lire('sitemap.xml')) : [];
+  const planAttendu = locs(attendus['sitemap.xml']);
+  if (plan.map(p => p.loc).join() !== planAttendu.map(p => p.loc).join()) erreur(`sitemap.xml : pages « ${plan.map(p => p.loc).join(', ')} », attendu « ${planAttendu.map(p => p.loc).join(', ')} » (node tools/seo.mjs)`);
+  plan.forEach((p, i) => { if (planAttendu[i] && p.lastmod < planAttendu[i].lastmod) avertissements.push(`sitemap.xml : ${p.loc} daté du ${p.lastmod}, ses sources du ${planAttendu[i].lastmod} (node tools/seo.mjs)`); });
+  const robots = existsSync(join(racine, 'robots.txt')) ? lire('robots.txt') : '';
+  if (!robots.includes(`Sitemap: ${config.url_app}sitemap.xml`)) erreur('robots.txt : ligne « Sitemap » absente ou fausse');
+  if (/^Disallow:\s*\/\s*$/m.test(robots)) erreur('robots.txt : le site entier est bloqué aux robots');
+  if (!html.includes(`<link rel="canonical" href="${config.url_app}">`)) erreur('index.html : canonical absente ou différente de url_app');
+  if (!lire('mentions-legales.html').includes(`<link rel="canonical" href="${config.url_app}mentions-legales.html">`)) erreur('mentions-legales.html : canonical absente');
+  const titre = (html.match(/<title>([^<]*)<\/title>/) || [])[1] || '';
+  const description = (html.match(/<meta name="description" content="([^"]*)">/) || [])[1] || '';
+  if (!titre || titre.length > 60) erreur(`index.html : <title> de ${titre.length} caractères (60 au plus)`);
+  if (!description || description.length > 160) erreur(`index.html : meta description de ${description.length} caractères (160 au plus)`);
+  if (/<section[^>]*id="apropos"[^>]*\bhidden\b/.test(html)) erreur('index.html : le bloc « Qui est derrière » + FAQ ne doit pas être masqué (robots sans JavaScript)');
 }
 
 // --- Bilan ---

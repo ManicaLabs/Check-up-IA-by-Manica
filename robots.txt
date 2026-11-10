@@ -1,0 +1,9 @@
+# robots.txt de https://checkup-ia.manica.fr/ (Check-up IA by Manica)
+# Même politique que manica.fr : moteurs de recherche, moteurs de réponse IA et robots d'entraînement
+# sont autorisés (contenu public, une marque neuve gagne à être connue et citée ; décision réversible).
+# Rien à exclure : l'application n'a ni API ni page privée. Présentation pour les assistants IA : /llms.txt
+
+User-agent: *
+Allow: /
+
+Sitemap: https://checkup-ia.manica.fr/sitemap.xml
