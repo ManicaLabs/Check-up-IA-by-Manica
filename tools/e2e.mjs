@@ -438,6 +438,9 @@ async function parcours(prefixe, { systeme = 'light', forcer = null, role = 'dir
     if (ordre[position] === 0) bonnes++;
     const compteur = await page.$eval('#q-compteur', e => e.textContent);
     if (compteur !== `Question ${i + 1} / ${total}`) problemes.push(`${prefixe} : compteur ${compteur}`);
+    const reste = await page.$eval('#q-reste', e => (e.hidden ? '' : e.textContent));
+    const resteAttendu = total - i > 3 ? '' : total - i === 1 ? 'Dernière question avant votre score' : `Plus que ${total - i} questions avant votre score`;
+    if (reste !== resteAttendu) problemes.push(`${prefixe} : relance « ${reste} » à la question ${i + 1}, attendu « ${resteAttendu} »`);
     if (i === 1) await page.screenshot({ path: `${OUT}${prefixe}-2-question.png` });
     if (i === 2) {
       // Retour : la question précédente revient avec la réponse marquée, un clic la remplace
@@ -489,6 +492,8 @@ async function parcours(prefixe, { systeme = 'light', forcer = null, role = 'dir
   const apres = await page.evaluate(() => ({ score: document.getElementById('r-score').textContent, diag: !document.getElementById('r-diagnostic').hidden, gate: !document.getElementById('r-gate').hidden }));
   if (apres.score !== score || !apres.diag || apres.gate) problemes.push(`${prefixe} : après rechargement ${JSON.stringify(apres)}`);
   if (leads.length !== 1) problemes.push(`${prefixe} : ${leads.length} leads après rechargement`);
+  // Défilement instantané avant le clic : avec le défilement doux, le clic part avant que le bouton soit à l'écran.
+  await page.$eval('#btn-refaire', el => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
   await page.click('#btn-refaire');
   await page.waitForSelector('#ecran-accueil:not([hidden])');
   if (await page.evaluate(() => localStorage.getItem('checkup-ia:v2'))) problemes.push(`${prefixe} : session non effacée après « Refaire »`);
